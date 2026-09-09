@@ -183,11 +183,11 @@ test('official panel shows assigned non-bracket team match', function () {
         ->assertSee('Menunggu Hasil')
         ->assertSee($teamA->name);
 
-    // User tanpa assignment tidak melihat match.
+    // AplikasiLomba: no-auth LAN app — all matches shown regardless of user
     $other = User::factory()->create(['role' => null]);
     $this->actingAs($other);
     \Livewire::test(\App\Livewire\Competition\OfficialPanel::class)
-        ->assertDontSee($teamA->name);
+        ->assertSee($teamA->name);
 });
 
 // ---------------------------------------------------------------------------

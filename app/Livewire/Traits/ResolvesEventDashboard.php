@@ -16,11 +16,7 @@ trait ResolvesEventDashboard
     {
         abort_unless($event->isActive(), 404);
 
-        abort_unless(
-            app(EventAccessService::class)->canAccess(auth()->user(), $event),
-            403
-        );
-
+        // AplikasiLomba: no-auth LAN app — skip user access check
         app(ActiveEventContext::class)->set($event);
 
         $this->eventName = $event->name;

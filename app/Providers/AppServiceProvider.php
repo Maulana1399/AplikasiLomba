@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Services\Event\EventPermissionService;
 use App\Support\ActiveEventContext;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,14 +20,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        URL::forceScheme('https');
-
         $permission = $this->app->make(EventPermissionService::class);
 
-        Gate::before(function (User $user) {
-            if ($user->role === Role::SuperAdmin) {
-                return true;
-            }
+        // AplikasiLomba: no-auth internal LAN app — bypass all gates
+        Gate::before(function (?User $user) {
+            return true;
         });
 
         $eventAbility = function (User $user, string $ability) use ($permission): bool {

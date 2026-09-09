@@ -6,7 +6,6 @@ use App\Models\CompetitionClass;
 use App\Models\CompetitionSchedule;
 use App\Services\Competition\CompetitionWorkflowService;
 use App\Support\ActiveEventContext;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class OfficialPanel extends Component
@@ -51,14 +50,7 @@ class OfficialPanel extends Component
             return;
         }
 
-        $assigned = \App\Models\CompetitionMatchOfficial::where('user_id', auth()->id())
-            ->where('competition_schedule_id', $scheduleId)
-            ->exists();
-
-        if (! $assigned) {
-            return;
-        }
-
+        // AplikasiLomba: no-auth LAN app — always allow auto-open
         $schedule = CompetitionSchedule::find($scheduleId);
 
         if ($schedule !== null && $schedule->status === 'Waiting Result') {
@@ -68,7 +60,6 @@ class OfficialPanel extends Component
 
     public function openSubmitDialog(int $scheduleId): void
     {
-        Gate::authorize('submit-result');
 
         $schedule = CompetitionSchedule::with([
             'scheduleEntries.competitionRegistration.participation.person',
@@ -124,7 +115,6 @@ class OfficialPanel extends Component
 
     public function submitResult(): void
     {
-        Gate::authorize('submit-result');
 
         $this->validate();
 
@@ -189,11 +179,8 @@ class OfficialPanel extends Component
     {
         $event = app(ActiveEventContext::class)->current();
         $classIds = CompetitionClass::where('event_id', $event?->id)->pluck('id');
-        $userId = auth()->id();
 
-        $assignedScheduleIds = \App\Models\CompetitionMatchOfficial::where('user_id', $userId)
-            ->pluck('competition_schedule_id');
-
+        // AplikasiLomba: no-auth LAN app — show all matches, not just assigned ones
         $waitingMatches = CompetitionSchedule::with([
             'competitionClass.competitionCategory',
             'venue',
@@ -203,7 +190,6 @@ class OfficialPanel extends Component
         ])
             ->withCount('scheduleEntries as participants_count')
             ->whereIn('competition_class_id', $classIds)
-            ->whereIn('id', $assignedScheduleIds)
             ->where('status', 'Waiting Result')
             ->orderBy('sort_order')
             ->orderBy('start_at')
@@ -216,7 +202,6 @@ class OfficialPanel extends Component
             'winnerTeam',
         ])
             ->whereIn('competition_class_id', $classIds)
-            ->whereIn('id', $assignedScheduleIds)
             ->where('status', 'Finished')
             ->orderBy('finished_at', 'desc')
             ->take(20)

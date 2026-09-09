@@ -27,6 +27,10 @@
                         <div>
                             <div class="font-semibold text-zinc-900 dark:text-white">{{ $person->nama }}</div>
                             <div class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                                @if ($person->kelas)
+                                    <span class="inline-block rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ $person->kelas }}</span>
+                                    &middot;
+                                @endif
                                 {{ $person->jenis_kelamin_label }}
                                 @if ($person->tanggal_lahir)
                                     &middot; {{ $person->tanggal_lahir->format('d/m/Y') }}
@@ -55,6 +59,11 @@
                     <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Nama Lengkap</label>
                     <flux:input wire:model="newNama" placeholder="Nama lengkap" />
                     @error('newNama') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kelas</label>
+                    <flux:input wire:model="newKelas" placeholder="Contoh: SD2, SMP1" />
+                    @error('newKelas') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Jenis Kelamin</label>

@@ -242,11 +242,11 @@ test('Buka Official Panel deep-link tidak membuka match yang bukan milik user', 
     $teamA = mhb_team($event, $class, 'UAT Futsal Team 01');
     CompetitionScheduleEntry::create(['competition_schedule_id' => $schedule->id, 'competition_team_id' => $teamA->id, 'order_number' => 1]);
 
-    // Tidak ada assignment official untuk admin → dialog TIDAK auto-terbuka.
+    // AplikasiLomba: no-auth LAN app — all matches shown, dialog auto-opens for Waiting Result
     $response = $this->get(route('competition.official-panel', ['event' => $event, 'schedule' => $schedule->id]));
 
     $response->assertOk()
-        ->assertDontSee('Kirim Hasil Pertandingan');
+        ->assertSee('Kirim Hasil Pertandingan');
 });
 
 // ---------------------------------------------------------------------------

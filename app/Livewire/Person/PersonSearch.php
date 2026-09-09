@@ -13,6 +13,8 @@ class PersonSearch extends Component
 
     public string $newNama = '';
 
+    public string $newKelas = '';
+
     public string $newJenisKelamin = '';
 
     public string $newTanggalLahir = '';
@@ -40,7 +42,7 @@ class PersonSearch extends Component
     public function toggleCreateForm(): void
     {
         $this->showCreateForm = ! $this->showCreateForm;
-        $this->reset(['newNama', 'newJenisKelamin', 'newTanggalLahir', 'newDesaId', 'newKelompokId']);
+        $this->reset(['newNama', 'newKelas', 'newJenisKelamin', 'newTanggalLahir', 'newDesaId', 'newKelompokId']);
         $this->resetErrorBag();
     }
 
@@ -48,6 +50,7 @@ class PersonSearch extends Component
     {
         $this->validate([
             'newNama' => 'required|string|max:255',
+            'newKelas' => 'nullable|string|max:50',
             'newJenisKelamin' => 'required|in:L,P',
             'newTanggalLahir' => 'nullable|date',
             'newDesaId' => 'required|exists:desas,id',
@@ -56,6 +59,7 @@ class PersonSearch extends Component
 
         $person = Person::create([
             'nama' => $this->newNama,
+            'kelas' => $this->newKelas ?: null,
             'jenis_kelamin' => $this->newJenisKelamin,
             'tanggal_lahir' => $this->newTanggalLahir ?: null,
             'desa_id' => (int) $this->newDesaId,

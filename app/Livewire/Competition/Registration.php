@@ -24,6 +24,8 @@ class Registration extends Component
 
     public string $nama = '';
 
+    public string $kelas = '';
+
     public string $jenisKelamin = '';
 
     public string $tanggalLahir = '';
@@ -39,6 +41,8 @@ class Registration extends Component
     public bool $processing = false;
 
     public bool $alreadyRegistered = false;
+
+    public string $conflictMessage = '';
 
     public ?array $successData = null;
 
@@ -56,6 +60,7 @@ class Registration extends Component
 
         $this->selectedPersonId = $person->id;
         $this->nama = $person->nama;
+        $this->kelas = $person->kelas ?? '';
         $this->jenisKelamin = $person->jenis_kelamin;
         $this->tanggalLahir = $person->tanggal_lahir?->format('Y-m-d') ?? '';
         $this->desaId = (string) ($person->desa_id ?? '');
@@ -63,6 +68,7 @@ class Registration extends Component
 
         $this->loadParticipations();
         $this->checkDuplicate();
+        $this->checkConflict();
         $this->stepSearch = false;
         $this->stepRegister = true;
     }
@@ -100,6 +106,7 @@ class Registration extends Component
             'event_name' => $event?->name ?? '-',
             'category_name' => $r->competitionCategory?->name ?? '-',
             'class_name' => $r->competitionClass?->name ?? '-',
+            'category_id' => $r->competition_category_id,
         ])->toArray();
     }
 
@@ -124,9 +131,54 @@ class Registration extends Component
         }
     }
 
+    public function checkConflict(): void
+    {
+        $this->conflictMessage = '';
+
+        if (! $this->selectedPersonId || ! $this->competitionCategoryId) {
+            return;
+        }
+
+        $category = CompetitionCategory::find($this->competitionCategoryId);
+        if (! $category) {
+            return;
+        }
+
+        $conflictCategoryIds = $category->allExclusiveCategoryIds();
+        if (empty($conflictCategoryIds)) {
+            return;
+        }
+
+        $event = app(ActiveEventContext::class)->current();
+        $participation = Participation::where('person_id', $this->selectedPersonId)
+            ->where('event_id', $event?->id)
+            ->first();
+
+        if (! $participation) {
+            return;
+        }
+
+        $conflictNames = CompetitionRegistration::where('participation_id', $participation->id)
+            ->whereIn('competition_category_id', $conflictCategoryIds)
+            ->with('competitionCategory')
+            ->get()
+            ->pluck('competitionCategory.name')
+            ->implode(', ');
+
+        if ($conflictNames) {
+            $this->conflictMessage = "Konflik dengan kategori yang sudah diikuti: {$conflictNames}";
+        }
+    }
+
     public function updatedCompetitionClassId(): void
     {
         $this->checkDuplicate();
+    }
+
+    public function updatedCompetitionCategoryId(): void
+    {
+        $this->competitionClassId = '';
+        $this->checkConflict();
     }
 
     public function submit(): void
@@ -151,6 +203,7 @@ class Registration extends Component
             } else {
                 $this->validate([
                     'nama' => 'required|string|max:255',
+                    'kelas' => 'required|string|max:50',
                     'jenisKelamin' => 'required|in:L,P',
                     'tanggalLahir' => 'nullable|date',
                     'desaId' => 'required|exists:desas,id',
@@ -159,11 +212,23 @@ class Registration extends Component
 
                 $person = Person::create([
                     'nama' => $this->nama,
+                    'kelas' => $this->kelas,
                     'jenis_kelamin' => $this->jenisKelamin,
                     'tanggal_lahir' => $this->tanggalLahir ?: null,
                     'desa_id' => (int) $this->desaId,
                     'kelompok_id' => $this->kelompokId ? (int) $this->kelompokId : null,
                 ]);
+            }
+
+            // Validate person has kelas and it matches the competition class
+            $class = CompetitionClass::findOrFail($this->competitionClassId);
+            if (blank($person->kelas)) {
+                $this->addError('competitionClassId', 'Peserta belum memiliki kelas. Silakan edit data peserta terlebih dahulu.');
+                return;
+            }
+            if ($person->kelas !== $class->name) {
+                $this->addError('competitionClassId', "Kelas peserta ({$person->kelas}) tidak sesuai dengan kelas lomba ({$class->name}).");
+                return;
             }
 
             $service = app(CompetitionRegistrationService::class);
@@ -179,10 +244,11 @@ class Registration extends Component
 
             $this->successData = [
                 'person_name' => $person->nama,
+                'kelas' => $person->kelas ?? '-',
                 'category_name' => $category?->name ?? '-',
                 'class_name' => $class?->name ?? '-',
                 'participant_number' => $result['participation']->participant_number ?? '-',
-                'status' => $this->selectedPersonId ? 'Person existing — Participation baru dibuat.' : 'Person baru dan Participation dibuat.',
+                'status' => $this->selectedPersonId ? 'Participation baru dibuat untuk peserta existing.' : 'Peserta baru dan Participation dibuat.',
             ];
 
             $this->reset(['competitionCategoryId', 'competitionClassId']);
@@ -195,12 +261,21 @@ class Registration extends Component
 
     public function resetSelection(): void
     {
-        $this->reset(['selectedPersonId', 'nama', 'jenisKelamin', 'tanggalLahir', 'desaId', 'kelompokId', 'competitionCategoryId', 'competitionClassId', 'alreadyRegistered', 'personParticipations']);
+        $this->reset([
+            'selectedPersonId', 'nama', 'kelas', 'jenisKelamin', 'tanggalLahir',
+            'desaId', 'kelompokId', 'competitionCategoryId', 'competitionClassId',
+            'alreadyRegistered', 'conflictMessage', 'personParticipations',
+        ]);
     }
 
     public function resetAll(): void
     {
-        $this->reset(['selectedPersonId', 'nama', 'jenisKelamin', 'tanggalLahir', 'desaId', 'kelompokId', 'competitionCategoryId', 'competitionClassId', 'stepSearch', 'stepRegister', 'stepSuccess', 'alreadyRegistered', 'successData', 'personParticipations']);
+        $this->reset([
+            'selectedPersonId', 'nama', 'kelas', 'jenisKelamin', 'tanggalLahir',
+            'desaId', 'kelompokId', 'competitionCategoryId', 'competitionClassId',
+            'stepSearch', 'stepRegister', 'stepSuccess', 'alreadyRegistered',
+            'conflictMessage', 'successData', 'personParticipations',
+        ]);
         $this->stepSearch = true;
         $this->resetErrorBag();
     }
@@ -234,11 +309,6 @@ class Registration extends Component
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
-    }
-
-    public function updatedCompetitionCategoryId(): void
-    {
-        $this->competitionClassId = '';
     }
 
     public function render()

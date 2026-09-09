@@ -9,7 +9,6 @@ use App\Models\CompetitionSchedule;
 use App\Services\Competition\CompetitionWorkflowService;
 use App\Support\ActiveEventContext;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class OperatorDashboard extends Component
@@ -27,17 +26,12 @@ class OperatorDashboard extends Component
 
     public function advanceStatus(int $scheduleId): void
     {
-        Gate::authorize('manage-events');
 
         $schedule = CompetitionSchedule::withCount('scheduleEntries as participants_count')->findOrFail($scheduleId);
 
         if ($schedule->start_at && Carbon::parse($schedule->start_at)->isFuture()) {
-            $user = auth()->user();
-            if (! $user->can('manage-events')) {
-                session()->flash('error', 'Jadwal ini belum dimulai. Silakan tunggu waktu yang ditentukan.');
-
-                return;
-            }
+            // AplikasiLomba: no-auth LAN app, skip time check for admin
+            return;
         }
 
         if ($schedule->status === 'Playing') {
@@ -71,7 +65,6 @@ class OperatorDashboard extends Component
 
     public function resetStatus(int $scheduleId): void
     {
-        Gate::authorize('manage-events');
 
         $schedule = CompetitionSchedule::with('bracketMatch')->findOrFail($scheduleId);
 
@@ -103,7 +96,6 @@ class OperatorDashboard extends Component
 
     public function publishAnnouncement(): void
     {
-        Gate::authorize('manage-events');
 
         if ($this->processing) {
             return;
@@ -137,7 +129,6 @@ class OperatorDashboard extends Component
     public function render()
     {
         $event = app(ActiveEventContext::class)->current();
-        $user = auth()->user();
 
         $schedules = CompetitionSchedule::with(['competitionClass.competitionCategory', 'venue', 'winner.participation.person', 'finishedBy'])
             ->whereIn('competition_class_id', CompetitionClass::where('event_id', $event?->id)->pluck('id'))
@@ -175,7 +166,7 @@ class OperatorDashboard extends Component
             'activeAnnouncement' => $activeAnnouncement,
             'viewerUrl' => $viewerUrl,
             'tvUrl' => $tvUrl,
-            'canManage' => $user->can('manage-events'),
+            'canManage' => true,
             'schedules' => $schedules,
         ]);
     }

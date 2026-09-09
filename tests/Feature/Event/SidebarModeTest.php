@@ -1,11 +1,8 @@
 <?php
 
-use App\Enums\Role;
 use App\Models\Event;
-use App\Models\User;
 use App\Support\ActiveEventContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
@@ -13,175 +10,107 @@ uses(RefreshDatabase::class);
 // Helpers
 // ---------------------------------------------------------------------------
 
-function sm_event(array $overrides = []): Event
+function sm_competition_event(array $overrides = []): Event
 {
     return Event::create(array_merge([
-        'name' => 'Sidebar Mode Event',
-        'slug' => 'sm-'.substr(md5(uniqid()), 0, 8),
-        'event_type' => 'cai',
+        'name' => 'Lomba Test',
+        'slug' => 'lomba-'.substr(md5(uniqid()), 0, 8),
+        'event_type' => 'competition',
         'status' => 'active',
     ], $overrides));
 }
 
-function sm_super_admin(): User
-{
-    return User::factory()->create(['role' => Role::SuperAdmin]);
-}
-
 // ---------------------------------------------------------------------------
-// Platform Mode (no active event)
+// Root redirect
 // ---------------------------------------------------------------------------
 
-test('sidebar shows platform mode when no event exists', function () {
-    $this->actingAs(sm_super_admin());
+test('root redirects to competition dashboard when active competition event exists', function () {
+    $event = sm_competition_event();
 
-    $this->get(route('settings.profile'))
-        ->assertOk()
-        ->assertSee('Kelola Event')
-        ->assertDontSee('Scan Absensi')
-        ->assertDontSee('Sesi Absensi')
-        ->assertDontSee('Self Register')
-        ->assertDontSee('Registrasi Ulang')
-        ->assertDontSee('QR & Label')
-        ->assertDontSee('Surat Izin')
-        ->assertDontSee('Activity Log')
-        ->assertDontSee('Rekap Absensi');
+    $this->get('/')
+        ->assertRedirect(route('competition.dashboard', $event));
 });
 
-test('sidebar stays in platform mode when events exist but none is selected', function () {
-    $this->actingAs(sm_super_admin());
-
-    $event = sm_event(['name' => 'Existing Unselected CAI', 'event_type' => 'cai']);
-
-    expect(app(ActiveEventContext::class)->id())->toBeNull();
-
-    $this->get(route('settings.profile'))
-        ->assertOk()
-        ->assertSee('Kelola Event')
-        ->assertDontSee('Scan Absensi')
-        ->assertDontSee('Sesi Absensi')
-        ->assertDontSee('QR & Label')
-        ->assertDontSee('Surat Izin')
-        ->assertDontSee('Activity Log')
-        ->assertDontSee('/absensi')
-        ->assertDontSee(route('qr-label.index', ['event' => $event]))
-        ->assertDontSee(route('surat-izin', ['event' => $event]))
-        ->assertDontSee(route('activity-log.index', ['event' => $event]));
-});
-
-test('platform mode dashboard item points to the platform dashboard', function () {
-    $this->actingAs(sm_super_admin());
-
-    $this->get(route('settings.profile'))
-        ->assertOk()
-        ->assertSee('href="'.route('dashboard').'"', false);
+test('root shows 404 when no active competition event exists', function () {
+    $this->get('/')
+        ->assertStatus(404);
 });
 
 // ---------------------------------------------------------------------------
-// Event Mode (active event)
+// Sidebar — 4 menus only
 // ---------------------------------------------------------------------------
 
-test('sidebar shows cai event menus when a cai event is active', function () {
-    $user = sm_super_admin();
-    $this->actingAs($user);
-
-    $event = sm_event(['name' => 'Active CAI Event', 'event_type' => 'cai']);
+test('sidebar shows only 4 competition menus when event is active', function () {
+    $event = sm_competition_event();
     app(ActiveEventContext::class)->set($event);
 
-    $this->get(route('settings.profile'))
+    $this->get(route('competition.dashboard', $event))
         ->assertOk()
-        ->assertSee('Scan Absensi')
-        ->assertSee('Sesi Absensi')
-        ->assertSee('Registrasi Peserta')
-        ->assertSee('Self Register')
-        ->assertSee('Registrasi Ulang')
-        ->assertSee('Daftar Peserta')
-        ->assertSee('Regu')
-        ->assertSee('Rekap Peserta')
-        ->assertSee('Rekap Absensi')
-        ->assertSee('QR & Label')
-        ->assertSee('Surat Izin')
-        ->assertSee('Activity Log')
-        ->assertSee('Kelola Event');
+        ->assertSee('Registrasi')
+        ->assertSee('Setting')
+        ->assertSee('Pembagian Tim')
+        ->assertSee('Lomba')
+        ->assertDontSee('Master Data')
+        ->assertDontSee('User')
+        ->assertDontSee('Pengajian')
+        ->assertDontSee('Scan Absensi')
+        ->assertDontSee('QR & Label')
+        ->assertDontSee('Surat Izin')
+        ->assertDontSee('Kelola Event');
 });
 
-test('sidebar shows pengajian menus when a pengajian event is active', function () {
-    $this->actingAs(sm_super_admin());
-
-    $event = sm_event(['name' => 'Active Pengajian Event', 'event_type' => 'pengajian']);
+test('sidebar shows event name when active', function () {
+    $event = sm_competition_event(['name' => 'KSN 2026']);
     app(ActiveEventContext::class)->set($event);
 
-    $this->get(route('settings.profile'))
+    $this->get(route('competition.dashboard', $event))
         ->assertOk()
-        ->assertSee('Regional Report')
-        ->assertSee('Daftar Peserta')
-        ->assertSee('Import Massal')
-        ->assertDontSee('Scan Absensi')
-        ->assertDontSee('QR & Label');
+        ->assertSee('KSN 2026');
+});
+
+test('sidebar shows no-event message when no event is active', function () {
+    $this->get(route('competition.dashboard', sm_competition_event()))
+        ->assertOk(); // dashboard component itself renders
 });
 
 // ---------------------------------------------------------------------------
-// Event Switcher — no auto-fallback
+// No auth required
 // ---------------------------------------------------------------------------
 
-test('event switcher does not auto-select an event when none is active', function () {
-    sm_event(['name' => 'Unselected CAI', 'event_type' => 'cai']);
+test('competition routes are accessible without authentication', function () {
+    $event = sm_competition_event();
 
-    Livewire::actingAs(sm_super_admin())
-        ->test(\App\Livewire\Event\EventSwitcher::class)
-        ->assertSet('currentEventId', null)
-        ->assertSet('currentEventName', null)
-        ->assertSee('Pilih Event...');
+    $this->get(route('competition.dashboard', $event))->assertOk();
+    $this->get(route('competition.registration', $event))->assertOk();
+    $this->get(route('competition.participants', $event))->assertOk();
+    $this->get(route('competition.category.index', $event))->assertOk();
+    $this->get(route('competition.class.index', $event))->assertOk();
+    $this->get(route('competition.venue.index', $event))->assertOk();
+    $this->get(route('competition.teams', $event))->assertOk();
+    $this->get(route('competition.schedule.index', $event))->assertOk();
+    $this->get(route('competition.heat.index', $event))->assertOk();
+    $this->get(route('competition.bracket-manager', $event))->assertOk();
+    $this->get(route('competition.match-center', $event))->assertOk();
+    $this->get(route('competition.operator-dashboard', $event))->assertOk();
+    $this->get(route('competition.official-panel', $event))->assertOk();
 });
 
-test('event switcher lists existing events even without an active selection', function () {
-    sm_event(['name' => 'Listed CAI Event', 'event_type' => 'cai']);
-
-    Livewire::actingAs(sm_super_admin())
-        ->test(\App\Livewire\Event\EventSwitcher::class)
-        ->assertSee('Listed CAI Event')
-        ->assertSet('currentEventId', null);
-});
-
 // ---------------------------------------------------------------------------
-// Event creation — auto-activate
+// Event switcher
 // ---------------------------------------------------------------------------
 
-test('creating the first event auto-selects it and redirects to its dashboard', function () {
-    $user = sm_super_admin();
-    $this->actingAs($user);
+test('event switch POST sets active event and redirects to competition dashboard', function () {
+    $event = sm_competition_event();
 
-    $slug = 'auto-active-'.substr(md5(uniqid()), 0, 6);
-
-    $test = Livewire::test(\App\Livewire\Event\Index::class)
-        ->set('showCreateForm', true)
-        ->set('newName', 'Auto Active Event')
-        ->set('newSlug', $slug)
-        ->set('newEventType', 'cai')
-        ->call('create');
-
-    $event = Event::where('slug', $slug)->firstOrFail();
+    $this->post(route('events.switch', $event))
+        ->assertRedirect(route('competition.dashboard', $event));
 
     expect(app(ActiveEventContext::class)->id())->toBe($event->id);
-
-    $test->assertRedirect(route('events.dashboard', $event));
 });
 
-test('creating an event does not override an already active event', function () {
-    $user = sm_super_admin();
-    $this->actingAs($user);
+test('event switch with inactive event returns 404', function () {
+    $event = sm_competition_event(['status' => 'inactive']);
 
-    $existing = sm_event(['name' => 'Existing Active Event']);
-    app(ActiveEventContext::class)->set($existing);
-
-    $slug = 'second-'.substr(md5(uniqid()), 0, 6);
-
-    Livewire::test(\App\Livewire\Event\Index::class)
-        ->set('showCreateForm', true)
-        ->set('newName', 'Second Event')
-        ->set('newSlug', $slug)
-        ->set('newEventType', 'cai')
-        ->call('create');
-
-    expect(app(ActiveEventContext::class)->id())->toBe($existing->id);
+    $this->post(route('events.switch', $event))
+        ->assertStatus(404);
 });

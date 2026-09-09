@@ -1,6 +1,6 @@
 <div class="space-y-6">
     <div class="text-sm text-zinc-500 dark:text-zinc-400">
-        <a href="{{ route('dashboard') }}" wire:navigate class="hover:text-zinc-700 dark:hover:text-zinc-300">Dashboard</a>
+        <a href="{{ route('competition.dashboard', app(\App\Support\ActiveEventContext::class)->current()) }}" wire:navigate class="hover:text-zinc-700 dark:hover:text-zinc-300">Dashboard</a>
         <span class="mx-1">/</span>
         <span class="text-zinc-800 dark:text-zinc-200 font-medium">Registrasi Competition</span>
     </div>
@@ -52,6 +52,10 @@
                         <p class="text-xs font-medium uppercase tracking-wide text-blue-600 dark:text-blue-400">Person Terpilih</p>
                         <p class="mt-1 font-semibold text-zinc-900 dark:text-white">{{ $nama }}</p>
                         <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                            @if ($kelas)
+                                <span class="inline-block rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ $kelas }}</span>
+                                &middot;
+                            @endif
                             {{ $jenisKelamin === 'L' ? 'Laki - Laki' : 'Perempuan' }}
                             @if ($tanggalLahir) &middot; {{ \Carbon\Carbon::parse($tanggalLahir)->format('d/m/Y') }} @endif
                             &middot; {{ \App\Models\desa::find($desaId)?->desa_asal ?? '-' }}
@@ -86,6 +90,12 @@
             @if ($alreadyRegistered)
                 <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
                     Peserta sudah terdaftar di kelas ini. Pilih kelas lain.
+                </div>
+            @endif
+
+            @if ($conflictMessage)
+                <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+                    {{ $conflictMessage }}
                 </div>
             @endif
 

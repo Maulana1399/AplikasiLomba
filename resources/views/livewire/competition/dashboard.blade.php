@@ -7,7 +7,7 @@
     </div>
 
     {{-- Konten Competition via partial bersama --}}
-    @include('livewire.event.dashboard.competition', [
+    @include('livewire.competition.dashboard.competition', [
         'overview'            => $overview,
         'liveMatches'         => $liveMatches,
         'todaySchedules'      => $todaySchedules,

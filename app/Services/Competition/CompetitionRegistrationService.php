@@ -9,16 +9,12 @@ use App\Models\Event;
 use App\Models\Participation;
 use App\Models\Person;
 use App\Services\Placement\PlacementService;
-use App\Services\Registration\RegistrationService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CompetitionRegistrationService
 {
-    public function __construct(
-        private readonly RegistrationService $registrationService,
-    ) {}
-
     public function register(
         string $nama,
         string $jenisKelamin,
@@ -83,19 +79,12 @@ class CompetitionRegistrationService
                 ]);
             }
 
-            // 2. Kelas validation: if Person has kelas, it must match CompetitionClass.name
-            if ($person->kelas !== null && $person->kelas !== $class->name) {
-                throw ValidationException::withMessages([
-                    'competitionClassId' => "Kelas peserta ({$person->kelas}) tidak sesuai dengan kelas lomba ({$class->name}).",
-                ]);
-            }
-
             $existingParticipation = Participation::where('person_id', $person->id)
                 ->where('event_id', $event->id)
                 ->first();
 
             if ($existingParticipation) {
-                // 3. Duplicate registration check
+                // 2. Duplicate registration check
                 $existingReg = CompetitionRegistration::where('participation_id', $existingParticipation->id)
                     ->where('competition_class_id', $class->id)
                     ->first();
@@ -106,7 +95,7 @@ class CompetitionRegistrationService
                     ]);
                 }
 
-                // 4. Conflict/exclusivity check (bidirectional)
+                // 3. Conflict/exclusivity check (bidirectional)
                 $conflictCategoryIds = $category->allExclusiveCategoryIds();
 
                 if (! empty($conflictCategoryIds)) {
@@ -145,7 +134,7 @@ class CompetitionRegistrationService
     private function createParticipation(Person $person, Event $event, string $jenisKelamin): Participation
     {
         $participantNumber = PlacementService::generateParticipantNumber($event->id, $jenisKelamin);
-        $attendanceCode = $this->registrationService->generateAttendanceCode();
+        $attendanceCode = $this->generateAttendanceCode();
 
         return Participation::create([
             'person_id' => $person->id,
@@ -154,6 +143,15 @@ class CompetitionRegistrationService
             'attendance_code' => $attendanceCode,
             'jenis_peserta' => 'Peserta',
         ]);
+    }
+
+    public function generateAttendanceCode(): string
+    {
+        do {
+            $code = 'KJA-'.Str::upper(Str::random(8));
+        } while (Participation::where('attendance_code', $code)->exists());
+
+        return $code;
     }
 
     private function createCompetitionRegistration(

@@ -4,27 +4,22 @@ namespace App\Livewire\Competition;
 
 use App\Models\CompetitionCategory;
 use App\Models\CompetitionClass;
+use App\Models\desa;
+use App\Models\kelompok;
+use App\Models\MasterParticipantClass;
 use App\Models\Participation;
 use App\Models\Person;
 use App\Services\Competition\CompetitionRegistrationService;
 use App\Support\ActiveEventContext;
 use Illuminate\Support\Facades\Gate;
-use Livewire\Attributes\On;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class Registration extends Component
 {
-    public bool $stepSearch = true;
-
-    public bool $stepRegister = false;
-
-    public bool $stepSuccess = false;
-
-    public ?int $selectedPersonId = null;
-
     public string $nama = '';
 
-    public string $kelas = '';
+    public string $participantClassId = '';
 
     public string $jenisKelamin = '';
 
@@ -53,40 +48,20 @@ class Registration extends Component
         app(ActiveEventContext::class)->requireCurrent();
     }
 
-    #[On('personSelected')]
-    public function onPersonSelected(int $personId): void
+    public function findPerson(): ?Person
     {
-        $person = Person::with(['desa', 'kelompok'])->findOrFail($personId);
+        if (blank($this->nama) || blank($this->desaId)) {
+            return null;
+        }
 
-        $this->selectedPersonId = $person->id;
-        $this->nama = $person->nama;
-        $this->kelas = $person->kelas ?? '';
-        $this->jenisKelamin = $person->jenis_kelamin;
-        $this->tanggalLahir = $person->tanggal_lahir?->format('Y-m-d') ?? '';
-        $this->desaId = (string) ($person->desa_id ?? '');
-        $this->kelompokId = (string) ($person->kelompok_id ?? '');
-
-        $this->loadParticipations();
-        $this->checkDuplicate();
-        $this->checkConflict();
-        $this->stepSearch = false;
-        $this->stepRegister = true;
+        return Person::where('nama', trim($this->nama))
+            ->where('desa_id', $this->desaId)
+            ->first();
     }
 
-    #[On('personSelectionCleared')]
-    public function onPersonSelectionCleared(): void
+    public function loadParticipations(?Person $person): void
     {
-        $this->resetSelection();
-        $this->stepSearch = true;
-        $this->stepRegister = false;
-    }
-
-    #[On('personCreated')]
-    public function onPersonCreated(): void {}
-
-    public function loadParticipations(): void
-    {
-        if (! $this->selectedPersonId) {
+        if (! $person) {
             $this->personParticipations = null;
 
             return;
@@ -94,7 +69,7 @@ class Registration extends Component
 
         $event = app(ActiveEventContext::class)->current();
 
-        $participations = Participation::where('person_id', $this->selectedPersonId)
+        $participations = Participation::where('person_id', $person->id)
             ->where('event_id', $event?->id)
             ->pluck('id');
 
@@ -110,16 +85,16 @@ class Registration extends Component
         ])->toArray();
     }
 
-    public function checkDuplicate(): void
+    public function checkDuplicate(?Person $person): void
     {
         $this->alreadyRegistered = false;
 
-        if (! $this->selectedPersonId || ! $this->competitionClassId) {
+        if (! $person || blank($this->competitionClassId)) {
             return;
         }
 
         $event = app(ActiveEventContext::class)->current();
-        $participation = Participation::where('person_id', $this->selectedPersonId)
+        $participation = Participation::where('person_id', $person->id)
             ->where('event_id', $event?->id)
             ->first();
 
@@ -131,11 +106,11 @@ class Registration extends Component
         }
     }
 
-    public function checkConflict(): void
+    public function checkConflict(?Person $person): void
     {
         $this->conflictMessage = '';
 
-        if (! $this->selectedPersonId || ! $this->competitionCategoryId) {
+        if (! $person || blank($this->competitionCategoryId)) {
             return;
         }
 
@@ -150,7 +125,7 @@ class Registration extends Component
         }
 
         $event = app(ActiveEventContext::class)->current();
-        $participation = Participation::where('person_id', $this->selectedPersonId)
+        $participation = Participation::where('person_id', $person->id)
             ->where('event_id', $event?->id)
             ->first();
 
@@ -158,7 +133,7 @@ class Registration extends Component
             return;
         }
 
-        $conflictNames = CompetitionRegistration::where('participation_id', $participation->id)
+        $conflictNames = \App\Models\CompetitionRegistration::where('participation_id', $participation->id)
             ->whereIn('competition_category_id', $conflictCategoryIds)
             ->with('competitionCategory')
             ->get()
@@ -170,15 +145,34 @@ class Registration extends Component
         }
     }
 
+    public function refreshPersonState(): void
+    {
+        $person = $this->findPerson();
+        $this->loadParticipations($person);
+        $this->checkDuplicate($person);
+        $this->checkConflict($person);
+    }
+
+    public function updatedNama(): void
+    {
+        $this->refreshPersonState();
+    }
+
+    public function updatedDesaId(): void
+    {
+        $this->kelompokId = '';
+        $this->refreshPersonState();
+    }
+
     public function updatedCompetitionClassId(): void
     {
-        $this->checkDuplicate();
+        $this->checkDuplicate($this->findPerson());
     }
 
     public function updatedCompetitionCategoryId(): void
     {
         $this->competitionClassId = '';
-        $this->checkConflict();
+        $this->checkConflict($this->findPerson());
     }
 
     public function submit(): void
@@ -192,99 +186,120 @@ class Registration extends Component
 
         try {
             $this->validate([
+                'nama' => 'required|string|max:255',
+                'participantClassId' => 'required|exists:master_participant_classes,id',
+                'jenisKelamin' => 'required|in:L,P',
+                'tanggalLahir' => 'nullable|date',
+                'desaId' => 'required|exists:desas,id',
+                'kelompokId' => 'nullable|exists:kelompoks,id',
                 'competitionCategoryId' => 'required|exists:competition_categories,id',
                 'competitionClassId' => 'required|exists:competition_classes,id',
             ]);
 
             $event = app(ActiveEventContext::class)->requireCurrent();
 
-            if ($this->selectedPersonId) {
-                $person = Person::findOrFail($this->selectedPersonId);
-            } else {
-                $this->validate([
-                    'nama' => 'required|string|max:255',
-                    'kelas' => 'required|string|max:50',
-                    'jenisKelamin' => 'required|in:L,P',
-                    'tanggalLahir' => 'nullable|date',
-                    'desaId' => 'required|exists:desas,id',
-                    'kelompokId' => 'nullable|exists:kelompoks,id',
-                ]);
+            $category = CompetitionCategory::where('id', $this->competitionCategoryId)
+                ->where('event_id', $event->id)
+                ->first();
 
-                $person = Person::create([
-                    'nama' => $this->nama,
-                    'kelas' => $this->kelas,
-                    'jenis_kelamin' => $this->jenisKelamin,
-                    'tanggal_lahir' => $this->tanggalLahir ?: null,
-                    'desa_id' => (int) $this->desaId,
-                    'kelompok_id' => $this->kelompokId ? (int) $this->kelompokId : null,
-                ]);
-            }
+            if (! $category) {
+                $this->addError('competitionCategoryId', 'Kategori harus berasal dari event aktif.');
 
-            // Validate person has kelas and it matches the competition class
-            $class = CompetitionClass::findOrFail($this->competitionClassId);
-            if (blank($person->kelas)) {
-                $this->addError('competitionClassId', 'Peserta belum memiliki kelas. Silakan edit data peserta terlebih dahulu.');
                 return;
             }
-            if ($person->kelas !== $class->name) {
-                $this->addError('competitionClassId', "Kelas peserta ({$person->kelas}) tidak sesuai dengan kelas lomba ({$class->name}).");
+
+            $class = CompetitionClass::where('id', $this->competitionClassId)
+                ->where('competition_category_id', $category->id)
+                ->first();
+
+            if (! $class) {
+                $this->addError('competitionClassId', 'Kelas harus berasal dari kategori yang dipilih.');
+
                 return;
             }
+
+            $participantClass = MasterParticipantClass::findOrFail($this->participantClassId);
 
             $service = app(CompetitionRegistrationService::class);
-            $result = $service->registerForPerson(
-                person: $person,
+
+            $result = $service->register(
+                nama: trim($this->nama),
+                jenisKelamin: $this->jenisKelamin,
+                tanggalLahir: $this->tanggalLahir ?: null,
+                desaId: (int) $this->desaId,
                 eventId: $event->id,
                 competitionCategoryId: (int) $this->competitionCategoryId,
                 competitionClassId: (int) $this->competitionClassId,
+                kelompokId: $this->kelompokId !== '' ? (int) $this->kelompokId : null,
+                kelas: $participantClass->name,
             );
 
-            $category = CompetitionCategory::find($this->competitionCategoryId);
-            $class = CompetitionClass::find($this->competitionClassId);
+            $person = $result['person'];
+
+            $this->resetForm();
 
             $this->successData = [
                 'person_name' => $person->nama,
                 'kelas' => $person->kelas ?? '-',
-                'category_name' => $category?->name ?? '-',
-                'class_name' => $class?->name ?? '-',
+                'category_name' => $category->name,
+                'class_name' => $class->name,
                 'participant_number' => $result['participation']->participant_number ?? '-',
-                'status' => $this->selectedPersonId ? 'Participation baru dibuat untuk peserta existing.' : 'Peserta baru dan Participation dibuat.',
+                'status' => $result['status'] === 'registered' ? 'Peserta berhasil didaftarkan ke lomba.' : $result['status'],
             ];
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $field => $messages) {
+                $this->addError($field, $messages[0] ?? '');
+            }
 
-            $this->reset(['competitionCategoryId', 'competitionClassId']);
-            $this->stepRegister = false;
-            $this->stepSuccess = true;
+            if ($e->errors()['nama'] ?? null) {
+                $this->alreadyRegistered = true;
+            }
+
+            if ($e->errors()['competitionCategoryId'] ?? null) {
+                $this->conflictMessage = $e->errors()['competitionCategoryId'][0];
+            }
         } finally {
             $this->processing = false;
         }
     }
 
-    public function resetSelection(): void
+    public function resetForm(): void
     {
         $this->reset([
-            'selectedPersonId', 'nama', 'kelas', 'jenisKelamin', 'tanggalLahir',
+            'nama', 'participantClassId', 'jenisKelamin', 'tanggalLahir',
             'desaId', 'kelompokId', 'competitionCategoryId', 'competitionClassId',
-            'alreadyRegistered', 'conflictMessage', 'personParticipations',
+            'alreadyRegistered', 'conflictMessage', 'personParticipations', 'successData',
         ]);
-    }
-
-    public function resetAll(): void
-    {
-        $this->reset([
-            'selectedPersonId', 'nama', 'kelas', 'jenisKelamin', 'tanggalLahir',
-            'desaId', 'kelompokId', 'competitionCategoryId', 'competitionClassId',
-            'stepSearch', 'stepRegister', 'stepSuccess', 'alreadyRegistered',
-            'conflictMessage', 'successData', 'personParticipations',
-        ]);
-        $this->stepSearch = true;
         $this->resetErrorBag();
     }
 
-    public function goBack(): void
+    public function getParticipantClassesProperty()
     {
-        $this->resetSelection();
-        $this->stepSearch = true;
-        $this->stepRegister = false;
+        return MasterParticipantClass::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function getDesasProperty()
+    {
+        return desa::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('desa_asal')
+            ->get();
+    }
+
+    public function getKelompoksProperty()
+    {
+        if (blank($this->desaId)) {
+            return collect();
+        }
+
+        return kelompok::where('desa_id', $this->desaId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('kelompok_asal')
+            ->get();
     }
 
     public function getCategoriesProperty()
@@ -314,6 +329,9 @@ class Registration extends Component
     public function render()
     {
         return view('livewire.competition.registration', [
+            'participantClasses' => $this->participantClasses,
+            'desas' => $this->desas,
+            'kelompoks' => $this->kelompoks,
             'categories' => $this->categories,
             'classes' => $this->classes,
         ]);

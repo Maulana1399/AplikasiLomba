@@ -434,13 +434,7 @@ test('inactive category and class are not offered in registration', function () 
     app(ActiveEventContext::class)->set($event);
     $user = setting_admin();
 
-    $desa = \App\Models\desa::create(['desa_asal' => 'Desa Registrasi']);
-    $person = \App\Models\Person::create([
-        'nama' => 'Peserta Registrasi',
-        'kelas' => 'SD7',
-        'jenis_kelamin' => 'L',
-        'desa_id' => $desa->id,
-    ]);
+    \App\Models\desa::create(['desa_asal' => 'Desa Registrasi']);
 
     $activeCat = setting_category($event, ['name' => 'Kategori Aktif Reg', 'is_active' => true]);
     setting_category($event, ['name' => 'Kategori Nonaktif Reg', 'is_active' => false]);
@@ -449,7 +443,6 @@ test('inactive category and class are not offered in registration', function () 
 
     Livewire::actingAs($user)
         ->test(Registration::class)
-        ->call('onPersonSelected', $person->id)
         ->assertSee('Kategori Aktif Reg')
         ->assertDontSee('Kategori Nonaktif Reg')
         ->set('competitionCategoryId', (string) $activeCat->id)

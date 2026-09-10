@@ -45,6 +45,16 @@ Route::prefix('competition')->middleware(['ensure.active-competition'])->group(f
     Route::get('classes', App\Livewire\Competition\Class\Index::class)
         ->name('competition.class.index');
 
+    // 2b. Setting → Pilihan Dropdown (master data for registrasi dropdowns)
+    Route::get('participant-classes', App\Livewire\Competition\ParticipantClass\Index::class)
+        ->name('competition.participant-class.index');
+
+    Route::get('desa', App\Livewire\Competition\Desa\Index::class)
+        ->name('competition.desa.index');
+
+    Route::get('kelompok', App\Livewire\Competition\Kelompok\Index::class)
+        ->name('competition.kelompok.index');
+
     // 3. Pembagian Tim
     Route::get('teams', App\Livewire\Competition\Team\Index::class)
         ->name('competition.teams');

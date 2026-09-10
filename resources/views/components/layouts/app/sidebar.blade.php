@@ -30,6 +30,12 @@
                     <flux:navlist.group expandable heading="Setting" class="grid">
                         <flux:navlist.item icon="cog-6-tooth" :href="route('competition.category.index', absolute: false)" :current="request()->routeIs('competition.category.index')" wire:navigate>{{ __('Kategori') }}</flux:navlist.item>
                         <flux:navlist.item :href="route('competition.class.index', absolute: false)" :current="request()->routeIs('competition.class.index')" wire:navigate>{{ __('Kelas') }}</flux:navlist.item>
+
+                        <flux:navlist.group expandable heading="{{ __('Pilihan Dropdown') }}" class="grid">
+                            <flux:navlist.item :href="route('competition.participant-class.index', absolute: false)" :current="request()->routeIs('competition.participant-class.index')" wire:navigate>{{ __('Kelas Peserta') }}</flux:navlist.item>
+                            <flux:navlist.item :href="route('competition.desa.index', absolute: false)" :current="request()->routeIs('competition.desa.index')" wire:navigate>{{ __('Desa') }}</flux:navlist.item>
+                            <flux:navlist.item :href="route('competition.kelompok.index', absolute: false)" :current="request()->routeIs('competition.kelompok.index')" wire:navigate>{{ __('Kelompok') }}</flux:navlist.item>
+                        </flux:navlist.group>
                     </flux:navlist.group>
 
                     {{-- 3. Pembagian Tim --}}

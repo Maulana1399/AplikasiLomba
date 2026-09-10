@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             DesaSeeder::class,
             KelompokSeeder::class,
+            MasterParticipantClassSeeder::class,
         ]);
     }
 }

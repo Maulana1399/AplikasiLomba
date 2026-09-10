@@ -66,10 +66,10 @@ function makeClass(Event $event, CompetitionCategory $category, array $overrides
 }
 
 // ---------------------------------------------------------------------------
-// Person.kelas validation
+// Person.kelas is participant-class master data (independent of CompetitionClass)
 // ---------------------------------------------------------------------------
 
-test('person kelas must match competition class name to register', function () {
+test('person registers successfully when kelas matches', function () {
     $event = makeEvent();
     $category = makeCategory($event);
     $class = makeClass($event, $category, ['name' => 'SD2']);
@@ -83,7 +83,7 @@ test('person kelas must match competition class name to register', function () {
     expect(Participation::where('person_id', $person->id)->exists())->toBeTrue();
 });
 
-test('person kelas mismatch blocks registration', function () {
+test('person kelas mismatch does not block registration (participant class is independent)', function () {
     $event = makeEvent();
     $category = makeCategory($event);
     $class = makeClass($event, $category, ['name' => 'SMP1']);
@@ -91,8 +91,11 @@ test('person kelas mismatch blocks registration', function () {
 
     $service = app(CompetitionRegistrationService::class);
 
-    $service->registerForPerson($person, $event->id, $category->id, $class->id);
-})->throws(\Illuminate\Validation\ValidationException::class, 'Kelas peserta (SD2) tidak sesuai dengan kelas lomba (SMP1).');
+    $result = $service->registerForPerson($person, $event->id, $category->id, $class->id);
+
+    expect($result['status'])->toBe('registered');
+    expect(Participation::where('person_id', $person->id)->exists())->toBeTrue();
+});
 
 test('person with null kelas can register at service level (backward-compatible)', function () {
     $event = makeEvent();

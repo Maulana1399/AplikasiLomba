@@ -90,6 +90,6 @@ class CompetitionDashboardPresenter implements DashboardPresenterContract
 
     public function view(): string
     {
-        return 'livewire.event.dashboard.competition';
+        return 'livewire.competition.dashboard.competition';
     }
 }

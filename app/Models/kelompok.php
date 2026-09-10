@@ -9,7 +9,16 @@ class kelompok extends Model
     protected $fillable = [
         'kelompok_asal',
         'desa_id',
+        'is_active',
+        'sort_order',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function peserta()
     {

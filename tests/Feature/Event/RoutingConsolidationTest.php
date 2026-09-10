@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Support\ActiveEventContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 uses(RefreshDatabase::class);
 
@@ -32,72 +33,20 @@ function rc_super_admin(): User
 }
 
 // ---------------------------------------------------------------------------
-// 1. resolve.active-event middleware
+// 1. Active-event middleware
 // ---------------------------------------------------------------------------
 
-test('resolve.active-event middleware sets the active event from the URL', function () {
+test('the legacy resolve.active-event middleware and events.dashboard route no longer exist', function () {
     $event = rc_event();
-    $this->actingAs(rc_super_admin());
 
-    app(ActiveEventContext::class)->clear();
-
-    $this->get(route('events.dashboard', $event))->assertOk();
-
-    expect(app(ActiveEventContext::class)->id())->toBe($event->id);
+    expect(fn () => route('events.dashboard', $event))->toThrow(RouteNotFoundException::class);
 });
 
-test('resolve.active-event middleware overrides a stale session event before authorization', function () {
-    $eventA = rc_event();
-    $eventB = rc_event();
-    $user = User::factory()->create(['role' => null]);
-    grantEventRoleToUser($user, $eventB, 'viewer');
-
-    app(ActiveEventContext::class)->set($eventA);
-
-    $this->actingAs($user);
-    $this->get(route('events.dashboard', $eventB))->assertOk();
-
-    expect(app(ActiveEventContext::class)->id())->toBe($eventB->id);
-});
-
-test('a stale session event does not leak access to another event', function () {
-    $eventA = rc_event();
-    $eventB = rc_event();
-    $user = User::factory()->create(['role' => null]);
-    grantEventRoleToUser($user, $eventA, 'viewer');
-
-    $this->actingAs($user);
-    $this->get(route('events.dashboard', $eventB))->assertForbidden();
-
-    expect(app(ActiveEventContext::class)->id())->toBe($eventB->id);
-});
-
-test('gate view-dashboard evaluates the URL event instead of a stale session', function () {
-    $eventA = rc_event();
-    $eventB = rc_event();
-    $user = User::factory()->create(['role' => null]);
-    grantEventRoleToUser($user, $eventA, 'viewer');
-
-    $this->actingAs($user);
-    $this->get(route('events.dashboard', $eventB))->assertForbidden();
-});
-
-test('deep link to /events/{event}/dashboard works without a prior session', function () {
-    $event = rc_event();
-    $this->actingAs(rc_super_admin());
-
-    expect(app(ActiveEventContext::class)->id())->toBeNull();
-
-    $this->get(route('events.dashboard', $event))->assertOk();
-
-    expect(app(ActiveEventContext::class)->id())->toBe($event->id);
-});
-
-test('resolve.active-event middleware works for competition dashboard deep link', function () {
+test('ensure.active-competition middleware works for competition dashboard deep link', function () {
     $event = rc_event(['event_type' => 'competition']);
     $this->actingAs(rc_super_admin());
 
-    $this->get(route('competition.dashboard', $event))->assertOk();
+    $this->get(route('competition.dashboard'))->assertOk();
 
     expect(app(ActiveEventContext::class)->id())->toBe($event->id);
 });
@@ -106,106 +55,80 @@ test('resolve.active-event middleware works for competition dashboard deep link'
 // 2. Dashboard route resolver
 // ---------------------------------------------------------------------------
 
-test('dashboardRoute returns events.dashboard for CAI events', function () {
+test('dashboardRoute no longer resolves for removed CAI events dashboard', function () {
     $event = rc_event(['event_type' => 'cai']);
 
-    expect($event->dashboardRoute())->toBe(route('events.dashboard', $event, absolute: false));
+    expect(fn () => $event->dashboardRoute())->toThrow(RouteNotFoundException::class);
 });
 
 test('dashboardRoute returns competition.dashboard for competition events', function () {
     $event = rc_event(['event_type' => 'competition']);
 
-    expect($event->dashboardRoute())->toBe(route('competition.dashboard', $event, absolute: false));
+    expect($event->dashboardRoute())->toBe(route('competition.dashboard', absolute: false));
 });
 
-test('dashboardRoute returns pengajian.report for pengajian events', function () {
+test('dashboardRoute no longer resolves for removed pengajian events dashboard', function () {
     $event = rc_event(['event_type' => 'pengajian']);
 
-    expect($event->dashboardRoute())->toBe(route('pengajian.report', ['event' => $event], absolute: false));
+    expect(fn () => $event->dashboardRoute())->toThrow(RouteNotFoundException::class);
 });
 
-test('competition and pengajian routes are consolidated under events event prefix', function () {
+test('competition routes are consolidated under a clean competition prefix without event ids', function () {
     $content = file_get_contents(base_path('routes/web.php'));
 
-    expect($content)->toContain('events/{event}/competition')
-        ->and($content)->toContain('events/{event}/pengajian');
+    expect($content)->toContain("Route::prefix('competition')")
+        ->and($content)->not->toContain("/competition/{event}")
+        ->and($content)->not->toContain("events.switch");
 });
 
-test('competition routes generate event-prefixed urls', function () {
+test('competition routes generate event-free urls', function () {
     $event = rc_event(['event_type' => 'competition']);
 
-    expect(route('competition.dashboard', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/competition')
-        ->and(route('competition.registration', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/competition/registration')
-        ->and(route('competition.participants', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/competition/participants')
-        ->and(route('competition.schedule.index', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/competition/schedules')
-        ->and(route('competition.report.summary', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/competition/reports/summary')
-        ->and(route('competition.viewer', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/competition/viewer');
+    expect(route('competition.dashboard', absolute: false))
+        ->toBe('/competition/dashboard')
+        ->and(route('competition.registration', absolute: false))
+        ->toBe('/competition/registration')
+        ->and(route('competition.participants', absolute: false))
+        ->toBe('/competition/participants')
+        ->and(route('competition.heat.index', absolute: false))
+        ->toBe('/competition/heat')
+        ->and(route('competition.match-center', absolute: false))
+        ->toBe('/competition/match-center')
+        ->and(route('competition.viewer', absolute: false))
+        ->toBe('/competition/viewer');
 });
 
-test('pengajian routes generate event-prefixed urls except public hadir', function () {
-    $event = rc_event(['event_type' => 'pengajian']);
-
-    expect(route('pengajian.report', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/pengajian/report')
-        ->and(route('pengajian.admin.access', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/pengajian/admin/access')
-        ->and(route('pengajian.enter-token', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/pengajian')
-        ->and(route('pengajian.desa', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/pengajian/desa')
-        ->and(route('pengajian.hadir', ['nonce' => 'abc-123'], absolute: false))
-        ->toBe('/pengajian/hadir/abc-123');
-});
-
-test('cai legacy module routes generate event-prefixed urls', function () {
+test('legacy pengajian and cai module routes no longer exist', function () {
     $event = rc_event();
 
-    expect(route('absensi', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/absensi')
-        ->and(route('database', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/database')
-        ->and(route('registrasi.peserta', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/registrasi')
-        ->and(route('rekap.peserta', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/rekap-peserta')
-        ->and(route('qr-label.index', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/qr-label')
-        ->and(route('surat-izin', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/surat-izin')
-        ->and(route('activity-log.index', ['event' => $event], absolute: false))
-        ->toBe('/events/'.$event->id.'/activity-log');
+    foreach ([
+        'pengajian.report',
+        'pengajian.admin.access',
+        'pengajian.enter-token',
+        'pengajian.desa',
+        'absensi',
+        'database',
+        'registrasi.peserta',
+        'rekap.peserta',
+        'qr-label.index',
+        'surat-izin',
+        'activity-log.index',
+    ] as $name) {
+        expect(fn () => route($name, ['event' => $event], absolute: false))
+            ->toThrow(RouteNotFoundException::class);
+    }
 });
 
-test('legacy cai root paths redirect to event-scoped routes', function () {
-    $event = rc_event();
-    $this->actingAs(rc_super_admin());
-
-    app(ActiveEventContext::class)->set($event);
-
-    $this->get('/absensi')->assertRedirect('/events/'.$event->id.'/absensi');
-    $this->get('/sesi-absensi')->assertRedirect('/events/'.$event->id.'/sesi-absensi');
-    $this->get('/database')->assertRedirect('/events/'.$event->id.'/database');
-    $this->get('/registrasi')->assertRedirect('/events/'.$event->id.'/registrasi');
-    $this->get('/rekap')->assertRedirect('/events/'.$event->id.'/rekap-peserta');
-    $this->get('/rekap-peserta')->assertRedirect('/events/'.$event->id.'/rekap-peserta');
-    $this->get('/qr-label')->assertRedirect('/events/'.$event->id.'/qr-label');
-    $this->get('/surat-izin')->assertRedirect('/events/'.$event->id.'/surat-izin');
-    $this->get('/activity-log')->assertRedirect('/events/'.$event->id.'/activity-log');
-});
-
-test('legacy cai root paths still require authentication', function () {
-    $this->get('/absensi')->assertRedirect('/login');
-    $this->get('/database')->assertRedirect('/login');
-    $this->get('/registrasi')->assertRedirect('/login');
-    $this->get('/qr-label')->assertRedirect('/login');
-    $this->get('/surat-izin')->assertRedirect('/login');
-    $this->get('/activity-log')->assertRedirect('/login');
+test('legacy cai root paths are gone — root now serves the competition dashboard', function () {
+    $this->get('/absensi')->assertNotFound();
+    $this->get('/sesi-absensi')->assertNotFound();
+    $this->get('/database')->assertNotFound();
+    $this->get('/registrasi')->assertNotFound();
+    $this->get('/rekap')->assertNotFound();
+    $this->get('/rekap-peserta')->assertNotFound();
+    $this->get('/qr-label')->assertNotFound();
+    $this->get('/surat-izin')->assertNotFound();
+    $this->get('/activity-log')->assertNotFound();
 });
 
 // ---------------------------------------------------------------------------

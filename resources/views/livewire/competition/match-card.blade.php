@@ -83,22 +83,22 @@
                     Finish Match
                 </flux:button>
                 @if ($requiresOfficial)
-                    <flux:button :href="route('competition.official-panel', ['event' => app(\App\Support\ActiveEventContext::class)->current(), 'schedule' => $schedule->id], absolute: false)" variant="ghost" class="whitespace-nowrap">
+                    <flux:button :href="route('competition.official-panel', ['schedule' => $schedule->id], absolute: false)" variant="ghost" class="whitespace-nowrap">
                         Buka Official Panel
                     </flux:button>
                 @else
-                    <flux:button :href="route('competition.schedule.outcomes', ['event' => app(\App\Support\ActiveEventContext::class)->current(), 'schedule' => $schedule->id], absolute: false)" variant="ghost" class="whitespace-nowrap">
+                    <flux:button :href="route('competition.schedule.outcomes', ['schedule' => $schedule->id], absolute: false)" variant="ghost" class="whitespace-nowrap">
                         Input Hasil
                     </flux:button>
                 @endif
             @endif
             @if ($schedule->status === 'Waiting Result')
                 @if ($requiresOfficial)
-                    <flux:button :href="route('competition.official-panel', ['event' => app(\App\Support\ActiveEventContext::class)->current(), 'schedule' => $schedule->id], absolute: false)" variant="primary" class="whitespace-nowrap">
+                    <flux:button :href="route('competition.official-panel', ['schedule' => $schedule->id], absolute: false)" variant="primary" class="whitespace-nowrap">
                         Buka Official Panel
                     </flux:button>
                 @else
-                    <flux:button :href="route('competition.schedule.outcomes', ['event' => app(\App\Support\ActiveEventContext::class)->current(), 'schedule' => $schedule->id], absolute: false)" variant="primary" class="whitespace-nowrap">
+                    <flux:button :href="route('competition.schedule.outcomes', ['schedule' => $schedule->id], absolute: false)" variant="primary" class="whitespace-nowrap">
                         Input Hasil
                     </flux:button>
                 @endif
@@ -108,7 +108,7 @@
                     Atur Official
                 </flux:button>
             @endcan
-            <flux:button :href="route('competition.schedule.entries', ['event' => app(\App\Support\ActiveEventContext::class)->current(), 'schedule' => $schedule->id], absolute: false)"
+            <flux:button :href="route('competition.schedule.entries', ['schedule' => $schedule->id], absolute: false)"
                          :variant="$schedule->status === 'Ready' && !$participantsComplete ? 'primary' : 'ghost'"
                          size="sm" class="whitespace-nowrap">
                 Atur Peserta

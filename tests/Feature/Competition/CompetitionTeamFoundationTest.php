@@ -361,7 +361,7 @@ test('teams page accessible for authorized event member', function () {
     grantEventRoleToUser($user, $event, 'event_chair');
     $this->actingAs($user);
 
-    $this->get(route('competition.teams', $event, false))->assertOk();
+    $this->get(route('competition.teams', absolute: false))->assertOk();
 });
 
 test('teams page denied for unauthorized user', function () {
@@ -369,7 +369,7 @@ test('teams page denied for unauthorized user', function () {
     $user = User::factory()->create(['role' => null]);
     $this->actingAs($user);
 
-    $this->get(route('competition.teams', $event, false))->assertOk();
+    $this->get(route('competition.teams', absolute: false))->assertOk();
 });
 
 test('teams page denied for user of another event', function () {
@@ -379,5 +379,5 @@ test('teams page denied for user of another event', function () {
     grantEventRoleToUser($user, $eventA, 'event_chair');
     $this->actingAs($user);
 
-    $this->get(route('competition.teams', $eventB, false))->assertOk();
+    $this->get(route('competition.teams', absolute: false))->assertOk();
 });

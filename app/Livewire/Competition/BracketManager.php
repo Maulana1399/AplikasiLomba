@@ -337,7 +337,7 @@ class BracketManager extends Component
             return [];
         }
 
-        $limit = $bracket->third_place_match ? 4 : 3;
+        $limit = max($bracket->competitionClass?->winner_count ?? 3, $bracket->third_place_match ? 4 : 1);
 
         $service = app(\App\Services\Competition\CompetitionResultService::class);
 

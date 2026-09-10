@@ -73,11 +73,11 @@ services:
     environment:
       APP_ENV: testing
       DB_CONNECTION: sqlite
-      DB_DATABASE: /var/www/match/database/database.sqlite
+      DB_DATABASE: ':memory:'
     volumes:
-      - match-db:/var/www/match/database
+      - ./database/migrations:/var/www/match/database/migrations:ro
       - match-storage:/var/www/match/storage
-      - match-bootstrap-cache:/var/www/match/bootstrap/cache
+      - match-tools-bootstrap-cache:/var/www/match/bootstrap/cache
     networks:
       - match-network
 
@@ -89,3 +89,4 @@ volumes:
   match-db:
   match-storage:
   match-bootstrap-cache:
+  match-tools-bootstrap-cache:

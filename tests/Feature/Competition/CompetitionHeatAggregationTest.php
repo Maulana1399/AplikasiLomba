@@ -497,8 +497,8 @@ test('Match Center Waiting Result heat shows Input Hasil link to OutcomeManager'
 
     \Livewire::test(\App\Livewire\Competition\MatchCenter::class)
         ->assertSee('Input Hasil')
-        ->assertSee(route('competition.schedule.outcomes', ['event' => $event, 'schedule' => $heat->id], false));
+        ->assertSee(route('competition.schedule.outcomes', ['schedule' => $heat->id], false));
 
-    $response = $this->get(route('competition.schedule.outcomes', ['event' => $event, 'schedule' => $heat->id]));
+    $response = $this->get(route('competition.schedule.outcomes', ['schedule' => $heat->id]));
     $response->assertOk();
 });

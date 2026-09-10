@@ -2,21 +2,21 @@
 
 namespace App\Livewire\Competition;
 
-use App\Livewire\Traits\ResolvesEventDashboard;
-use App\Models\Event;
 use App\Services\Dashboard\DashboardPresenterFactory;
 use App\Support\ActiveEventContext;
 use Livewire\Component;
 
 class Dashboard extends Component
 {
-    use ResolvesEventDashboard;
-
     public string $eventName = '';
 
-    public function mount(Event $event): void
+    public function mount(): void
     {
-        $this->resolveEventDashboard($event);
+        $event = app(ActiveEventContext::class)->requireCurrent();
+
+        abort_unless($event->isActive(), 404);
+
+        $this->eventName = $event->name;
     }
 
     public function render(DashboardPresenterFactory $factory)

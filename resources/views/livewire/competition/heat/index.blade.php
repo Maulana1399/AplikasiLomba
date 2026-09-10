@@ -9,7 +9,7 @@
         </div>
         @if ($selected)
             <div class="flex shrink-0 gap-2">
-                <flux:button :href="route('competition.match-center', ['event' => app(\App\Support\ActiveEventContext::class)->current()], absolute: false)" icon="play" variant="ghost">Match Center</flux:button>
+                <flux:button :href="route('competition.match-center', absolute: false)" icon="play" variant="ghost">Match Center</flux:button>
                 <flux:button wire:click="toggleFormatForm" variant="primary" icon="plus">
                     {{ $showFormatForm ? 'Batal' : 'Buat Format' }}
                 </flux:button>
@@ -211,13 +211,10 @@
                                     @endforelse
                                 </ul>
 
-                                @php
-                                    $event = app(\App\Support\ActiveEventContext::class)->current();
-                                @endphp
                                 <div class="mt-auto flex flex-wrap gap-1.5 pt-2">
-                                    <flux:button :href="route('competition.schedule.entries', ['event' => $event, 'schedule' => $card['id']], absolute: false)" size="xs" icon="users" class="flex-1 whitespace-nowrap">Peserta</flux:button>
-                                    <flux:button :href="route('competition.match-center', ['event' => $event], absolute: false)" size="xs" icon="play" variant="primary" class="flex-1 whitespace-nowrap">Match Center</flux:button>
-                                    <flux:button :href="route('competition.schedule.outcomes', ['event' => $event, 'schedule' => $card['id']], absolute: false)" size="xs" icon="clipboard-document-list" class="flex-1 whitespace-nowrap">Input Hasil</flux:button>
+                                    <flux:button :href="route('competition.schedule.entries', ['schedule' => $card['id']], absolute: false)" size="xs" icon="users" class="flex-1 whitespace-nowrap">Peserta</flux:button>
+                                    <flux:button :href="route('competition.match-center', absolute: false)" size="xs" icon="play" variant="primary" class="flex-1 whitespace-nowrap">Match Center</flux:button>
+                                    <flux:button :href="route('competition.schedule.outcomes', ['schedule' => $card['id']], absolute: false)" size="xs" icon="clipboard-document-list" class="flex-1 whitespace-nowrap">Input Hasil</flux:button>
                                 </div>
                             </div>
                         @endforeach

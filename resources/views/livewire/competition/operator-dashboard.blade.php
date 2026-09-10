@@ -1,6 +1,6 @@
 <div class="space-y-6">
     <div class="text-sm text-zinc-500 dark:text-zinc-400">
-        <a href="{{ route('competition.dashboard', app(\App\Support\ActiveEventContext::class)->current()) }}" wire:navigate class="hover:text-zinc-700 dark:hover:text-zinc-300">Dashboard</a>
+        <a href="{{ route('competition.dashboard') }}" wire:navigate class="hover:text-zinc-700 dark:hover:text-zinc-300">Dashboard</a>
         <span class="mx-1">/</span>
         <span class="text-zinc-800 dark:text-zinc-200 font-medium">Operator Dashboard</span>
     </div>
@@ -122,7 +122,7 @@
                             @if ($pc >= $rp)
                                 <flux:button wire:click="advanceStatus({{ $schedule->id }})" size="sm" variant="primary">Mulai</flux:button>
                             @else
-                                <flux:button :href="route('competition.schedule.entries', ['event' => app(\App\Support\ActiveEventContext::class)->current(), 'schedule' => $schedule->id], absolute: false)" size="sm" variant="primary">Atur Peserta</flux:button>
+                                <flux:button :href="route('competition.schedule.entries', ['schedule' => $schedule->id], absolute: false)" size="sm" variant="primary">Atur Peserta</flux:button>
                             @endif
                             <flux:button wire:click="resetStatus({{ $schedule->id }})" size="sm" variant="ghost">Reset</flux:button>
                         </div>
@@ -161,7 +161,7 @@
                             @if ($pc >= $rp)
                                 <flux:button wire:click="advanceStatus({{ $schedule->id }})" size="sm" variant="primary">Siapkan</flux:button>
                             @else
-                                <flux:button :href="route('competition.schedule.entries', ['event' => app(\App\Support\ActiveEventContext::class)->current(), 'schedule' => $schedule->id], absolute: false)" size="sm" variant="primary">Atur Peserta</flux:button>
+                                <flux:button :href="route('competition.schedule.entries', ['schedule' => $schedule->id], absolute: false)" size="sm" variant="primary">Atur Peserta</flux:button>
                             @endif
                             <flux:button wire:click="resetStatus({{ $schedule->id }})" size="sm" variant="ghost">Reset</flux:button>
                         </div>
@@ -197,7 +197,7 @@
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <flux:button :href="route('competition.schedule.outcomes', ['event' => app(\App\Support\ActiveEventContext::class)->current(), 'schedule' => $schedule->id], absolute: false)" size="sm" icon-trailing="clipboard-document-list">
+                                <flux:button :href="route('competition.schedule.outcomes', ['schedule' => $schedule->id], absolute: false)" size="sm" icon-trailing="clipboard-document-list">
                                     {{ $schedule->has_outcome ? 'Lihat Hasil' : 'Input Hasil' }}
                                 </flux:button>
                                 <flux:button wire:click="resetStatus({{ $schedule->id }})" size="sm" variant="ghost">Reset</flux:button>

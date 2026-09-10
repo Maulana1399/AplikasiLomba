@@ -538,17 +538,18 @@ class OutcomeManager extends Component
         $event = app(ActiveEventContext::class)->requireCurrent();
         $service = app(CompetitionResultService::class);
         $format = $this->schedule->competitionClass?->format;
+        $winnerCount = $this->schedule->competitionClass?->winner_count ?? 3;
 
         if ($this->isTeam) {
-            return $service->podiumForTeams($event->id, $this->schedule->competition_class_id);
+            return $service->podiumForTeams($event->id, $this->schedule->competition_class_id, $winnerCount);
         }
 
         // Heat & vs-format (bracket) memakai podium final kelas; mass memakai podium schedule.
         if ($this->isHeat || in_array($format, [CompetitionFormat::INDIVIDUAL_VS_INDIVIDUAL, CompetitionFormat::TEAM_VS_TEAM], true)) {
-            return $service->podiumForClass($event->id, $this->schedule->competition_class_id);
+            return $service->podiumForClass($event->id, $this->schedule->competition_class_id, $winnerCount);
         }
 
-        return $service->podiumForSchedule($event->id, $this->schedule->id);
+        return $service->podiumForSchedule($event->id, $this->schedule->id, $winnerCount);
     }
 
     public function render()

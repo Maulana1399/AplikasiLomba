@@ -77,8 +77,8 @@ class Event extends Model
     {
         return match (true) {
             $this->isPengajian() => route('pengajian.report', ['event' => $this], absolute: false),
-            $this->isCompetition() => route('competition.dashboard', $this, absolute: false),
-            default => route('events.dashboard', $this, absolute: false),
+            $this->isCompetition() => route('competition.dashboard', absolute: false),
+            default => route('events.dashboard', ['event' => $this], absolute: false),
         };
     }
 
@@ -88,17 +88,17 @@ class Event extends Model
             'scan' => $this->isPengajian()
                 ? route('pengajian.report', ['event' => $this], absolute: false)
                 : ($this->isCompetition()
-                    ? route('competition.dashboard', $this, absolute: false)
+                    ? route('competition.dashboard', absolute: false)
                     : route('absensi', ['event' => $this], absolute: false)),
             'registrasi' => $this->isPengajian()
                 ? route('pengajian.admin.manual-entry', ['event' => $this], absolute: false)
                 : ($this->isCompetition()
-                    ? route('competition.registration', ['event' => $this], absolute: false)
+                    ? route('competition.registration', absolute: false)
                     : route('registrasi.peserta', ['event' => $this], absolute: false)),
             'cari' => $this->isPengajian()
                 ? route('pengajian.report', ['event' => $this], absolute: false)
                 : ($this->isCompetition()
-                    ? route('competition.participants', ['event' => $this], absolute: false)
+                    ? route('competition.participants', absolute: false)
                     : route('database', ['event' => $this], absolute: false)),
             default => abort(404),
         };

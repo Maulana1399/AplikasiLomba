@@ -11,10 +11,6 @@
             <div class="text-xs font-medium uppercase tracking-wide text-indigo-600 dark:text-indigo-400">Kelas</div>
             <div class="mt-1 text-2xl font-bold text-indigo-800 dark:text-indigo-200">{{ $overview['classes'] }}</div>
         </div>
-        <div class="rounded-xl border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-950">
-            <div class="text-xs font-medium uppercase tracking-wide text-purple-600 dark:text-purple-400">Arena</div>
-            <div class="mt-1 text-2xl font-bold text-purple-800 dark:text-purple-200">{{ $overview['venues'] }}</div>
-        </div>
         <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950">
             <div class="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">Hari Ini</div>
             <div class="mt-1 text-2xl font-bold text-amber-800 dark:text-amber-200">{{ $overview['today_matches'] }}</div>
@@ -48,7 +44,7 @@
                         @php
                             $participants = $schedule->scheduleEntries->map(fn($e) => $e->competitionRegistration?->participation?->person?->nama)->filter();
                         @endphp
-                        <a href="{{ route('competition.match-center', ['event' => app(\App\Support\ActiveEventContext::class)->current()], absolute: false) }}"
+                        <a href="{{ route('competition.match-center', absolute: false) }}"
                            class="flex items-center justify-between rounded-lg border bg-white p-3 transition hover:shadow dark:bg-zinc-950
                                   {{ $schedule->status === 'Playing' ? 'border-green-300 dark:border-green-700' : '' }}
                                   {{ $schedule->status === 'Waiting Result' ? 'border-yellow-300 dark:border-yellow-700' : '' }}
@@ -78,7 +74,7 @@
     <div>
         <div class="mb-3 flex items-center justify-between">
             <h2 class="text-lg font-bold text-zinc-900 dark:text-white">Jadwal Hari Ini</h2>
-            <a href="{{ route('competition.schedule.index', ['event' => app(\App\Support\ActiveEventContext::class)->current()], absolute: false) }}" class="text-sm text-blue-600 hover:text-blue-800">Lihat Semua</a>
+            <a href="{{ route('competition.match-center', absolute: false) }}" class="text-sm text-blue-600 hover:text-blue-800">Lihat Semua</a>
         </div>
         <div class="space-y-2">
             @foreach ($todaySchedules as $schedule)

@@ -155,8 +155,8 @@ class OperatorDashboard extends Component
             ->latest()
             ->first();
 
-        $viewerUrl = $event ? route('competition.viewer', ['event' => $event->id], true) : null;
-        $tvUrl = $event ? route('competition.viewer', ['event' => $event->id, 'venue' => null, 'display' => 'tv'], true) : null;
+        $viewerUrl = route('competition.viewer', absolute: true);
+        $tvUrl = route('competition.viewer', ['display' => 'tv'], true);
 
         return view('livewire.competition.operator-dashboard', [
             'nowPlaying' => $nowPlaying,

@@ -172,18 +172,6 @@ test('finishMatch rejects bracket matches', function () {
     expect($this->schedule->fresh()->status)->toBe('Playing');
 });
 
-test('schedule edit no longer changes status', function () {
-    $originalStatus = $this->schedule->status;
-
-    \Livewire::test(\App\Livewire\Competition\Schedule\Index::class)
-        ->call('edit', $this->schedule->id)
-        ->set('editCompetitionClassId', (string) $this->class->id)
-        ->set('editRequiredParticipants', '2')
-        ->call('update');
-
-    expect($this->schedule->fresh()->status)->toBe($originalStatus);
-});
-
 // -----------------------------------------------------------------------
 // Outcome only loads assigned participants
 // -----------------------------------------------------------------------

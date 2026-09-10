@@ -106,11 +106,11 @@ class CompetitionResultService
     }
 
     /**
-     * Top 3 (podium) for a schedule, ordered by stored position.
+     * Top-N (podium) for a schedule, ordered by stored position.
      *
      * @return array<int, array{position: int, person_name: string, participant_number: string, score: ?float}>
      */
-    public function podiumForSchedule(int $eventId, int $scheduleId): array
+    public function podiumForSchedule(int $eventId, int $scheduleId, int $limit = 3): array
     {
         $schedule = $this->scheduleInEvent($eventId, $scheduleId);
 
@@ -121,7 +121,7 @@ class CompetitionResultService
             ->whereNotNull('position')
             ->where('position', '>', 0)
             ->orderBy('position')
-            ->take(3)
+            ->take($limit)
             ->get()
             ->map(fn ($outcome) => [
                 'position' => (int) $outcome->position,

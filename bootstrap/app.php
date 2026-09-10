@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'resolve.active-event' => \App\Http\Middleware\ResolveActiveEvent::class,
+            'ensure.active-competition' => \App\Http\Middleware\EnsureCompetitionContext::class,
         ]);
 
         $middleware->trustProxies(at: '*');

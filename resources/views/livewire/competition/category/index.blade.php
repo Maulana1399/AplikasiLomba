@@ -104,4 +104,21 @@
             </tbody>
         </table>
     </div>
+
+    @if ($editId !== null)
+        <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+            <h2 class="mb-1 text-lg font-semibold text-zinc-900 dark:text-white">Kategori Konflik (Exclusive)</h2>
+            <p class="mb-4 text-sm text-zinc-500 dark:text-zinc-400">Tandai kategori yang tidak boleh diikuti peserta secara bersamaan. Berlaku dua arah otomatis.</p>
+            <div class="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+                @forelse ($candidateCategories as $candidate)
+                    <flux:checkbox wire:model="editExclusiveIds" :value="$candidate->id">
+                        {{ $candidate->name }}
+                    </flux:checkbox>
+                @empty
+                    <p class="text-sm text-zinc-500">Belum ada kategori lain dalam event ini.</p>
+                @endforelse
+            </div>
+            @error('editExclusiveIds') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+        </div>
+    @endif
 </div>

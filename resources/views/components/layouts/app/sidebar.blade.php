@@ -22,36 +22,33 @@
                 <flux:navlist variant="outline">
                     {{-- 1. Registrasi --}}
                     <flux:navlist.group expandable heading="Registrasi" class="grid">
-                        <flux:navlist.item icon="user-plus" :href="route('competition.registration', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.registration')" wire:navigate>{{ __('Registrasi Peserta') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.participants', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.participants')" wire:navigate>{{ __('Daftar Peserta') }}</flux:navlist.item>
+                        <flux:navlist.item icon="user-plus" :href="route('competition.registration', absolute: false)" :current="request()->routeIs('competition.registration')" wire:navigate>{{ __('Registrasi Peserta') }}</flux:navlist.item>
+                        <flux:navlist.item :href="route('competition.participants', absolute: false)" :current="request()->routeIs('competition.participants')" wire:navigate>{{ __('Daftar Peserta') }}</flux:navlist.item>
                     </flux:navlist.group>
 
                     {{-- 2. Setting --}}
                     <flux:navlist.group expandable heading="Setting" class="grid">
-                        <flux:navlist.item icon="cog-6-tooth" :href="route('competition.category.index', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.category.index')" wire:navigate>{{ __('Kategori') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.class.index', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.class.index')" wire:navigate>{{ __('Kelas') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.venue.index', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.venue.index')" wire:navigate>{{ __('Venue') }}</flux:navlist.item>
+                        <flux:navlist.item icon="cog-6-tooth" :href="route('competition.category.index', absolute: false)" :current="request()->routeIs('competition.category.index')" wire:navigate>{{ __('Kategori') }}</flux:navlist.item>
+                        <flux:navlist.item :href="route('competition.class.index', absolute: false)" :current="request()->routeIs('competition.class.index')" wire:navigate>{{ __('Kelas') }}</flux:navlist.item>
                     </flux:navlist.group>
 
                     {{-- 3. Pembagian Tim --}}
                     <flux:navlist.group expandable heading="Pembagian Tim" class="grid">
-                        <flux:navlist.item icon="users" :href="route('competition.teams', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.teams')" wire:navigate>{{ __('Tim') }}</flux:navlist.item>
+                        <flux:navlist.item icon="users" :href="route('competition.teams', absolute: false)" :current="request()->routeIs('competition.teams')" wire:navigate>{{ __('Tim') }}</flux:navlist.item>
                     </flux:navlist.group>
 
                     {{-- 4. Lomba --}}
                     <flux:navlist.group expandable heading="Lomba" class="grid">
-                        <flux:navlist.item icon="calendar" :href="route('competition.schedule.index', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.schedule.index')" wire:navigate>{{ __('Jadwal') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.heat.index', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.heat.index')" wire:navigate>{{ __('Heat') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.bracket-manager', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.bracket-manager')" wire:navigate>{{ __('Bracket') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.match-center', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.match-center')" wire:navigate>{{ __('Match Center') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.operator-dashboard', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.operator-dashboard')" wire:navigate>{{ __('Operator') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.official-panel', ['event' => $activeEvent], absolute: false)" :current="request()->routeIs('competition.official-panel')" wire:navigate>{{ __('Official Panel') }}</flux:navlist.item>
+                        <flux:navlist.item icon="calendar" :href="route('competition.heat.index', absolute: false)" :current="request()->routeIs('competition.heat.index')" wire:navigate>{{ __('Heat') }}</flux:navlist.item>
+                        <flux:navlist.item :href="route('competition.bracket-manager', absolute: false)" :current="request()->routeIs('competition.bracket-manager')" wire:navigate>{{ __('Bracket') }}</flux:navlist.item>
+                        <flux:navlist.item :href="route('competition.match-center', absolute: false)" :current="request()->routeIs('competition.match-center')" wire:navigate>{{ __('Match Center') }}</flux:navlist.item>
+                        <flux:navlist.item :href="route('competition.operator-dashboard', absolute: false)" :current="request()->routeIs('competition.operator-dashboard')" wire:navigate>{{ __('Operator') }}</flux:navlist.item>
+                        <flux:navlist.item :href="route('competition.official-panel', absolute: false)" :current="request()->routeIs('competition.official-panel')" wire:navigate>{{ __('Official Panel') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
             @else
                 <div class="px-3 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                    <p>Tidak ada event lomba aktif.</p>
-                    <p class="mt-2 text-xs">Buat event dengan tipe <strong>competition</strong> terlebih dahulu.</p>
+                    <p>Tidak ada event aktif.</p>
                 </div>
             @endif
 

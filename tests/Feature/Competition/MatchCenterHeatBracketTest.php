@@ -218,7 +218,7 @@ test('Buka Official Panel deep-link membuka match yang di-assign dan menampilkan
         'role' => 'referee',
     ]);
 
-    $response = $this->get(route('competition.official-panel', ['event' => $event, 'schedule' => $schedule->id]));
+    $response = $this->get(route('competition.official-panel', ['schedule' => $schedule->id]));
 
     $response->assertOk()
         ->assertSee('Kirim Hasil Pertandingan')
@@ -243,7 +243,7 @@ test('Buka Official Panel deep-link tidak membuka match yang bukan milik user', 
     CompetitionScheduleEntry::create(['competition_schedule_id' => $schedule->id, 'competition_team_id' => $teamA->id, 'order_number' => 1]);
 
     // AplikasiLomba: no-auth LAN app — all matches shown, dialog auto-opens for Waiting Result
-    $response = $this->get(route('competition.official-panel', ['event' => $event, 'schedule' => $schedule->id]));
+    $response = $this->get(route('competition.official-panel', ['schedule' => $schedule->id]));
 
     $response->assertOk()
         ->assertSee('Kirim Hasil Pertandingan');

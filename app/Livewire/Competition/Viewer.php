@@ -7,6 +7,7 @@ use App\Models\CompetitionClass;
 use App\Models\CompetitionSchedule;
 use App\Models\Event;
 use App\Models\Venue;
+use App\Support\ActiveEventContext;
 use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -14,7 +15,7 @@ use Livewire\Component;
 #[Layout('components.layouts.viewer')]
 class Viewer extends Component
 {
-    public Event $event;
+    public ?Event $event;
 
     public ?string $venueId = null;
 
@@ -22,13 +23,14 @@ class Viewer extends Component
 
     public ?CompetitionAnnouncement $announcement = null;
 
-    public function mount(Event $event, $venue = null): void
+    public function mount(): void
     {
-        abort_unless($event->isActive(), 404);
-        abort_unless($event->isCompetition(), 404);
+        $this->event = app(ActiveEventContext::class)->requireCurrent();
 
-        $this->event = $event;
-        $this->venueId = $venue ? (string) $venue : null;
+        abort_unless($this->event->isActive(), 404);
+        abort_unless($this->event->isCompetition(), 404);
+
+        $this->venueId = request()->query('venue') ? (string) request()->query('venue') : null;
         $this->tvMode = request()->query('display') === 'tv';
 
         $this->loadAnnouncement();

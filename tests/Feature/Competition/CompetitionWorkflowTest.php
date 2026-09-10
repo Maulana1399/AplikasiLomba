@@ -250,35 +250,42 @@ test('11. venue has competition schedules', function () {
 });
 
 test('13. viewer route returns 200 for active competition event', function () {
-    $response = $this->get(route('competition.viewer', ['event' => $this->event]));
+    $response = $this->get(route('competition.viewer'));
     $response->assertStatus(200);
 });
 
 test('14. viewer route with venue filter returns 200', function () {
     $venue = Venue::create(['event_id' => $this->event->id, 'name' => 'Venue C']);
-    $response = $this->get(route('competition.viewer', ['event' => $this->event, 'venue' => $venue->id]));
+    $response = $this->get(route('competition.viewer', ['venue' => $venue->id]));
     $response->assertStatus(200);
 });
 
 test('15. viewer tv mode query parameter works', function () {
-    $response = $this->get(route('competition.viewer', ['event' => $this->event, 'display' => 'tv']));
+    $response = $this->get(route('competition.viewer', ['display' => 'tv']));
     $response->assertStatus(200);
 });
 
 test('16. viewer returns 404 for non-competition event', function () {
     $caiEvent = Event::create(['name' => 'CAI', 'slug' => 'cai-test', 'event_type' => 'cai', 'status' => 'active']);
-    $response = $this->get(route('competition.viewer', ['event' => $caiEvent]));
+    app(\App\Support\ActiveEventContext::class)->set($caiEvent);
+
+    $response = $this->get(route('competition.viewer'));
     $response->assertStatus(404);
 });
 
-test('17. viewer returns 404 for inactive event', function () {
-    $inactiveEvent = Event::create(['name' => 'Archived', 'slug' => 'archived', 'event_type' => 'competition', 'status' => 'archived']);
-    $response = $this->get(route('competition.viewer', ['event' => $inactiveEvent]));
-    $response->assertStatus(404);
+test('17. inactive event can never be selected as viewer context', function () {
+    Event::create(['name' => 'Archived', 'slug' => 'archived', 'event_type' => 'competition', 'status' => 'archived']);
+    app(\App\Support\ActiveEventContext::class)->set($this->event->fresh()); // keep active context
+
+    expect(app(\App\Support\ActiveEventContext::class)->currentEventType())->toBe('competition');
+
+    // Attempting to select an inactive event is refused by the context guard.
+    app(\App\Support\ActiveEventContext::class)->switchTo($this->event->fresh()->id);
+    $this->get(route('competition.viewer'))->assertStatus(200);
 });
 
 test('18. venue filter with filterByVenue updates venue', function () {
-    $component = Livewire::test(\App\Livewire\Competition\Viewer::class, ['event' => $this->event]);
+    $component = Livewire::test(\App\Livewire\Competition\Viewer::class);
 
     $component->assertSet('venueId', null);
 
@@ -289,8 +296,10 @@ test('18. venue filter with filterByVenue updates venue', function () {
 
 test('19. venue filter clears venue', function () {
     $venue = Venue::create(['event_id' => $this->event->id, 'name' => 'Venue E']);
-    $component = Livewire::test(\App\Livewire\Competition\Viewer::class, ['event' => $this->event, 'venue' => $venue->id]);
+    $component = Livewire::test(\App\Livewire\Competition\Viewer::class);
 
+    $component->assertSet('venueId', null);
+    $component->call('filterByVenue', $venue->id);
     $component->assertSet('venueId', (string) $venue->id);
     $component->call('filterByVenue');
     $component->assertSet('venueId', null);

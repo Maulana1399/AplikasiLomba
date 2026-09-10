@@ -190,7 +190,7 @@ test('competition.dashboard legacy route still returns 200', function () {
     $event = dch_event(['event_type' => 'competition']);
     $this->actingAs(dc_admin());
 
-    $this->get(route('competition.dashboard', $event))->assertOk();
+    $this->get(route('competition.dashboard'))->assertOk();
 });
 
 test('Competition\\Dashboard component renders without CAI data', function () {
@@ -199,7 +199,7 @@ test('Competition\\Dashboard component renders without CAI data', function () {
     app(ActiveEventContext::class)->set($event);
 
     Livewire::actingAs($user)
-        ->test(CompetitionDashboard::class, ['event' => $event])
+        ->test(CompetitionDashboard::class)
         ->assertDontSee('Belum Absen')
         ->assertDontSee('Ganti Sesi')
         ->assertDontSee('Sesi Aktif');

@@ -68,6 +68,47 @@ class CompetitionTeamService
         ]);
     }
 
+    /**
+     * Swap a member between two teams (players↔players, substitutes↔substitutes,
+     * or player↔substitute) in the same CompetitionClass.
+     *
+     * @param array{int, int} $firstRecord  [memberId, teamId]
+     * @param array{int, int} $secondRecord [memberId, teamId]
+     */
+    public function swapMembers(CompetitionTeam $teamA, int $memberAId, CompetitionTeam $teamB, int $memberBId): void
+    {
+        if ($teamA->competition_class_id !== $teamB->competition_class_id) {
+            throw ValidationException::withMessages([
+                'swap' => 'Kedua tim harus berada pada lomba (class) yang sama.',
+            ]);
+        }
+
+        if ($teamA->id === $teamB->id) {
+            throw ValidationException::withMessages([
+                'swap' => 'Tidak dapat menukar anggota dalam tim yang sama.',
+            ]);
+        }
+
+        $memberA = $teamA->members()->findOrFail($memberAId);
+        $memberB = $teamB->members()->findOrFail($memberBId);
+
+        $tmpTeam = $memberA->competition_team_id;
+        $tmpSubstitute = $memberA->is_substitute;
+        $tmpOrder = $memberA->sort_order;
+
+        $memberA->update([
+            'competition_team_id' => $memberB->competition_team_id,
+            'is_substitute' => $memberB->is_substitute,
+            'sort_order' => $memberB->sort_order,
+        ]);
+
+        $memberB->update([
+            'competition_team_id' => $tmpTeam,
+            'is_substitute' => $tmpSubstitute,
+            'sort_order' => $tmpOrder,
+        ]);
+    }
+
     public function removeMember(CompetitionTeam $team, int $memberId): void
     {
         $member = $team->members()->findOrFail($memberId);

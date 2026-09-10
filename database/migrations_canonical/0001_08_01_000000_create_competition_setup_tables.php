@@ -55,28 +55,29 @@ return new class extends Migration
 
         Schema::create('competition_classes', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('competition_category_id');
             $table->unsignedBigInteger('event_id');
             $table->string('name');
-            $table->string('gender', 1)->nullable();
-            $table->string('format', 40)->nullable()->default('individual_heat');
-            $table->string('status', 30)->nullable()->default('registration_open');
-            $table->string('result_type', 20)->nullable();
             $table->string('code')->nullable();
             $table->integer('sort_order')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->timestamps();
+            $table->unsignedBigInteger('competition_category_id');
+            $table->string('gender', 1);
+            $table->string('format', 40)->nullable()->default('individual_heat');
+            $table->string('status', 30)->nullable()->default('registration_open');
+            $table->string('result_type', 20)->nullable();
             $table->unsignedInteger('winner_count')->default(3);
             $table->unsignedInteger('team_size')->nullable();
-            $table->timestamps();
 
             $table->unique(['competition_category_id', 'name']);
             $table->unique(['event_id', 'code']);
             $table->index('event_id');
             $table->index(['event_id', 'status']);
             $table->index('is_active');
+            $table->index('competition_category_id');
 
-            $table->foreign('competition_category_id')->references('id')->on('competition_categories')->restrictOnDelete();
             $table->foreign('event_id')->references('id')->on('events')->restrictOnDelete();
+            $table->foreign('competition_category_id')->references('id')->on('competition_categories')->restrictOnDelete();
         });
 
         Schema::create('competition_registrations', function (Blueprint $table) {
@@ -87,7 +88,7 @@ return new class extends Migration
             $table->string('registration_type')->default('individual');
             $table->timestamps();
 
-            $table->unique(['participation_id', 'competition_class_id']);
+            $table->unique(['participation_id', 'competition_class_id'], 'uniq_participation_class');
             $table->index('competition_category_id');
             $table->index('competition_class_id');
 

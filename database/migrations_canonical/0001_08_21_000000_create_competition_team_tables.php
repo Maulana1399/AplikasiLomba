@@ -17,10 +17,12 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['event_id', 'competition_class_id', 'name']);
+            $table->unique(['competition_class_id', 'name'], 'uniq_class_team_name');
+            $table->unique(['competition_class_id', 'kelompok_id'], 'uniq_class_team_kelompok');
+            $table->index('event_id');
             $table->index('competition_class_id');
 
-            $table->foreign('event_id')->references('id')->on('events')->cascadeOnDelete();
+            $table->foreign('event_id')->references('id')->on('events')->restrictOnDelete();
             $table->foreign('competition_class_id')->references('id')->on('competition_classes')->restrictOnDelete();
             $table->foreign('kelompok_id')->references('id')->on('kelompoks')->nullOnDelete();
         });
@@ -30,26 +32,26 @@ return new class extends Migration
             $table->unsignedBigInteger('competition_team_id');
             $table->unsignedBigInteger('competition_registration_id');
             $table->boolean('is_substitute')->default(false);
-            $table->unsignedInteger('sort_order')->default(0);
+            $table->unsignedInteger('sort_order')->nullable();
             $table->timestamps();
 
-            $table->unique(['competition_team_id', 'competition_registration_id']);
+            $table->unique(['competition_team_id', 'competition_registration_id'], 'uniq_team_member');
             $table->index('competition_registration_id');
 
             $table->foreign('competition_team_id')->references('id')->on('competition_teams')->cascadeOnDelete();
-            $table->foreign('competition_registration_id')->references('id')->on('competition_registrations')->cascadeOnDelete();
+            $table->foreign('competition_registration_id')->references('id')->on('competition_registrations')->restrictOnDelete();
         });
 
         Schema::create('competition_team_outcomes', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('competition_team_id');
-            $table->integer('position')->nullable();
-            $table->string('status')->nullable();
+            $table->unsignedInteger('position')->nullable();
+            $table->string('status', 50)->nullable();
             $table->decimal('score', 10, 2)->nullable();
-            $table->string('remarks')->nullable();
+            $table->text('remarks')->nullable();
             $table->timestamps();
 
-            $table->unique(['competition_team_id', 'position']);
+            $table->index('competition_team_id');
 
             $table->foreign('competition_team_id')->references('id')->on('competition_teams')->cascadeOnDelete();
         });

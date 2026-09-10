@@ -14,8 +14,8 @@ return new class extends Migration
             $table->string('name');
             $table->unsignedInteger('participant_count');
             $table->string('status', 20)->default('draft');
-            $table->boolean('third_place_match')->default(false);
             $table->timestamps();
+            $table->boolean('third_place_match')->default(false);
 
             $table->foreign('competition_class_id')->references('id')->on('competition_classes')->restrictOnDelete();
         });
@@ -26,10 +26,10 @@ return new class extends Migration
             $table->unsignedBigInteger('competition_schedule_id')->nullable();
             $table->unsignedInteger('round');
             $table->unsignedInteger('position');
-            $table->boolean('is_third_place')->default(false);
             $table->unsignedBigInteger('source_match_a_id')->nullable();
             $table->unsignedBigInteger('source_match_b_id')->nullable();
             $table->timestamps();
+            $table->boolean('is_third_place')->default(false);
 
             $table->unique(['competition_bracket_id', 'round', 'position'], 'uniq_bracket_round_pos');
 
@@ -43,21 +43,22 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('competition_schedule_id');
             $table->unsignedBigInteger('competition_registration_id')->nullable();
-            $table->unsignedBigInteger('team_id')->nullable();
             $table->decimal('score', 10, 2)->nullable();
             $table->unsignedInteger('position')->nullable();
             $table->string('status', 50)->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->unsignedBigInteger('competition_team_id')->nullable();
 
             $table->unique(['competition_schedule_id', 'competition_registration_id'], 'uniq_heat_schedule_registration');
+            $table->unique(['competition_schedule_id', 'competition_team_id'], 'uniq_heat_schedule_team');
             $table->index('competition_registration_id');
             $table->index('competition_schedule_id');
-            $table->index('team_id');
+            $table->index('competition_team_id');
 
             $table->foreign('competition_schedule_id')->references('id')->on('competition_schedules')->cascadeOnDelete();
             $table->foreign('competition_registration_id')->references('id')->on('competition_registrations')->restrictOnDelete();
-            $table->foreign('team_id')->references('id')->on('competition_teams')->cascadeOnDelete();
+            $table->foreign('competition_team_id')->references('id')->on('competition_teams')->restrictOnDelete();
         });
 
         Schema::create('competition_heat_formats', function (Blueprint $table) {
@@ -67,6 +68,7 @@ return new class extends Migration
             $table->unsignedInteger('participants_per_heat')->default(1);
             $table->unsignedInteger('qualifiers_per_heat')->default(1);
             $table->timestamps();
+            $table->unsignedInteger('min_participants_to_start')->default(2);
 
             $table->unique(['competition_class_id', 'round'], 'uniq_heat_format_class_round');
 

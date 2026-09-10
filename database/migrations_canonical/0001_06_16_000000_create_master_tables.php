@@ -11,27 +11,33 @@ return new class extends Migration
         Schema::create('desas', function (Blueprint $table) {
             $table->id();
             $table->string('desa_asal');
+            $table->timestamps();
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
-            $table->timestamps();
+
+            $table->unique('desa_asal');
         });
 
         Schema::create('kelompoks', function (Blueprint $table) {
             $table->id();
             $table->string('kelompok_asal');
             $table->unsignedBigInteger('desa_id')->nullable();
+            $table->timestamps();
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('sort_order')->default(0);
-            $table->timestamps();
 
-            $table->foreign('desa_id')->references('id')->on('desas')->nullOnDelete();
+            $table->unique(['kelompok_asal', 'desa_id']);
+
+            $table->foreign('desa_id')->references('id')->on('desas')->cascadeOnDelete();
         });
 
         Schema::create('regus', function (Blueprint $table) {
             $table->id();
             $table->string('regu');
-            $table->enum('jenis_kelamin', ['Laki - Laki', 'Perempuan'])->nullable();
             $table->timestamps();
+            $table->string('jenis_kelamin')->nullable();
+
+            $table->unique('regu');
         });
 
         Schema::create('master_participant_classes', function (Blueprint $table) {

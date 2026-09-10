@@ -12,24 +12,23 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->string('event_type', 50)->default('cai');
             $table->text('description')->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->string('status', 50)->default('active');
+            $table->string('status')->default('active');
             $table->timestamps();
+            $table->string('event_type')->default('cai');
         });
 
         Schema::create('people', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
             $table->string('jenis_kelamin', 1)->nullable();
-            $table->date('tanggal_lahir')->nullable();
-            $table->string('kelas')->nullable();
             $table->unsignedBigInteger('desa_id')->nullable();
-            $table->unsignedBigInteger('kelompok_id')->nullable();
-            $table->unsignedBigInteger('nip')->nullable()->unique();
             $table->timestamps();
+            $table->date('tanggal_lahir')->nullable();
+            $table->unsignedBigInteger('kelompok_id')->nullable();
+            $table->string('kelas')->nullable();
 
             $table->foreign('desa_id')->references('id')->on('desas')->nullOnDelete();
             $table->foreign('kelompok_id')->references('id')->on('kelompoks')->nullOnDelete();
@@ -42,31 +41,22 @@ return new class extends Migration
             $table->string('participant_number')->nullable();
             $table->string('attendance_code')->nullable()->unique();
             $table->string('jenis_peserta')->default('Wajib');
-            $table->string('status_registrasi')->nullable();
-            $table->unsignedBigInteger('regu_id')->nullable();
             $table->timestamps();
+            $table->unsignedBigInteger('regu_id')->nullable();
+            $table->string('status_registrasi')->nullable();
 
-            $table->unique(['event_id', 'person_id']);
-            $table->unique(['event_id', 'participant_number']);
+            $table->unique(['event_id', 'person_id'], 'participations_event_person_unique');
+            $table->unique(['event_id', 'participant_number'], 'participations_event_participant_number_unique');
             $table->index('regu_id');
 
             $table->foreign('person_id')->references('id')->on('people')->restrictOnDelete();
             $table->foreign('event_id')->references('id')->on('events')->restrictOnDelete();
             $table->foreign('regu_id')->references('id')->on('regus')->nullOnDelete();
         });
-
-        Schema::table('users', function (Blueprint $table) {
-            $table->unsignedBigInteger('person_id')->nullable()->unique();
-            $table->foreign('person_id')->references('id')->on('people')->nullOnDelete();
-        });
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['person_id']);
-            $table->dropColumn('person_id');
-        });
         Schema::dropIfExists('participations');
         Schema::dropIfExists('people');
         Schema::dropIfExists('events');

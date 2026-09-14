@@ -45,8 +45,8 @@
                     @error('nama') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kelas Peserta</label>
-                    <flux:select wire:model="participantClassId" placeholder="Pilih kelas peserta">
+                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kelas Peserta <span class="text-red-500">*</span></label>
+                    <flux:select wire:model.live="participantClassId" placeholder="Pilih kelas peserta">
                         @foreach ($participantClasses as $participantClass)
                             <flux:select.option value="{{ $participantClass->id }}">{{ $participantClass->name }}</flux:select.option>
                         @endforeach
@@ -54,8 +54,8 @@
                     @error('participantClassId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Jenis Kelamin</label>
-                    <flux:select wire:model="jenisKelamin" placeholder="Pilih jenis kelamin">
+                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Jenis Kelamin <span class="text-red-500">*</span></label>
+                    <flux:select wire:model.live="jenisKelamin" placeholder="Pilih jenis kelamin">
                         <flux:select.option value="L">Laki - Laki</flux:select.option>
                         <flux:select.option value="P">Perempuan</flux:select.option>
                     </flux:select>
@@ -121,26 +121,43 @@
                 </div>
             @endif
 
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div>
-                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kategori Lomba</label>
-                    <flux:select wire:model.live="competitionCategoryId" placeholder="Pilih kategori">
-                        @foreach ($categories as $category)
-                            <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    @error('competitionCategoryId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kelas Lomba</label>
-                    <flux:select wire:model.live="competitionClassId" placeholder="{{ blank($competitionCategoryId) ? 'Pilih kategori terlebih dahulu' : 'Pilih kelas' }}">
-                        @foreach ($classes as $class)
-                            <flux:select.option value="{{ $class->id }}">{{ $class->name }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    @error('competitionClassId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                </div>
+            <div>
+                <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Lomba <span class="text-red-500">*</span></label>
+                <flux:select wire:model.live="competitionId" placeholder="Pilih lomba">
+                    @foreach ($competitions as $competition)
+                        <flux:select.option value="{{ $competition->id }}">{{ $competition->name }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                @error('competitionId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Pilih lomba. Kategori/kelas disaring dari lomba, kelas peserta, dan jenis kelamin.</p>
             </div>
+
+            @if (count($candidateClasses) > 1 && blank($resolvedClass) && ! $resolveError)
+                <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-800 dark:bg-amber-950">
+                    <p class="mb-2 font-medium text-amber-800 dark:text-amber-200">Beberapa kelas lomba cocok. Pilih kategori/kelas yang diinginkan:</p>
+                    <flux:select wire:model.live="selectedClassId" placeholder="Pilih kelas lomba">
+                        @foreach ($candidateClasses as $candidate)
+                            <flux:select.option value="{{ $candidate['id'] }}">{{ $candidate['category_name'] }} — {{ $candidate['name'] }} ({{ $candidate['gender'] }}, {{ $candidate['format_label'] }})</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    @error('selectedClassId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+            @endif
+
+            @if ($resolvedClass || $resolveError)
+                <div class="mt-4 rounded-lg border p-4 text-sm {{ $resolveError ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950' : 'border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900' }}">
+                    @if ($resolveError)
+                        <p class="font-medium text-red-700 dark:text-red-300">{{ $resolveError }}</p>
+                    @else
+                        <div class="grid gap-2">
+                            <div class="flex justify-between"><span class="text-zinc-500">Kelas Lomba:</span><span class="font-medium text-zinc-900 dark:text-white">{{ $resolvedClass['name'] }}</span></div>
+                            <div class="flex justify-between"><span class="text-zinc-500">Kategori:</span><span class="text-zinc-700 dark:text-zinc-300">{{ $resolvedClass['category_name'] }}</span></div>
+                            <div class="flex justify-between"><span class="text-zinc-500">Format:</span><span class="text-zinc-700 dark:text-zinc-300">{{ $resolvedClass['format_label'] }}</span></div>
+                            <div class="flex justify-between"><span class="text-zinc-500">Penilaian:</span><span class="text-zinc-700 dark:text-zinc-300">{{ $resolvedClass['result_label'] }}</span></div>
+                        </div>
+                    @endif
+                </div>
+            @endif
 
             <div class="mt-6 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-sm text-zinc-500">
@@ -149,7 +166,7 @@
                         Menyimpan...
                     @endif
                 </div>
-                <flux:button wire:click="submit" variant="primary" :loading="$processing" :disabled="$alreadyRegistered">
+                <flux:button wire:click="submit" variant="primary" :loading="$processing" :disabled="$alreadyRegistered || blank($resolvedClass)">
                     Daftarkan
                 </flux:button>
             </div>

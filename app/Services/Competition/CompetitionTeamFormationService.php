@@ -53,8 +53,16 @@ class CompetitionTeamFormationService
             $registrations = $class->competitionRegistrations()
                 ->with('participation.person.kelompok')
                 ->get()
-                ->filter(fn ($registration) => $registration->participation?->person?->kelompok_id !== null)
+                ->filter(fn ($registration) => $registration->participation?->person !== null)
                 ->values();
+
+            if ($registrations->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'class' => 'Tidak ada peserta eligible untuk membentuk team.',
+                ]);
+            }
+
+            $this->assertGroupEligibility($registrations);
 
             $byKelompok = $registrations->groupBy(fn ($registration) => $registration->participation->person->kelompok_id);
 
@@ -131,8 +139,16 @@ class CompetitionTeamFormationService
         $registrations = $class->competitionRegistrations()
             ->with('participation.person.kelompok')
             ->get()
-            ->filter(fn ($registration) => $registration->participation?->person?->kelompok_id !== null)
+            ->filter(fn ($registration) => $registration->participation?->person !== null)
             ->values();
+
+        if ($registrations->isEmpty()) {
+            throw ValidationException::withMessages([
+                'class' => 'Tidak dapat preview: tidak ada peserta eligible.',
+            ]);
+        }
+
+        $this->assertGroupEligibility($registrations);
 
         $byKelompok = $registrations->groupBy(fn ($registration) => $registration->participation->person->kelompok_id);
 
@@ -476,28 +492,48 @@ class CompetitionTeamFormationService
 
     private function guardTeamFormat(CompetitionClass $class): void
     {
-        if (! CompetitionFormat::isTeamFormat($class->format)) {
+        if ($class->format !== CompetitionFormat::TEAM_VS_TEAM) {
             throw ValidationException::withMessages([
-                'class' => 'Pembagian tim hanya untuk format team (team_vs_team / team_mass).',
+                'class' => 'Pembagian tim hanya untuk format team_vs_team.',
+            ]);
+        }
+    }
+
+    private function assertGroupEligibility(Collection $registrations): void
+    {
+        $withoutKelompok = $registrations->filter(fn ($registration) => $registration->participation?->person?->kelompok_id === null);
+
+        if ($withoutKelompok->isNotEmpty()) {
+            $count = $withoutKelompok->count();
+            $sample = $withoutKelompok->take(3)->map(fn ($registration) => $registration->participation?->person?->nama ?? '#'.$registration->id)->implode(', ');
+
+            throw ValidationException::withMessages([
+                'class' => 'Tidak dapat membentuk team mode Berdasarkan Kelompok: '.$count.' peserta belum memiliki Kelompok ('.$sample.'). Lengkapi Kelompok terlebih dahulu; tidak ada formasi parsial.',
             ]);
         }
     }
 
     private function assertCanForm(CompetitionClass $class, bool $force): void
     {
-        // Guard: jangan regenerate bila team sudah dipakai di jadwal/hasil.
-        $inUse = CompetitionTeam::where('competition_class_id', $class->id)
-            ->get()
-            ->contains(fn ($team) => $team->scheduleEntries()->exists() || $team->outcome()->exists());
+        $hasSchedule = CompetitionTeam::where('competition_class_id', $class->id)->whereHas('scheduleEntries')->exists();
+        $hasHeat = CompetitionTeam::where('competition_class_id', $class->id)->whereHas('heatResults')->exists();
+        $hasOutcome = CompetitionTeam::where('competition_class_id', $class->id)->whereHas('outcome')->exists();
+        $hasWinner = \App\Models\CompetitionSchedule::whereIn('winner_team_id', CompetitionTeam::where('competition_class_id', $class->id)->pluck('id'))->exists();
+        $inUse = $hasSchedule || $hasHeat || $hasOutcome || $hasWinner;
+        $absoluteInUse = $hasSchedule || $hasHeat || $hasWinner;
 
-        if ($inUse) {
+        if ($inUse && ! $force) {
             throw ValidationException::withMessages([
-                'class' => 'Tidak dapat membentuk ulang team: team sudah dipakai di jadwal/hasil.',
+                'class' => 'Tim sudah dipakai di jadwal/hasil/heat result. Membentuk ulang memerlukan konfirmasi — gunakan Bentuk Ulang (force) dengan konfirmasi.',
             ]);
         }
 
-        // Manual protection: jangan diam-diam menimpa pembagian team yang sudah
-        // ada (otomatis maupun manual). Rebuild hanya lewat aksi eksplisit ($force).
+        if ($inUse && $force && $absoluteInUse) {
+            throw ValidationException::withMessages([
+                'class' => 'Tidak dapat membentuk ulang: team masih terpakai di jadwal/heat result (integritas hasil) — kosongkan jadwal/hasil terkait secara manual terlebih dahulu. Tidak ada penghapusan otomatis.',
+            ]);
+        }
+
         $hasExisting = CompetitionTeam::where('competition_class_id', $class->id)
             ->whereHas('members')
             ->exists();

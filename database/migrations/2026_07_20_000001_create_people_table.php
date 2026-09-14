@@ -13,7 +13,6 @@ return new class extends Migration
             $table->string('nama');
             $table->string('jenis_kelamin', 1)->nullable();
             $table->foreignId('desa_id')->nullable()->constrained('desas')->nullOnDelete();
-            $table->integer('nip')->nullable()->unique();
             $table->timestamps();
         });
     }

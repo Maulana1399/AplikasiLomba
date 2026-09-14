@@ -68,7 +68,7 @@ class Index extends Component
     {
         $event = app(ActiveEventContext::class)->current();
 
-        return CompetitionCategory::where('event_id', $event?->id)
+        return CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event?->id))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -93,24 +93,26 @@ class Index extends Component
 
     public function getTeamsProperty()
     {
-        if (blank($this->competitionClassId)) {
+        $class = $this->selectedClass;
+
+        if ($class === null) {
             return collect();
         }
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
-        return app(CompetitionTeamService::class)->listForClass($event->id, (int) $this->competitionClassId);
+        return app(CompetitionTeamService::class)->listForClass($class->event_id, $class->id);
     }
 
     public function getSelectedClassProperty(): ?CompetitionClass
     {
-        if (blank($this->competitionClassId)) {
+        if (blank($this->competitionClassId) || blank($this->competitionCategoryId)) {
             return null;
         }
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
-        return CompetitionClass::where('event_id', $event->id)->find($this->competitionClassId);
+        return CompetitionClass::where('id', $this->competitionClassId)
+            ->where('competition_category_id', $this->competitionCategoryId)
+            ->where('format', CompetitionFormat::TEAM_VS_TEAM)
+            ->where('is_active', true)
+            ->first();
     }
 
     public function getFormatLabelProperty(): string
@@ -122,19 +124,19 @@ class Index extends Component
 
     public function getAvailableRegistrationsProperty()
     {
-        if (blank($this->competitionClassId)) {
+        $class = $this->selectedClass;
+
+        if ($class === null) {
             return collect();
         }
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
-        $assignedRegistrationIds = CompetitionTeamMember::whereHas('team', function ($query) use ($event) {
-            $query->where('event_id', $event->id)
-                ->where('competition_class_id', $this->competitionClassId);
+        $assignedRegistrationIds = CompetitionTeamMember::whereHas('team', function ($query) use ($class) {
+            $query->where('event_id', $class->event_id)
+                ->where('competition_class_id', $class->id);
         })->pluck('competition_registration_id');
 
         return \App\Models\CompetitionRegistration::with('participation.person.kelompok')
-            ->where('competition_class_id', $this->competitionClassId)
+            ->where('competition_class_id', $class->id)
             ->whereNotIn('id', $assignedRegistrationIds)
             ->orderBy('id')
             ->get();
@@ -213,15 +215,15 @@ class Index extends Component
             return;
         }
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
+        $class = $this->selectedClass;
         $service = app(CompetitionTeamFormationService::class);
 
         $forcedTeamSize = $this->teamSizeInput !== '' ? (int) $this->teamSizeInput : null;
 
         try {
             $result = $this->formationMode === 'balanced'
-                ? $service->previewBalancedForClass($event->id, $this->selectedClass->id, $forcedTeamSize)
-                : $service->previewForClass($event->id, $this->selectedClass->id, $forcedTeamSize);
+                ? $service->previewBalancedForClass($class->event_id, $class->id, $forcedTeamSize)
+                : $service->previewForClass($class->event_id, $class->id, $forcedTeamSize);
 
             unset($result['class']);
 
@@ -308,7 +310,7 @@ class Index extends Component
     {
         Gate::authorize('manage-registration');
 
-        if ($this->selectedClass === null || blank($this->competitionClassId)) {
+        if ($this->selectedClass === null) {
             return;
         }
 
@@ -319,7 +321,6 @@ class Index extends Component
                 'teamSizeInput' => 'nullable|integer|min:1|max:100',
             ]);
 
-            $event = app(ActiveEventContext::class)->requireCurrent();
             $class = $this->selectedClass;
             $service = app(CompetitionTeamFormationService::class);
 
@@ -331,10 +332,10 @@ class Index extends Component
             $force = $this->isFormed;
 
             if ($this->formationMode === 'balanced') {
-                $result = $service->formBalancedForClass($event->id, $class->id, $forcedTeamSize, $force);
+                $result = $service->formBalancedForClass($class->event_id, $class->id, $forcedTeamSize, $force);
                 session()->flash('success', 'Pembagian tim Random & Balanced selesai. Ukuran tim: '.$result['team_size'].' pemain ('.$result['team_count'].' tim).');
             } else {
-                $result = $service->formForClass($event->id, $class->id, $forcedTeamSize, $force);
+                $result = $service->formForClass($class->event_id, $class->id, $forcedTeamSize, $force);
                 session()->flash('success', 'Pembagian tim berdasarkan kelompok selesai. Ukuran tim: '.$result['team_size'].' pemain ('.count($result['teams']).' tim).');
             }
 
@@ -356,8 +357,7 @@ class Index extends Component
     {
         Gate::authorize('manage-registration');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-        $team = CompetitionTeam::where('event_id', $event->id)->findOrFail($teamId);
+        $team = CompetitionTeam::where('event_id', $this->selectedClass?->event_id)->findOrFail($teamId);
 
         try {
             app(CompetitionTeamService::class)->addMember($team, $registrationId, $asSubstitute);
@@ -371,11 +371,14 @@ class Index extends Component
     {
         Gate::authorize('manage-registration');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-        $team = CompetitionTeam::where('event_id', $event->id)->findOrFail($teamId);
+        $team = CompetitionTeam::where('event_id', $this->selectedClass?->event_id)->findOrFail($teamId);
 
-        app(CompetitionTeamService::class)->removeMember($team, $memberId);
-        session()->flash('success', 'Anggota dihapus dari tim.');
+        try {
+            app(CompetitionTeamService::class)->removeMember($team, $memberId);
+            session()->flash('success', 'Anggota dihapus dari tim.');
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->getMessage());
+        }
     }
 
     public function moveToPlayers(int $teamId, int $memberId): void
@@ -392,21 +395,27 @@ class Index extends Component
     {
         Gate::authorize('manage-registration');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-        $team = CompetitionTeam::where('event_id', $event->id)->findOrFail($teamId);
+        $team = CompetitionTeam::where('event_id', $this->selectedClass?->event_id)->findOrFail($teamId);
 
-        app(CompetitionTeamService::class)->setSubstitute($team, $memberId, $asSubstitute);
+        try {
+            app(CompetitionTeamService::class)->setSubstitute($team, $memberId, $asSubstitute);
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->getMessage());
+        }
     }
 
     public function shuffle(int $teamId): void
     {
         Gate::authorize('manage-registration');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-        $team = CompetitionTeam::where('event_id', $event->id)->findOrFail($teamId);
+        $team = CompetitionTeam::where('event_id', $this->selectedClass?->event_id)->findOrFail($teamId);
 
-        app(CompetitionTeamService::class)->shuffleMembers($team);
-        session()->flash('success', 'Urutan anggota diacak.');
+        try {
+            app(CompetitionTeamService::class)->shuffleMembers($team);
+            session()->flash('success', 'Urutan anggota diacak.');
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->getMessage());
+        }
     }
 
     public function swapMember(int $teamId, int $memberId): void
@@ -421,16 +430,16 @@ class Index extends Component
             return;
         }
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
+        $eventId = $this->selectedClass?->event_id;
 
         try {
-            $teamA = CompetitionTeam::where('event_id', $event->id)->findOrFail($teamId);
+            $teamA = CompetitionTeam::where('event_id', $eventId)->findOrFail($teamId);
             $targetMember = CompetitionTeamMember::with('team')->findOrFail($target);
 
             app(CompetitionTeamService::class)->swapMembers(
                 $teamA,
                 $memberId,
-                CompetitionTeam::where('event_id', $event->id)->findOrFail($targetMember->team->id),
+                CompetitionTeam::where('event_id', $eventId)->findOrFail($targetMember->team->id),
                 $target,
             );
 

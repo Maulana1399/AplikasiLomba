@@ -39,6 +39,7 @@ class CompetitionBracketSeederService
      *     seeded: int,
      *     initial_matches: int,
      *     competitor_type: string,
+     *     byes_advanced: int,
      * }
      */
     public function seedInitialRound(int $eventId, int $bracketId): array
@@ -70,21 +71,27 @@ class CompetitionBracketSeederService
             $competitorType = 'registration';
         }
 
-        $seeded = 0;
+        $competitorCount = $competitors->count();
+        $bracketSize = (int) $bracket->participant_count;
+        $matchCount = $initialMatches->count();
+        $byeCount = max(0, $bracketSize - $competitorCount);
 
-        foreach ($initialMatches as $match) {
-            // Jangan campur dengan seeding manual: match yang sudah punya entry
-            // dibiarkan (dan slot pasangannya tidak dipakai untuk match lain).
+        $perMatchCounts = $this->perMatchCounts($matchCount, $competitorCount, $byeCount);
+
+        $seeded = 0;
+        $cursor = 0;
+
+        foreach ($initialMatches as $index => $match) {
             if ($match->schedule === null || $match->schedule->scheduleEntries()->exists()) {
+                $cursor += $perMatchCounts[$index] ?? 0;
+
                 continue;
             }
 
-            // Pasangan deterministik berdasarkan posisi match:
-            // match posisi P mengambil competitor [2*(P-1), 2*(P-1)+1].
-            $base = ($match->position - 1) * 2;
+            $take = $perMatchCounts[$index] ?? 0;
 
-            for ($slot = 0; $slot < 2; $slot++) {
-                $competitor = $competitors->get($base + $slot);
+            for ($slot = 0; $slot < $take; $slot++) {
+                $competitor = $competitors->get($cursor + $slot);
 
                 if ($competitor === null) {
                     break;
@@ -99,17 +106,101 @@ class CompetitionBracketSeederService
                 $seeded++;
             }
 
-            // Sprint R4G: setelah seeding, evaluasi status lewat workflow
-            // existing. Hanya match yang entry-nya sudah memenuhi kebutuhan
-            // (required_participants) yang naik ke `Ready`; yang masih kurang
-            // tetap `Scheduled` (TBD). checkAutoReady() idempotent.
+            $cursor += $take;
+
             $this->workflow->checkAutoReady($match->schedule);
         }
+
+        $byesAdvanced = $this->advanceByeMatches($initialMatches, $class->isTeamFormat());
 
         return [
             'seeded' => $seeded,
             'initial_matches' => $initialMatches->count(),
             'competitor_type' => $competitorType,
+            'byes_advanced' => $byesAdvanced,
         ];
+    }
+
+    /**
+     * Hitung jumlah peserta per initial match dengan penyebaran bye merata.
+     *
+     * @return array<int,int>
+     */
+    private function perMatchCounts(int $matchCount, int $competitorCount, int $byeCount): array
+    {
+        if ($matchCount === 0) {
+            return [];
+        }
+
+        if ($competitorCount >= $matchCount) {
+            $singles = $byeCount;
+            $counts = array_fill(0, $matchCount, 2);
+
+            for ($k = 0; $k < $singles; $k++) {
+                $idx = (int) floor($k * $matchCount / $singles);
+                $counts[$idx] = 1;
+            }
+
+            return $counts;
+        }
+
+        $counts = array_fill(0, $matchCount, 0);
+
+        for ($k = 0; $k < $competitorCount; $k++) {
+            $idx = (int) floor($k * $matchCount / $competitorCount);
+            $counts[$idx] = 1;
+        }
+
+        return $counts;
+    }
+
+    private function advanceByeMatches($initialMatches, bool $isTeam): int
+    {
+        $advanced = 0;
+
+        foreach ($initialMatches as $match) {
+            $schedule = $match->schedule;
+
+            if ($schedule === null || $schedule->status === 'Finished') {
+                continue;
+            }
+
+            $count = $schedule->scheduleEntries()->count();
+
+            if ($count !== 1) {
+                continue;
+            }
+
+            $entry = $schedule->scheduleEntries()->first();
+            $winnerId = $isTeam ? $entry->competition_team_id : $entry->competition_registration_id;
+
+            if ($winnerId === null) {
+                continue;
+            }
+
+            $update = [
+                'status' => 'Finished',
+                'finished_at' => now(),
+                'finished_by' => auth()->id(),
+            ];
+
+            if ($isTeam) {
+                $update['winner_team_id'] = $winnerId;
+            } else {
+                $update['winner_registration_id'] = $winnerId;
+            }
+
+            $schedule->update($update);
+
+            if ($isTeam) {
+                $this->workflow->advanceWinnerTeam($schedule->fresh());
+            } else {
+                $this->workflow->advanceWinner($schedule->fresh());
+            }
+
+            $advanced++;
+        }
+
+        return $advanced;
     }
 }

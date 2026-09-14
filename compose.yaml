@@ -19,11 +19,11 @@ services:
       - .env.docker
     environment:
       APP_ENV: ${APP_ENV:-local}
-      APP_URL: ${APP_URL:-http://127.0.0.1:8083}
       DB_CONNECTION: sqlite
-      DB_DATABASE: /var/www/match/database/database.sqlite
+      DB_DATABASE: /var/www/match/database-data/database.sqlite
     volumes:
-      - match-db:/var/www/match/database
+      - /var/www/match:/var/www/match
+      - match-db:/var/www/match/database-data
       - match-storage:/var/www/match/storage
       - match-bootstrap-cache:/var/www/match/bootstrap/cache
     expose:

@@ -14,6 +14,8 @@ class Event extends Model
     protected $fillable = [
         'name',
         'slug',
+        'code',
+        'sort_order',
         'event_type',
         'description',
         'start_date',
@@ -26,6 +28,7 @@ class Event extends Model
         return [
             'start_date' => 'date',
             'end_date' => 'date',
+            'sort_order' => 'integer',
         ];
     }
 
@@ -171,7 +174,7 @@ class Event extends Model
 
     public function competitionCategories()
     {
-        return $this->hasMany(CompetitionCategory::class);
+        return $this->belongsToMany(CompetitionCategory::class, 'competition_category_event', 'event_id', 'competition_category_id')->withTimestamps();
     }
 
     public function competitionClasses()
@@ -182,6 +185,11 @@ class Event extends Model
     public function competitionAnnouncements()
     {
         return $this->hasMany(CompetitionAnnouncement::class);
+    }
+
+    public function venues()
+    {
+        return $this->hasMany(Venue::class);
     }
 
     public function hasRuntimeDependencies(): bool

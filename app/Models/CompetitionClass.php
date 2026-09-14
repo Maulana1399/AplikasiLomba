@@ -17,6 +17,7 @@ class CompetitionClass extends Model
         'code',
         'sort_order',
         'winner_count',
+        'honorable_mention_count',
         'team_size',
         'is_active',
     ];
@@ -26,6 +27,7 @@ class CompetitionClass extends Model
         return [
             'is_active' => 'boolean',
             'winner_count' => 'integer',
+            'honorable_mention_count' => 'integer',
             'team_size' => 'integer',
         ];
     }

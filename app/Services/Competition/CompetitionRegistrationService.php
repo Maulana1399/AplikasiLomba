@@ -67,10 +67,11 @@ class CompetitionRegistrationService
             $event = Event::lockForUpdate()->findOrFail($eventId);
 
             $category = CompetitionCategory::where('id', $competitionCategoryId)
-                ->where('event_id', $event->id)->firstOrFail();
+                ->whereHas('events', fn ($q) => $q->where('events.id', $event->id))->firstOrFail();
 
             $class = CompetitionClass::where('id', $competitionClassId)
-                ->where('competition_category_id', $category->id)->firstOrFail();
+                ->where('competition_category_id', $category->id)
+                ->where('event_id', $event->id)->firstOrFail();
 
             // 1. Gender validation
             if ($class->gender !== 'M' && $class->gender !== $person->jenis_kelamin) {

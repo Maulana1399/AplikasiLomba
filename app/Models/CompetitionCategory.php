@@ -23,12 +23,32 @@ class CompetitionCategory extends Model
 
     public function event()
     {
-        return $this->belongsTo(Event::class);
+        return $this->belongsTo(Event::class, 'event_id');
+    }
+
+    public function events()
+    {
+        return $this->belongsToMany(Event::class, 'competition_category_event', 'competition_category_id', 'event_id')->withTimestamps();
     }
 
     public function competitionClasses()
     {
         return $this->hasMany(CompetitionClass::class);
+    }
+
+    public function competitionRegistrations()
+    {
+        return $this->hasMany(CompetitionRegistration::class);
+    }
+
+    public function masterParticipantClasses()
+    {
+        return $this->belongsToMany(
+            MasterParticipantClass::class,
+            'competition_category_master_participant_class',
+            'competition_category_id',
+            'master_participant_class_id',
+        )->withTimestamps();
     }
 
     /**

@@ -32,7 +32,7 @@ class Outcome extends Component
 
         return view('livewire.competition.report.outcome', [
             'outcomes' => $outcomes,
-            'categories' => CompetitionCategory::where('event_id', $event?->id)
+            'categories' => CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event?->id))
                 ->where('is_active', true)->orderBy('name')->get(),
             'filterClasses' => $this->filterCategoryId
                 ? CompetitionClass::where('competition_category_id', $this->filterCategoryId)

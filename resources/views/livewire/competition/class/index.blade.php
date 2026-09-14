@@ -15,10 +15,25 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if ($showCreateForm)
         <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 class="mb-4 text-lg font-semibold text-zinc-900 dark:text-white">Kelas Baru</h2>
             <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Lomba</label>
+                    <flux:select wire:model.live="newEventId" placeholder="Pilih lomba">
+                        @foreach ($events as $event)
+                            <flux:select.option value="{{ $event->id }}">{{ $event->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    @error('newEventId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kategori</label>
                     <flux:select wire:model="newCompetitionCategoryId" placeholder="Pilih kategori">
@@ -78,6 +93,11 @@
                     @error('newWinnerCount') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
+                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Honorable Mention</label>
+                    <flux:input wire:model="newHonorableMentionCount" type="number" min="0" max="100" placeholder="0 (opsional, tidak mempengaruhi ranking/podium)" />
+                    @error('newHonorableMentionCount') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <div>
                     <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Ukuran Tim</label>
                     <flux:input wire:model="newTeamSize" type="number" min="1" max="100" placeholder="Kosong = mengikuti aturan default (kelompok terkecil)" />
                     @error('newTeamSize') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -89,16 +109,21 @@
         </div>
     @endif
 
-    <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+    <style>#class-table-scroll{scrollbar-width:none;-ms-overflow-style:none}#class-table-scroll::-webkit-scrollbar{display:none;width:0;height:0}</style>
+    <div id="class-table-wrap" class="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 overflow-hidden">
+        <div class="px-3 pt-3 pb-2 text-xs text-zinc-500 dark:text-zinc-400 lg:hidden" aria-hidden="true">Geser tabel ke kiri/kanan untuk melihat semua kolom →</div>
+        <div id="class-table-scroll" tabindex="0" class="overflow-x-auto overscroll-x-contain focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-600" style="scrollbar-width:none;-ms-overflow-style:none">
+            <table class="w-full min-w-[1120px] divide-y divide-zinc-200 dark:divide-zinc-800">
             <thead class="bg-zinc-50 dark:bg-zinc-900">
                 <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Lomba</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Kategori</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Nama</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Gender</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Format</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Metode</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Pemenang</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">H.M.</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">U. Tim</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Kode</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Urutan</th>
@@ -111,8 +136,15 @@
                     @if ($editId === $class->id)
                         <tr class="bg-amber-50 dark:bg-amber-950/20">
                             <td class="px-4 py-2">
+                                <flux:select wire:model.live="editEventId" size="sm">
+                                    @foreach ($events as $event)
+                                        <flux:select.option value="{{ $event->id }}">{{ $event->name }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </td>
+                            <td class="px-4 py-2">
                                 <flux:select wire:model="editCompetitionCategoryId" size="sm">
-                                    @foreach ($categories as $category)
+                                    @foreach ($editCategories as $category)
                                         <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
                                     @endforeach
                                 </flux:select>
@@ -160,6 +192,10 @@
                                 <flux:input wire:model="editWinnerCount" size="sm" type="number" min="1" max="100" />
                             </td>
                             <td class="px-4 py-2">
+                                <flux:input wire:model="editHonorableMentionCount" size="sm" type="number" min="0" max="100" placeholder="0" />
+                                @error('editHonorableMentionCount') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </td>
+                            <td class="px-4 py-2">
                                 <flux:input wire:model="editTeamSize" size="sm" type="number" min="1" max="100" placeholder="-" />
                             </td>
                             <td class="px-4 py-2">
@@ -180,12 +216,14 @@
                         </tr>
                     @else
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
+                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $class->event?->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $class->competitionCategory?->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">{{ $class->name }}</td>
                             <td class="px-4 py-3 text-sm">{{ $class->gender === 'L' ? 'Laki - Laki' : ($class->gender === 'P' ? 'Perempuan' : 'Campuran') }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">{{ $this->formatOptions()[$this->uiFormat($class->format, $class->resultType())] ?? $class->format }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">{{ $this->resultTypeLabel($class->resultType()) }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $class->winner_count ?? 3 }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $class->honorable_mention_count ?? 0 }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $class->team_size ?? '-' }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $class->code ?? '-' }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $class->sort_order ?? '-' }}</td>
@@ -202,16 +240,98 @@
                                     <flux:button wire:click="toggleActive({{ $class->id }})" size="sm" variant="{{ $class->is_active ? 'danger' : 'primary' }}">
                                         {{ $class->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                     </flux:button>
+                                    <flux:button wire:click="delete({{ $class->id }})" size="sm" variant="danger"
+                                        wire:confirm="Yakin hapus kelas ini? Tindakan tidak dapat dibatalkan.">Hapus</flux:button>
                                 </div>
                             </td>
                         </tr>
                     @endif
                 @empty
                     <tr>
-                        <td colspan="11" class="px-4 py-8 text-center text-sm text-zinc-500">Belum ada kelas.</td>
+                        <td colspan="13" class="px-4 py-8 text-center text-sm text-zinc-500">Belum ada kelas.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
+        </div>
+        <div id="class-table-scrollbar" class="fixed bottom-0 z-30 hidden overflow-x-auto overflow-y-hidden border border-zinc-200 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.08)] dark:border-zinc-800 dark:bg-zinc-900/95 dark:shadow-none [scrollbar-width:thin] [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700" aria-hidden="true" style="scrollbar-width:thin">
+            <div id="class-table-scrollbar-inner" class="h-px"></div>
+        </div>
     </div>
+    @push('scripts')
+    <script>
+    (() => {
+        const idScroll = 'class-table-scroll';
+        const idWrap = 'class-table-wrap';
+        const idBar = 'class-table-scrollbar';
+        const idInner = 'class-table-scrollbar-inner';
+        let ro, onBar, onScroll, onWinScroll, onWinResize;
+        const setup = () => {
+            const s = document.getElementById(idScroll);
+            const w = document.getElementById(idWrap);
+            const b = document.getElementById(idBar);
+            const i = document.getElementById(idInner);
+            if (!s || !w || !b || !i) return;
+            if (onBar) b.removeEventListener('scroll', onBar);
+            if (onScroll) s.removeEventListener('scroll', onScroll);
+            if (onWinScroll) window.removeEventListener('scroll', onWinScroll);
+            if (onWinResize) window.removeEventListener('resize', onWinResize);
+            if (ro) ro.disconnect();
+            let needsOverflow = false;
+            let rafSync = 0;
+            let rafPos = 0;
+            const isWrapVisible = () => {
+                const r = w.getBoundingClientRect();
+                return r.width > 0 && r.height > 0 && r.bottom > 8 && r.top < window.innerHeight;
+            };
+            const applyPos = () => {
+                const r = w.getBoundingClientRect();
+                b.style.left = r.left + 'px';
+                b.style.width = r.width + 'px';
+                b.style.bottom = '0px';
+            };
+            const update = () => {
+                const show = needsOverflow && isWrapVisible();
+                b.classList.toggle('hidden', !show);
+                b.setAttribute('aria-hidden', show ? 'false' : 'true');
+                if (show) { applyPos(); b.scrollLeft = s.scrollLeft; }
+            };
+            const syncWidth = () => {
+                i.style.width = s.scrollWidth + 'px';
+                needsOverflow = s.scrollWidth > s.clientWidth + 1;
+                update();
+            };
+            const sync = (src, dst) => {
+                if (rafSync) return;
+                rafSync = requestAnimationFrame(() => { dst.scrollLeft = src.scrollLeft; rafSync = 0; });
+            };
+            const onPos = () => {
+                if (rafPos) return;
+                rafPos = requestAnimationFrame(() => { update(); rafPos = 0; });
+            };
+            onBar = () => sync(b, s);
+            onScroll = () => sync(s, b);
+            onWinScroll = onPos;
+            onWinResize = () => { syncWidth(); onPos(); };
+            b.addEventListener('scroll', onBar, { passive: true });
+            s.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('scroll', onWinScroll, { passive: true });
+            window.addEventListener('resize', onWinResize);
+            ro = new ResizeObserver(() => { syncWidth(); });
+            ro.observe(s);
+            ro.observe(w);
+            if (s.firstElementChild) ro.observe(s.firstElementChild);
+            syncWidth();
+        };
+        const init = () => {
+            setup();
+            if (window.Livewire && Livewire.hook) { try { Livewire.hook('morph.updated', setup); } catch (e) {} }
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+        else init();
+        document.addEventListener('livewire:navigated', setup);
+        document.addEventListener('livewire:updated', setup);
+    })();
+    </script>
+    @endpush
 </div>

@@ -12,7 +12,15 @@ class Venue extends Model
         'code',
         'location_detail',
         'sort_order',
+        'is_active',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function event()
     {

@@ -23,18 +23,6 @@ return new class extends Migration
             $table->index('regu_id');
         });
 
-        DB::statement('
-            UPDATE participations
-            SET regu_id = (
-                SELECT pesertas.regu_id
-                FROM legacy_participation_mappings
-                INNER JOIN pesertas ON pesertas.id = legacy_participation_mappings.peserta_id
-                WHERE legacy_participation_mappings.participation_id = participations.id
-                LIMIT 1
-            )
-            WHERE regu_id IS NULL
-        ');
-
         if ($isSqlite) {
             DB::statement('PRAGMA foreign_keys = ON');
         }

@@ -97,7 +97,7 @@
         </div>
 
         @if ($showPreview && !empty($previewBreakdown))
-            <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/40">
+            <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-zinc-900 dark:border-blue-800 dark:bg-blue-950/70 dark:text-zinc-100">
                 <div class="mb-3 flex items-center justify-between">
                     <h2 class="font-semibold text-blue-900 dark:text-blue-200">
                         Preview Pembagian — Ukuran Tim {{ $previewBreakdown['team_size'] }} pemain
@@ -158,13 +158,13 @@
                 <span class="text-zinc-500">Total Team:</span>
                 <span class="font-semibold text-zinc-900 dark:text-white">{{ $summary['total_teams'] }}</span>
                 <span class="mx-2 text-zinc-300 dark:text-zinc-700">·</span>
-                <span class="text-zinc-500">Team Size:</span>
+                <span class="text-zinc-500 dark:text-zinc-400">Team Size:</span>
                 <span class="font-semibold text-zinc-900 dark:text-white">{{ $summary['team_size'] ?? '-' }} pemain</span>
             </div>
         @endif
 
         @if ($teams->isEmpty())
-            <div class="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">
+            <div class="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
                 Belum ada team. Gunakan Preview lalu "Bentuk Tim" untuk pembagian otomatis, atau tambahkan anggota secara manual.
             </div>
         @else
@@ -174,7 +174,7 @@
                         <div class="mb-3 flex items-center justify-between">
                             <div>
                                 <h2 class="font-semibold text-zinc-900 dark:text-white">{{ $team->name }}</h2>
-                                <p class="text-xs text-zinc-500">
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                     {{ $team->players->count() }} pemain · {{ $team->substitutes->count() }} cadangan
                                 </p>
                             </div>
@@ -184,11 +184,11 @@
                         </div>
 
                         <div class="mb-2">
-                            <p class="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Pemain</p>
+                            <p class="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Pemain</p>
                             <ol class="space-y-1">
                                 @foreach ($team->players as $member)
-                                    <li class="flex items-center gap-2 rounded-md bg-zinc-50 px-3 py-1.5 text-sm dark:bg-zinc-800">
-                                        <span class="text-zinc-400">{{ $loop->iteration }}.</span>
+                                    <li class="flex items-center gap-2 rounded-md bg-zinc-50 px-3 py-1.5 text-sm text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100">
+                                        <span class="text-zinc-500 dark:text-zinc-400">{{ $loop->iteration }}.</span>
                                         <span class="flex-1">{{ $member->competitionRegistration?->participation?->person?->nama ?? '-' }}</span>
                                         @if (! empty($swapOptions[$member->id] ?? []))
                                             <flux:select size="xs" wire:model="swapWith.{{ $member->id }}" class="w-44">
@@ -207,11 +207,11 @@
                         </div>
 
                         <div>
-                            <p class="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Cadangan</p>
+                            <p class="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Cadangan</p>
                             <ol class="space-y-1">
                                 @foreach ($team->substitutes as $member)
-                                    <li class="flex items-center gap-2 rounded-md bg-amber-50 px-3 py-1.5 text-sm dark:bg-amber-950/40">
-                                        <span class="text-zinc-400">{{ $loop->iteration }}.</span>
+                                    <li class="flex items-center gap-2 rounded-md bg-amber-50 px-3 py-1.5 text-sm text-zinc-800 dark:bg-amber-950/40 dark:text-amber-50">
+                                        <span class="text-zinc-500 dark:text-amber-200">{{ $loop->iteration }}.</span>
                                         <span class="flex-1">{{ $member->competitionRegistration?->participation?->person?->nama ?? '-' }}</span>
                                         @if (! empty($swapOptions[$member->id] ?? []))
                                             <flux:select size="xs" wire:model="swapWith.{{ $member->id }}" class="w-44">
@@ -231,10 +231,10 @@
 
                         @if ($availableRegistrations->isNotEmpty())
                             <div class="mt-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-                                <p class="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Tersedia (belum masuk team)</p>
+                                <p class="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Tersedia (belum masuk team)</p>
                                 <div class="max-h-28 space-y-1 overflow-y-auto">
                                     @foreach ($availableRegistrations as $reg)
-                                        <div class="flex items-center gap-2 rounded-md bg-zinc-50 px-3 py-1 text-xs dark:bg-zinc-800">
+                                        <div class="flex items-center gap-2 rounded-md bg-zinc-50 px-3 py-1 text-xs text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100">
                                             <span class="flex-1">{{ $reg->participation?->person?->nama ?? '#' . $reg->id }}</span>
                                             <button wire:click="addMember({{ $team->id }}, {{ $reg->id }}, false)" class="text-blue-600 hover:text-blue-800 dark:text-blue-400" title="Tambah sebagai pemain">+ pemain</button>
                                             <button wire:click="addMember({{ $team->id }}, {{ $reg->id }}, true)" class="text-amber-600 hover:text-amber-800 dark:text-amber-400" title="Tambah sebagai cadangan">+ cadangan</button>

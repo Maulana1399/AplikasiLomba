@@ -98,6 +98,28 @@ class Index extends Component
         $desa->update(['is_active' => ! $desa->is_active]);
     }
 
+    public function delete(int $id): void
+    {
+        Gate::authorize('manage-events');
+
+        $desa = desa::findOrFail($id);
+
+        if ($desa->kelompok()->exists()) {
+            session()->flash('error', 'Desa tidak dapat dihapus karena masih memiliki kelompok.');
+
+            return;
+        }
+
+        if (\App\Models\Person::where('desa_id', $desa->id)->exists()) {
+            session()->flash('error', 'Desa tidak dapat dihapus karena masih digunakan oleh data peserta.');
+
+            return;
+        }
+
+        $desa->delete();
+        session()->flash('success', 'Desa berhasil dihapus.');
+    }
+
     public function render()
     {
         return view('livewire.competition.desa.index', [

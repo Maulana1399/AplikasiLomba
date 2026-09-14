@@ -4,7 +4,6 @@ namespace App\Livewire\Competition\Category;
 
 use App\Models\CompetitionCategory;
 use App\Models\CompetitionCategoryExclusive;
-use App\Support\ActiveEventContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -23,6 +22,8 @@ class Index extends Component
 
     public string $newSortOrder = '';
 
+    public array $newMasterParticipantClassIds = [];
+
     public ?int $editId = null;
 
     public string $editName = '';
@@ -31,19 +32,21 @@ class Index extends Component
 
     public string $editSortOrder = '';
 
+    public array $editMasterParticipantClassIds = [];
+
     public array $editExclusiveIds = [];
 
     public bool $processing = false;
 
     public function mount(): void
     {
-        app(ActiveEventContext::class)->requireCurrent();
+        // Kategori is a global master — no ActiveEventContext filter.
     }
 
     public function toggleCreateForm(): void
     {
         $this->showCreateForm = ! $this->showCreateForm;
-        $this->reset(['newName', 'newCode', 'newSortOrder']);
+        $this->reset(['newName', 'newCode', 'newSortOrder', 'newMasterParticipantClassIds']);
         $this->resetErrorBag();
     }
 
@@ -57,26 +60,28 @@ class Index extends Component
         $this->processing = true;
 
         try {
-            $event = app(ActiveEventContext::class)->requireCurrent();
-
             $this->validate([
                 'newName' => [
                     'required', 'string', 'max:255',
-                    Rule::unique('competition_categories', 'name')->where('event_id', $event->id),
+                    Rule::unique('competition_categories', 'name'),
                 ],
                 'newCode' => 'nullable|string|max:50',
                 'newSortOrder' => 'nullable|integer|min:0',
+                'newMasterParticipantClassIds' => 'nullable|array',
+                'newMasterParticipantClassIds.*' => 'exists:master_participant_classes,id',
             ]);
 
-            CompetitionCategory::create([
-                'event_id' => $event->id,
+            $category = CompetitionCategory::create([
                 'name' => $this->newName,
                 'code' => $this->newCode ?: null,
                 'sort_order' => $this->newSortOrder !== '' ? (int) $this->newSortOrder : null,
             ]);
 
+            $validIds = \App\Models\MasterParticipantClass::whereIn('id', $this->newMasterParticipantClassIds ?? [])->pluck('id');
+            $category->masterParticipantClasses()->sync($validIds);
+
             $this->showCreateForm = false;
-            $this->reset(['newName', 'newCode', 'newSortOrder']);
+            $this->reset(['newName', 'newCode', 'newSortOrder', 'newMasterParticipantClassIds']);
             session()->flash('success', 'Kategori berhasil dibuat.');
         } finally {
             $this->processing = false;
@@ -85,11 +90,12 @@ class Index extends Component
 
     public function edit(int $id): void
     {
-        $category = CompetitionCategory::findOrFail($id);
+        $category = CompetitionCategory::with('masterParticipantClasses')->findOrFail($id);
         $this->editId = $category->id;
         $this->editName = $category->name;
         $this->editCode = $category->code ?? '';
         $this->editSortOrder = $category->sort_order ?? '';
+        $this->editMasterParticipantClassIds = $category->masterParticipantClasses->pluck('id')->map(fn ($v) => (int) $v)->all();
         $this->editExclusiveIds = array_map('intval', $category->allExclusiveCategoryIds());
     }
 
@@ -99,17 +105,17 @@ class Index extends Component
 
         $category = CompetitionCategory::findOrFail($this->editId);
 
-        $this->validate([
-            'editName' => [
-                'required', 'string', 'max:255',
-                Rule::unique('competition_categories', 'name')
-                    ->where('event_id', $category->event_id)
-                    ->ignore($category->id),
-            ],
-            'editCode' => 'nullable|string|max:50',
-            'editSortOrder' => 'nullable|integer|min:0',
-            'editExclusiveIds' => 'nullable|array',
-        ]);
+            $this->validate([
+                'editName' => [
+                    'required', 'string', 'max:255',
+                    Rule::unique('competition_categories', 'name')->ignore($category->id),
+                ],
+                'editCode' => 'nullable|string|max:50',
+                'editSortOrder' => 'nullable|integer|min:0',
+                'editMasterParticipantClassIds' => 'nullable|array',
+                'editMasterParticipantClassIds.*' => 'exists:master_participant_classes,id',
+                'editExclusiveIds' => 'nullable|array',
+            ]);
 
         $category->update([
             'name' => $this->editName,
@@ -117,7 +123,8 @@ class Index extends Component
             'sort_order' => $this->editSortOrder !== '' ? (int) $this->editSortOrder : null,
         ]);
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
+        $mpcIds = \App\Models\MasterParticipantClass::whereIn('id', $this->editMasterParticipantClassIds ?? [])->pluck('id');
+        $category->masterParticipantClasses()->sync($mpcIds);
 
         $selectedIds = collect($this->editExclusiveIds)
             ->map(fn ($id) => (int) $id)
@@ -133,14 +140,13 @@ class Index extends Component
             ->unique()
             ->values();
 
-        $validIds = CompetitionCategory::where('event_id', $event->id)
-            ->whereIn('id', $selectedIds)
+        $validIds = CompetitionCategory::whereIn('id', $selectedIds)
             ->pluck('id')
             ->map(fn ($id) => (int) $id)
             ->values();
 
         if (! $selectedIds->isEmpty() && $validIds->count() !== $selectedIds->count()) {
-            $this->addError('editExclusiveIds', 'Kategori konflik harus berasal dari event yang sama.');
+            $this->addError('editExclusiveIds', 'Kategori tidak ditemukan.');
 
             return;
         }
@@ -161,13 +167,13 @@ class Index extends Component
             }
         });
 
-        $this->reset(['editId', 'editName', 'editCode', 'editSortOrder', 'editExclusiveIds']);
+        $this->reset(['editId', 'editName', 'editCode', 'editSortOrder', 'editMasterParticipantClassIds', 'editExclusiveIds']);
         session()->flash('success', 'Kategori berhasil diperbarui.');
     }
 
     public function cancelEdit(): void
     {
-        $this->reset(['editId', 'editName', 'editCode', 'editSortOrder', 'editExclusiveIds']);
+        $this->reset(['editId', 'editName', 'editCode', 'editSortOrder', 'editMasterParticipantClassIds', 'editExclusiveIds']);
     }
 
     public function toggleActive(int $id): void
@@ -178,17 +184,40 @@ class Index extends Component
         $category->update(['is_active' => ! $category->is_active]);
     }
 
+    public function delete(int $id): void
+    {
+        Gate::authorize('manage-events');
+
+        $category = CompetitionCategory::findOrFail($id);
+
+        if ($category->competitionClasses()->exists()) {
+            session()->flash('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh kelas lomba. Gunakan Nonaktifkan.');
+
+            return;
+        }
+
+        if ($category->competitionRegistrations()->exists()) {
+            session()->flash('error', 'Kategori tidak dapat dihapus karena masih memiliki pendaftaran peserta. Gunakan Nonaktifkan.');
+
+            return;
+        }
+
+        $category->delete();
+        session()->flash('success', 'Kategori berhasil dihapus.');
+    }
+
     public function render()
     {
-        $event = app(ActiveEventContext::class)->current();
-
         return view('livewire.competition.category.index', [
-            'categories' => CompetitionCategory::where('event_id', $event?->id)
+            'categories' => CompetitionCategory::with('masterParticipantClasses')
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),
-            'candidateCategories' => CompetitionCategory::where('event_id', $event?->id)
-                ->when($this->editId, fn ($query) => $query->where('id', '!=', $this->editId))
+            'candidateCategories' => CompetitionCategory::when($this->editId, fn ($query) => $query->where('id', '!=', $this->editId))
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(),
+            'masterParticipantClasses' => \App\Models\MasterParticipantClass::where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),

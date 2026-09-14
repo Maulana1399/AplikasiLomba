@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('regus', function (Blueprint $table) {
-            $table->enum('jenis_kelamin', ['Laki - Laki', 'Perempuan'])->nullable()->after('regu');
+            $table->string('jenis_kelamin')->nullable()->after('regu');
         });
     }
 

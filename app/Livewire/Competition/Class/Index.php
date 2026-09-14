@@ -7,6 +7,7 @@ use App\Models\CompetitionClass;
 use App\Models\CompetitionHeatResult;
 use App\Models\CompetitionOutcome;
 use App\Models\CompetitionTeamOutcome;
+use App\Models\Event;
 use App\Support\ActiveEventContext;
 use App\Support\CompetitionFormat;
 use App\Support\CompetitionResultType;
@@ -17,6 +18,8 @@ use Livewire\Component;
 class Index extends Component
 {
     public bool $showCreateForm = false;
+
+    public string $newEventId = '';
 
     public string $newName = '';
 
@@ -32,11 +35,15 @@ class Index extends Component
 
     public string $newWinnerCount = '';
 
+    public string $newHonorableMentionCount = '';
+
     public string $newTeamSize = '';
 
     public string $newCompetitionCategoryId = '';
 
     public ?int $editId = null;
+
+    public string $editEventId = '';
 
     public string $editName = '';
 
@@ -52,6 +59,8 @@ class Index extends Component
 
     public string $editWinnerCount = '';
 
+    public string $editHonorableMentionCount = '';
+
     public string $editTeamSize = '';
 
     public string $editCompetitionCategoryId = '';
@@ -60,14 +69,37 @@ class Index extends Component
 
     public function mount(): void
     {
-        app(ActiveEventContext::class)->requireCurrent();
+        $event = app(ActiveEventContext::class)->requireCurrent();
+        $this->newEventId = (string) $event->id;
     }
 
     public function toggleCreateForm(): void
     {
         $this->showCreateForm = ! $this->showCreateForm;
-        $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType', 'newFormat', 'newWinnerCount', 'newTeamSize', 'newCompetitionCategoryId']);
+        $this->reset(['newEventId', 'newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType', 'newFormat', 'newWinnerCount', 'newHonorableMentionCount', 'newTeamSize', 'newCompetitionCategoryId']);
+        if ($this->showCreateForm) {
+            $event = app(ActiveEventContext::class)->current();
+            $this->newEventId = (string) ($event?->id ?? '');
+        }
         $this->resetErrorBag();
+    }
+
+    public function updatedNewEventId(): void
+    {
+        $validIds = $this->getCategoriesForEvent($this->newEventId)->pluck('id')->map(fn ($id) => (string) $id);
+        if ($this->newCompetitionCategoryId !== '' && ! $validIds->contains($this->newCompetitionCategoryId)) {
+            $this->newCompetitionCategoryId = '';
+        }
+        $this->resetValidation('newCompetitionCategoryId');
+    }
+
+    public function updatedEditEventId(): void
+    {
+        $validIds = $this->getCategoriesForEvent($this->editEventId)->pluck('id')->map(fn ($id) => (string) $id);
+        if ($this->editCompetitionCategoryId !== '' && ! $validIds->contains($this->editCompetitionCategoryId)) {
+            $this->editCompetitionCategoryId = '';
+        }
+        $this->resetValidation('editCompetitionCategoryId');
     }
 
     public function formatOptions(): array
@@ -125,6 +157,7 @@ class Index extends Component
 
         try {
             $this->validate([
+                'newEventId' => 'required|exists:events,id',
                 'newName' => [
                     'required', 'string', 'max:255',
                     Rule::unique('competition_classes', 'name')->where('competition_category_id', $this->newCompetitionCategoryId),
@@ -135,14 +168,21 @@ class Index extends Component
                 'newFormat' => 'required|string|'.$this->formatRule(),
                 'newResultType' => 'nullable|in:'.implode(',', CompetitionResultType::ALL),
                 'newWinnerCount' => 'nullable|integer|min:1|max:100',
+                'newHonorableMentionCount' => 'nullable|integer|min:0|max:100',
                 'newTeamSize' => 'nullable|integer|min:1|max:100',
                 'newCompetitionCategoryId' => 'required|exists:competition_categories,id',
             ]);
 
-            $event = app(ActiveEventContext::class)->requireCurrent();
+            $event = Event::findOrFail($this->newEventId);
 
-            if (! CompetitionCategory::where('id', $this->newCompetitionCategoryId)->where('event_id', $event->id)->exists()) {
-                $this->addError('newCompetitionCategoryId', 'Kategori harus berasal dari event aktif.');
+            if (! $event->isCompetition()) {
+                $this->addError('newEventId', 'Lomba harus berupa event kompetisi.');
+
+                return;
+            }
+
+            if (! CompetitionCategory::where('id', $this->newCompetitionCategoryId)->whereHas('events', fn ($q) => $q->where('events.id', $event->id))->exists()) {
+                $this->addError('newCompetitionCategoryId', 'Kategori harus berasal dari lomba yang dipilih.');
 
                 return;
             }
@@ -160,11 +200,12 @@ class Index extends Component
                 'format' => $format,
                 'result_type' => $resultType,
                 'winner_count' => $this->newWinnerCount !== '' ? (int) $this->newWinnerCount : 3,
+                'honorable_mention_count' => $this->newHonorableMentionCount !== '' ? (int) $this->newHonorableMentionCount : 0,
                 'team_size' => $this->newTeamSize !== '' ? (int) $this->newTeamSize : null,
             ]);
 
             $this->showCreateForm = false;
-$this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType', 'newFormat', 'newWinnerCount', 'newTeamSize', 'newCompetitionCategoryId']);
+            $this->reset(['newEventId', 'newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType', 'newFormat', 'newWinnerCount', 'newHonorableMentionCount', 'newTeamSize', 'newCompetitionCategoryId']);
             session()->flash('success', 'Kelas berhasil dibuat.');
         } finally {
             $this->processing = false;
@@ -185,6 +226,7 @@ $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType'
     {
         $class = CompetitionClass::with('competitionCategory')->findOrFail($id);
         $this->editId = $class->id;
+        $this->editEventId = (string) $class->event_id;
         $this->editName = $class->name;
         $this->editGender = $class->gender ?? '';
         $this->editCode = $class->code ?? '';
@@ -192,6 +234,7 @@ $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType'
         $this->editResultType = $class->result_type ?? '';
         $this->editFormat = $this->uiFormat($class->format, $class->resultType());
         $this->editWinnerCount = (string) ($class->winner_count ?? 3);
+        $this->editHonorableMentionCount = (string) ($class->honorable_mention_count ?? 0);
         $this->editTeamSize = (string) ($class->team_size ?? '');
         $this->editCompetitionCategoryId = (string) $class->competition_category_id;
     }
@@ -201,6 +244,7 @@ $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType'
         Gate::authorize('manage-events');
 
         $this->validate([
+            'editEventId' => 'required|exists:events,id',
             'editName' => [
                 'required', 'string', 'max:255',
                 Rule::unique('competition_classes', 'name')
@@ -213,14 +257,23 @@ $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType'
             'editFormat' => 'required|string|'.$this->storedFormatRule(),
             'editResultType' => 'nullable|in:'.implode(',', CompetitionResultType::ALL),
             'editWinnerCount' => 'nullable|integer|min:1|max:100',
+            'editHonorableMentionCount' => 'nullable|integer|min:0|max:100',
             'editTeamSize' => 'nullable|integer|min:1|max:100',
             'editCompetitionCategoryId' => 'required|exists:competition_categories,id',
         ]);
 
         $class = CompetitionClass::findOrFail($this->editId);
 
-        if (! CompetitionCategory::where('id', $this->editCompetitionCategoryId)->where('event_id', $class->event_id)->exists()) {
-            $this->addError('editCompetitionCategoryId', 'Kategori harus berasal dari event yang sama.');
+        $event = Event::findOrFail($this->editEventId);
+
+        if (! $event->isCompetition()) {
+            $this->addError('editEventId', 'Lomba harus berupa event kompetisi.');
+
+            return;
+        }
+
+        if (! CompetitionCategory::where('id', $this->editCompetitionCategoryId)->whereHas('events', fn ($q) => $q->where('events.id', $event->id))->exists()) {
+            $this->addError('editCompetitionCategoryId', 'Kategori harus berasal dari lomba yang dipilih.');
 
             return;
         }
@@ -238,6 +291,7 @@ $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType'
         }
 
         $class->update([
+            'event_id' => $event->id,
             'competition_category_id' => $this->editCompetitionCategoryId,
             'name' => $this->editName,
             'gender' => $this->editGender ?: null,
@@ -246,10 +300,11 @@ $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType'
             'format' => $format,
             'result_type' => $resultType,
             'winner_count' => $this->editWinnerCount !== '' ? (int) $this->editWinnerCount : 3,
+            'honorable_mention_count' => $this->editHonorableMentionCount !== '' ? (int) $this->editHonorableMentionCount : 0,
             'team_size' => $this->editTeamSize !== '' ? (int) $this->editTeamSize : null,
         ]);
 
-        $this->reset(['editId', 'editName', 'editGender', 'editCode', 'editSortOrder', 'editResultType', 'editFormat', 'editWinnerCount', 'editTeamSize', 'editCompetitionCategoryId']);
+        $this->reset(['editId', 'editEventId', 'editName', 'editGender', 'editCode', 'editSortOrder', 'editResultType', 'editFormat', 'editWinnerCount', 'editHonorableMentionCount', 'editTeamSize', 'editCompetitionCategoryId']);
         session()->flash('success', 'Kelas berhasil diperbarui.');
     }
 
@@ -285,7 +340,7 @@ $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType'
 
     public function cancelEdit(): void
     {
-        $this->reset(['editId', 'editName', 'editGender', 'editCode', 'editSortOrder', 'editResultType', 'editFormat', 'editWinnerCount', 'editTeamSize', 'editCompetitionCategoryId']);
+        $this->reset(['editId', 'editEventId', 'editName', 'editGender', 'editCode', 'editSortOrder', 'editResultType', 'editFormat', 'editWinnerCount', 'editHonorableMentionCount', 'editTeamSize', 'editCompetitionCategoryId']);
     }
 
     public function toggleActive(int $id): void
@@ -296,21 +351,68 @@ $this->reset(['newName', 'newGender', 'newCode', 'newSortOrder', 'newResultType'
         $class->update(['is_active' => ! $class->is_active]);
     }
 
+    public function delete(int $id): void
+    {
+        Gate::authorize('manage-events');
+
+        $class = CompetitionClass::findOrFail($id);
+
+        if ($class->competitionRegistrations()->exists()) {
+            session()->flash('error', 'Kelas tidak dapat dihapus karena masih memiliki pendaftaran peserta. Gunakan Nonaktifkan.');
+
+            return;
+        }
+
+        if ($class->competitionSchedules()->exists()) {
+            session()->flash('error', 'Kelas tidak dapat dihapus karena masih memiliki jadwal pertandingan. Gunakan Nonaktifkan.');
+
+            return;
+        }
+
+        if ($class->competitionTeams()->exists()) {
+            session()->flash('error', 'Kelas tidak dapat dihapus karena masih memiliki tim. Gunakan Nonaktifkan.');
+
+            return;
+        }
+
+        if ($class->heatFormats()->exists()) {
+            session()->flash('error', 'Kelas tidak dapat dihapus karena masih memiliki format heat. Gunakan Nonaktifkan.');
+
+            return;
+        }
+
+        $class->delete();
+        session()->flash('success', 'Kelas berhasil dihapus.');
+    }
+
     public function render()
     {
-        $event = app(ActiveEventContext::class)->current();
-
         return view('livewire.competition.class.index', [
-            'classes' => CompetitionClass::with('competitionCategory')
-                ->where('event_id', $event?->id)
+            'classes' => CompetitionClass::with('competitionCategory', 'event')
+                ->whereHas('event', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'))
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),
-            'categories' => CompetitionCategory::where('event_id', $event?->id)
-                ->where('is_active', true)
+            'events' => Event::where('event_type', 'competition')
+                ->where('status', 'active')
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),
+            'categories' => $this->getCategoriesForEvent($this->newEventId),
+            'editCategories' => $this->getCategoriesForEvent($this->editEventId),
         ]);
+    }
+
+    public function getCategoriesForEvent(string $eventId): \Illuminate\Support\Collection
+    {
+        if ($eventId === '' || $eventId === '0') {
+            return collect();
+        }
+
+        return CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $eventId))
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
     }
 }

@@ -29,9 +29,19 @@ class Registration extends Component
 
     public string $kelompokId = '';
 
-    public string $competitionCategoryId = '';
+    public ?int $activeEventId = null;
 
-    public string $competitionClassId = '';
+    public ?string $activeEventName = null;
+
+    public string $competitionId = '';
+
+    public ?array $resolvedClass = null;
+
+    public ?string $resolveError = null;
+
+    public array $candidateClasses = [];
+
+    public string $selectedClassId = '';
 
     public bool $processing = false;
 
@@ -45,7 +55,9 @@ class Registration extends Component
 
     public function mount(): void
     {
-        app(ActiveEventContext::class)->requireCurrent();
+        $event = app(ActiveEventContext::class)->requireCurrent();
+        $this->activeEventId = $event->id;
+        $this->activeEventName = $event->name;
     }
 
     public function findPerson(): ?Person
@@ -85,72 +97,193 @@ class Registration extends Component
         ])->toArray();
     }
 
+    public function resolveCompetitionClass(): void
+    {
+        $this->resolvedClass = null;
+        $this->resolveError = null;
+        $this->candidateClasses = [];
+        $this->alreadyRegistered = false;
+        $this->conflictMessage = '';
+
+        if (blank($this->competitionId)) {
+            return;
+        }
+
+        $event = \App\Models\Event::where('id', $this->competitionId)
+            ->where('event_type', 'competition')->first();
+
+        if (! $event) {
+            $this->resolveError = 'Lomba tidak ditemukan.';
+
+            return;
+        }
+
+        if (blank($this->participantClassId) || blank($this->jenisKelamin)) {
+            return;
+        }
+
+        $participantClass = MasterParticipantClass::find($this->participantClassId);
+
+        if (! $participantClass) {
+            $this->resolveError = 'Kelas peserta tidak ditemukan.';
+
+            return;
+        }
+
+        $gender = $this->jenisKelamin === 'L' ? 'L' : ($this->jenisKelamin === 'P' ? 'P' : $this->jenisKelamin);
+
+        $mapped = $gender === 'L' ? 'L' : ($gender === 'P' ? 'P' : null);
+
+        $categoryIds = CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event->id))
+            ->where('is_active', true)
+            ->whereHas('masterParticipantClasses', fn ($q) => $q->where('master_participant_classes.id', $participantClass->id))
+            ->pluck('id');
+
+        if ($categoryIds->isEmpty()) {
+            $this->resolveError = 'Tidak ada kategori lomba yang sesuai dengan kelas peserta untuk lomba ini.';
+
+            return;
+        }
+
+        $candidates = CompetitionClass::where('event_id', $event->id)
+            ->where('is_active', true)
+            ->whereIn('competition_category_id', $categoryIds)
+            ->whereHas('competitionCategory', fn ($q) => $q->where('is_active', true))
+            ->with('competitionCategory')
+            ->get()->filter(function ($cls) use ($mapped) {
+                if ($cls->gender === 'M') {
+                    return true;
+                }
+
+                return $mapped !== null && $cls->gender === $mapped;
+            })->values();
+
+        if ($candidates->isEmpty()) {
+            $this->resolveError = 'Tidak ada kelas lomba yang sesuai dengan kelas/gender peserta untuk lomba ini.';
+
+            return;
+        }
+
+        $this->candidateClasses = $candidates->map(fn ($cls) => [
+            'id' => $cls->id,
+            'name' => $cls->name,
+            'category_id' => $cls->competition_category_id,
+            'category_name' => $cls->competitionCategory?->name ?? '-',
+            'format' => $cls->format,
+            'format_label' => \App\Support\CompetitionFormat::label($cls->format),
+            'result_type' => $cls->resultType(),
+            'result_label' => \App\Support\CompetitionResultType::label($cls->resultType()),
+            'gender' => $cls->gender,
+        ])->values()->all();
+
+        if ($this->candidateClasses === []) {
+            $this->resolveError = 'Tidak ada kelas lomba yang sesuai dengan kelas/gender peserta untuk lomba ini.';
+
+            return;
+        }
+
+        if (count($this->candidateClasses) === 1) {
+            if (blank($this->selectedClassId)) {
+                $this->selectedClassId = (string) $this->candidateClasses[0]['id'];
+            }
+
+            if (! collect($this->candidateClasses)->contains(fn ($c) => (string) $c['id'] === $this->selectedClassId)) {
+                $this->selectedClassId = (string) $this->candidateClasses[0]['id'];
+            }
+
+            $cls = $candidates->firstWhere('id', (int) $this->selectedClassId) ?? $candidates->first();
+        } else {
+            if (blank($this->selectedClassId) || ! collect($this->candidateClasses)->contains(fn ($c) => (string) $c['id'] === $this->selectedClassId)) {
+                $this->resolveError = null;
+                $this->resolvedClass = null;
+
+                return;
+            }
+
+            $cls = $candidates->firstWhere('id', (int) $this->selectedClassId);
+
+            if (! $cls) {
+                $this->resolveError = 'Kelas lomba tidak valid.';
+
+                return;
+            }
+        }
+
+        $cls->load('competitionCategory');
+
+        $this->resolvedClass = [
+            'id' => $cls->id,
+            'name' => $cls->name,
+            'category_id' => $cls->competition_category_id,
+            'category_name' => $cls->competitionCategory?->name ?? '-',
+            'format' => $cls->format,
+            'format_label' => \App\Support\CompetitionFormat::label($cls->format),
+            'result_type' => $cls->resultType(),
+            'result_label' => \App\Support\CompetitionResultType::label($cls->resultType()),
+            'gender' => $cls->gender,
+        ];
+
+        $person = $this->findPerson();
+
+        if ($person) {
+            $participation = Participation::where('person_id', $person->id)
+                ->where('event_id', $event->id)->first();
+
+            if ($participation) {
+                if (\App\Models\CompetitionRegistration::where('participation_id', $participation->id)
+                    ->where('competition_class_id', $cls->id)->exists()) {
+                    $this->alreadyRegistered = true;
+                }
+
+                $category = CompetitionCategory::find($cls->competition_category_id);
+
+                if ($category) {
+                    $conflictIds = $category->allExclusiveCategoryIds();
+
+                    if (! empty($conflictIds)) {
+                        $conflictNames = \App\Models\CompetitionRegistration::where('participation_id', $participation->id)
+                            ->whereIn('competition_category_id', $conflictIds)
+                            ->with('competitionCategory')->get()
+                            ->pluck('competitionCategory.name')->implode(', ');
+
+                        if ($conflictNames) {
+                            $this->conflictMessage = "Konflik dengan kategori yang sudah diikuti: {$conflictNames}";
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public function checkDuplicate(?Person $person): void
     {
         $this->alreadyRegistered = false;
 
-        if (! $person || blank($this->competitionClassId)) {
+        if (! $person || ! $this->resolvedClass) {
             return;
         }
 
-        $event = app(ActiveEventContext::class)->current();
+        $event = blank($this->competitionId) ? app(ActiveEventContext::class)->current() : \App\Models\Event::find($this->competitionId);
+
         $participation = Participation::where('person_id', $person->id)
             ->where('event_id', $event?->id)
             ->first();
 
-        if ($participation) {
-            $existing = \App\Models\CompetitionRegistration::where('participation_id', $participation->id)
-                ->where('competition_class_id', $this->competitionClassId)
-                ->exists();
-            $this->alreadyRegistered = $existing;
+        if ($participation && isset($this->resolvedClass['id'])) {
+            $this->alreadyRegistered = \App\Models\CompetitionRegistration::where('participation_id', $participation->id)
+                ->where('competition_class_id', $this->resolvedClass['id'])->exists();
         }
     }
 
     public function checkConflict(?Person $person): void
     {
-        $this->conflictMessage = '';
-
-        if (! $person || blank($this->competitionCategoryId)) {
-            return;
-        }
-
-        $category = CompetitionCategory::find($this->competitionCategoryId);
-        if (! $category) {
-            return;
-        }
-
-        $conflictCategoryIds = $category->allExclusiveCategoryIds();
-        if (empty($conflictCategoryIds)) {
-            return;
-        }
-
-        $event = app(ActiveEventContext::class)->current();
-        $participation = Participation::where('person_id', $person->id)
-            ->where('event_id', $event?->id)
-            ->first();
-
-        if (! $participation) {
-            return;
-        }
-
-        $conflictNames = \App\Models\CompetitionRegistration::where('participation_id', $participation->id)
-            ->whereIn('competition_category_id', $conflictCategoryIds)
-            ->with('competitionCategory')
-            ->get()
-            ->pluck('competitionCategory.name')
-            ->implode(', ');
-
-        if ($conflictNames) {
-            $this->conflictMessage = "Konflik dengan kategori yang sudah diikuti: {$conflictNames}";
-        }
     }
 
     public function refreshPersonState(): void
     {
         $person = $this->findPerson();
         $this->loadParticipations($person);
-        $this->checkDuplicate($person);
-        $this->checkConflict($person);
+        $this->resolveCompetitionClass();
     }
 
     public function updatedNama(): void
@@ -164,15 +297,20 @@ class Registration extends Component
         $this->refreshPersonState();
     }
 
-    public function updatedCompetitionClassId(): void
+    public function updatedParticipantClassId(): void
     {
-        $this->checkDuplicate($this->findPerson());
+        $this->refreshPersonState();
     }
 
-    public function updatedCompetitionCategoryId(): void
+    public function updatedJenisKelamin(): void
     {
-        $this->competitionClassId = '';
-        $this->checkConflict($this->findPerson());
+        $this->refreshPersonState();
+    }
+
+    public function updatedCompetitionId(): void
+    {
+        $this->selectedClassId = '';
+        $this->refreshPersonState();
     }
 
     public function submit(): void
@@ -192,34 +330,53 @@ class Registration extends Component
                 'tanggalLahir' => 'nullable|date',
                 'desaId' => 'required|exists:desas,id',
                 'kelompokId' => 'nullable|exists:kelompoks,id',
-                'competitionCategoryId' => 'required|exists:competition_categories,id',
-                'competitionClassId' => 'required|exists:competition_classes,id',
+                'competitionId' => 'required|exists:events,id',
             ]);
 
-            $event = app(ActiveEventContext::class)->requireCurrent();
+            $event = \App\Models\Event::where('id', $this->competitionId)
+                ->where('event_type', 'competition')->first();
 
-            $category = CompetitionCategory::where('id', $this->competitionCategoryId)
-                ->where('event_id', $event->id)
-                ->first();
-
-            if (! $category) {
-                $this->addError('competitionCategoryId', 'Kategori harus berasal dari event aktif.');
+            if (! $event) {
+                $this->addError('competitionId', 'Lomba tidak ditemukan.');
 
                 return;
             }
 
-            $class = CompetitionClass::where('id', $this->competitionClassId)
-                ->where('competition_category_id', $category->id)
-                ->first();
+            $this->resolveCompetitionClass();
 
-            if (! $class) {
-                $this->addError('competitionClassId', 'Kelas harus berasal dari kategori yang dipilih.');
+            if (! $this->resolvedClass) {
+                $this->addError('competitionId', $this->resolveError ?? 'Tidak ada kelas lomba yang sesuai dengan kelas/gender peserta untuk lomba ini.');
+
+                return;
+            }
+
+            if ($this->alreadyRegistered || $this->conflictMessage) {
+                if ($this->alreadyRegistered) {
+                    $this->addError('competitionId', 'Peserta sudah terdaftar di kelas ini.');
+                }
+                if ($this->conflictMessage) {
+                    $this->addError('competitionId', $this->conflictMessage);
+                }
+
+                return;
+            }
+
+            if (! $event->competitionClasses()->where('is_active', true)->exists()) {
+                $this->addError('competitionId', 'Lomba tidak memiliki kelas lomba yang aktif.');
+
+                return;
+            }
+
+            $class = CompetitionClass::with('competitionCategory')->findOrFail($this->resolvedClass['id']);
+            $category = $class->competitionCategory;
+
+            if (! $category || ! $category->is_active || ! $class->is_active) {
+                $this->addError('competitionId', 'Kelas lomba tidak aktif.');
 
                 return;
             }
 
             $participantClass = MasterParticipantClass::findOrFail($this->participantClassId);
-
             $service = app(CompetitionRegistrationService::class);
 
             $result = $service->register(
@@ -228,8 +385,8 @@ class Registration extends Component
                 tanggalLahir: $this->tanggalLahir ?: null,
                 desaId: (int) $this->desaId,
                 eventId: $event->id,
-                competitionCategoryId: (int) $this->competitionCategoryId,
-                competitionClassId: (int) $this->competitionClassId,
+                competitionCategoryId: (int) $category->id,
+                competitionClassId: (int) $class->id,
                 kelompokId: $this->kelompokId !== '' ? (int) $this->kelompokId : null,
                 kelas: $participantClass->name,
             );
@@ -263,14 +420,21 @@ class Registration extends Component
         }
     }
 
+    public function updatedSelectedClassId(): void
+    {
+        $this->resolveCompetitionClass();
+    }
+
     public function resetForm(): void
     {
         $this->reset([
             'nama', 'participantClassId', 'jenisKelamin', 'tanggalLahir',
-            'desaId', 'kelompokId', 'competitionCategoryId', 'competitionClassId',
+            'desaId', 'kelompokId', 'competitionId', 'resolvedClass', 'resolveError',
+            'candidateClasses', 'selectedClassId',
             'alreadyRegistered', 'conflictMessage', 'personParticipations', 'successData',
         ]);
         $this->resetErrorBag();
+        $this->resolveCompetitionClass();
     }
 
     public function getParticipantClassesProperty()
@@ -302,25 +466,13 @@ class Registration extends Component
             ->get();
     }
 
-    public function getCategoriesProperty()
+    public function getCompetitionsProperty()
     {
-        $event = app(ActiveEventContext::class)->current();
-
-        return CompetitionCategory::where('event_id', $event?->id)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
-    }
-
-    public function getClassesProperty()
-    {
-        if (blank($this->competitionCategoryId)) {
-            return collect();
-        }
-
-        return CompetitionClass::where('competition_category_id', $this->competitionCategoryId)
-            ->where('is_active', true)
+        return \App\Models\Event::where('event_type', 'competition')
+            ->where('status', 'active')
+            ->whereHas('competitionClasses', function ($query) {
+                $query->where('is_active', true);
+            })
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -332,8 +484,7 @@ class Registration extends Component
             'participantClasses' => $this->participantClasses,
             'desas' => $this->desas,
             'kelompoks' => $this->kelompoks,
-            'categories' => $this->categories,
-            'classes' => $this->classes,
+            'competitions' => $this->competitions,
         ]);
     }
 }

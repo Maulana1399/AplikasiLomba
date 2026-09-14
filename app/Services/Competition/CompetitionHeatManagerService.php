@@ -4,6 +4,7 @@ namespace App\Services\Competition;
 
 use App\Models\CompetitionClass;
 use App\Models\CompetitionHeatFormat;
+use App\Models\CompetitionHeatQualifier;
 use App\Models\CompetitionHeatResult;
 use App\Models\CompetitionRegistration;
 use App\Models\CompetitionSchedule;
@@ -186,7 +187,76 @@ class CompetitionHeatManagerService
             throw new ModelNotFoundException('Format heat bukan milik event aktif.');
         }
 
+        CompetitionHeatQualifier::where('competition_class_id', $format->competition_class_id)
+            ->where('round', $format->round)
+            ->delete();
+
         $format->delete();
+    }
+
+    public function heatQualifiers(int $classId, int $round): Collection
+    {
+        return CompetitionHeatQualifier::where('competition_class_id', $classId)
+            ->where('round', $round)
+            ->orderBy('heat_index')
+            ->get();
+    }
+
+    public function effectiveQualifiersForHeat(int $classId, int $round, int $heatIndex): ?int
+    {
+        $override = CompetitionHeatQualifier::where('competition_class_id', $classId)
+            ->where('round', $round)
+            ->where('heat_index', $heatIndex)
+            ->first();
+
+        if ($override !== null) {
+            return (int) $override->qualifiers_per_heat;
+        }
+
+        $format = $this->formatForRound($classId, $round);
+
+        return $format ? (int) $format->qualifiers_per_heat : null;
+    }
+
+    public function upsertHeatQualifier(int $eventId, int $classId, int $round, int $heatIndex, int $qualifiersPerHeat): CompetitionHeatQualifier
+    {
+        return DB::transaction(function () use ($eventId, $classId, $round, $heatIndex, $qualifiersPerHeat) {
+            $this->classInEvent($eventId, $classId);
+
+            if ($round < 1 || $heatIndex < 1) {
+                throw ValidationException::withMessages(['heat_qualifier' => 'Round dan heat index harus >= 1.']);
+            }
+
+            if ($qualifiersPerHeat < 1) {
+                throw ValidationException::withMessages(['heat_qualifier' => 'Jumlah lolos per heat harus lebih dari 0.']);
+            }
+
+            $schedules = $this->multiRound->roundSchedules($classId, $round);
+            $target = $schedules->values()->get($heatIndex - 1);
+
+            if ($target !== null) {
+                $entryCount = $target->scheduleEntries()->count();
+                if ($entryCount > 0 && $qualifiersPerHeat > $entryCount) {
+                    throw ValidationException::withMessages(['heat_qualifier' => 'Jumlah lolos tidak boleh melebihi peserta heat.']);
+                }
+            }
+
+            return CompetitionHeatQualifier::updateOrCreate(
+                ['competition_class_id' => $classId, 'round' => $round, 'heat_index' => $heatIndex],
+                ['qualifiers_per_heat' => $qualifiersPerHeat],
+            );
+        });
+    }
+
+    public function deleteHeatQualifier(int $eventId, int $qualifierId): void
+    {
+        $qualifier = CompetitionHeatQualifier::with('competitionClass')->findOrFail($qualifierId);
+
+        if ((int) $qualifier->competitionClass?->event_id !== (int) $eventId) {
+            throw new ModelNotFoundException('Heat qualifier bukan milik event aktif.');
+        }
+
+        $qualifier->delete();
     }
 
     // -------------------------------------------------------------------------

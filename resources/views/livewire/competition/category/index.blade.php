@@ -15,6 +15,12 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if ($showCreateForm)
         <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 class="mb-4 text-lg font-semibold text-zinc-900 dark:text-white">Kategori Baru</h2>
@@ -35,6 +41,17 @@
                     @error('newSortOrder') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
+            <div class="mt-4">
+                <p class="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">Kelas Peserta</p>
+                <p class="mb-2 text-xs text-zinc-500">Pilih satu atau banyak Kelas Peserta untuk kategori ini.</p>
+                <flux:checkbox.group wire:model.live="newMasterParticipantClassIds" class="grid gap-2 sm:grid-cols-3">
+                    @foreach ($masterParticipantClasses as $mpc)
+                        <flux:checkbox wire:key="new-mpc-{{ $mpc->id }}" value="{{ $mpc->id }}" label="{{ $mpc->name }}" />
+                    @endforeach
+                </flux:checkbox.group>
+                @error('newMasterParticipantClassIds') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                @error('newMasterParticipantClassIds.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+            </div>
             <div class="mt-4 flex justify-end">
                 <flux:button wire:click="create" variant="primary" :loading="$processing">Simpan</flux:button>
             </div>
@@ -47,6 +64,7 @@
                 <tr>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Nama</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Kode</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Kelas Peserta</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Urutan</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Status</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Aksi</th>
@@ -64,6 +82,14 @@
                                 <flux:input wire:model="editCode" size="sm" />
                             </td>
                             <td class="px-4 py-2">
+                                <flux:checkbox.group wire:model.live="editMasterParticipantClassIds" class="grid gap-1">
+                                    @foreach ($masterParticipantClasses as $mpc)
+                                        <flux:checkbox wire:key="edit-mpc-{{ $mpc->id }}" value="{{ $mpc->id }}" label="{{ $mpc->name }}" />
+                                    @endforeach
+                                </flux:checkbox.group>
+                                @error('editMasterParticipantClassIds') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </td>
+                            <td class="px-4 py-2">
                                 <flux:input wire:model="editSortOrder" type="number" size="sm" />
                             </td>
                             <td class="px-4 py-2 text-sm">{{ $category->is_active ? 'Active' : 'Inactive' }}</td>
@@ -78,6 +104,7 @@
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
                             <td class="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">{{ $category->name }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $category->code ?? '-' }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $category->masterParticipantClasses->pluck('name')->implode(', ') ?: '-' }}</td>
                             <td class="px-4 py-3 text-sm text-zinc-500">{{ $category->sort_order ?? '-' }}</td>
                             <td class="px-4 py-3 text-sm">
                                 <span @class([
@@ -92,13 +119,15 @@
                                     <flux:button wire:click="toggleActive({{ $category->id }})" size="sm" variant="{{ $category->is_active ? 'danger' : 'primary' }}">
                                         {{ $category->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                     </flux:button>
+                                    <flux:button wire:click="delete({{ $category->id }})" size="sm" variant="danger"
+                                        wire:confirm="Yakin hapus kategori ini? Tindakan tidak dapat dibatalkan.">Hapus</flux:button>
                                 </div>
                             </td>
                         </tr>
                     @endif
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-8 text-center text-sm text-zinc-500">Belum ada kategori.</td>
+                        <td colspan="6" class="px-4 py-8 text-center text-sm text-zinc-500">Belum ada kategori.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -109,15 +138,13 @@
         <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 class="mb-1 text-lg font-semibold text-zinc-900 dark:text-white">Kategori Konflik (Exclusive)</h2>
             <p class="mb-4 text-sm text-zinc-500 dark:text-zinc-400">Tandai kategori yang tidak boleh diikuti peserta secara bersamaan. Berlaku dua arah otomatis.</p>
-            <div class="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+            <flux:checkbox.group wire:model.live="editExclusiveIds" class="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
                 @forelse ($candidateCategories as $candidate)
-                    <flux:checkbox wire:model="editExclusiveIds" :value="$candidate->id">
-                        {{ $candidate->name }}
-                    </flux:checkbox>
+                    <flux:checkbox wire:key="excl-{{ $candidate->id }}" value="{{ $candidate->id }}" label="{{ $candidate->name }}" />
                 @empty
                     <p class="text-sm text-zinc-500">Belum ada kategori lain dalam event ini.</p>
                 @endforelse
-            </div>
+            </flux:checkbox.group>
             @error('editExclusiveIds') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
         </div>
     @endif

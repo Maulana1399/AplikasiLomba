@@ -3,6 +3,8 @@
 namespace App\Services\Competition;
 
 use App\Models\CompetitionClass;
+use App\Models\CompetitionHeatFormat;
+use App\Models\CompetitionHeatQualifier;
 use App\Models\CompetitionHeatResult;
 use App\Models\CompetitionOutcome;
 use App\Models\CompetitionSchedule;
@@ -202,6 +204,60 @@ class CompetitionMultiRoundHeatService
      *     qualified_count: int,
      * }
      */
+    public function effectiveTopNForHeat(int $classId, int $round, int $heatIndex, int $fallbackTopN): int
+    {
+        $override = CompetitionHeatQualifier::where('competition_class_id', $classId)
+            ->where('round', $round)
+            ->where('heat_index', $heatIndex)
+            ->first();
+
+        if ($override !== null) {
+            return (int) $override->qualifiers_per_heat;
+        }
+
+        $formatTopN = CompetitionHeatFormat::where('competition_class_id', $classId)
+            ->where('round', $round)
+            ->value('qualifiers_per_heat');
+
+        if ($formatTopN !== null) {
+            return (int) $formatTopN;
+        }
+
+        return $fallbackTopN;
+    }
+
+    public function topNForSchedule(CompetitionSchedule $schedule, int $fallbackTopN): int
+    {
+        $round = $this->roundOf($schedule->sort_order);
+        $heatIndex = $this->heatIndexOf($schedule, $round);
+
+        return $this->effectiveTopNForHeat((int) $schedule->competition_class_id, $round, $heatIndex, $fallbackTopN);
+    }
+
+    public function heatIndexOf(CompetitionSchedule $schedule, ?int $round = null): int
+    {
+        $round = $round ?? $this->roundOf($schedule->sort_order);
+        $sortOrder = (int) ($schedule->sort_order ?? 0);
+
+        if ($sortOrder >= 100) {
+            $idx = $sortOrder - ($round * 100);
+            if ($idx >= 1) {
+                return $idx;
+            }
+        }
+
+        $schedules = $this->roundSchedules((int) $schedule->competition_class_id, $round)
+            ->values();
+
+        foreach ($schedules as $i => $s) {
+            if ((int) $s->id === (int) $schedule->id) {
+                return $i + 1;
+            }
+        }
+
+        return 1;
+    }
+
     public function qualifyHeat(int $eventId, int $scheduleId, int $topN): array
     {
         return DB::transaction(function () use ($eventId, $scheduleId, $topN) {
@@ -218,12 +274,14 @@ class CompetitionMultiRoundHeatService
                 return ['qualified' => false, 'reason' => 'heat_incomplete', 'schedule_id' => $scheduleId, 'round' => $round, 'top_n' => $topN, 'qualifiers' => [], 'qualified_count' => 0];
             }
 
+            $effectiveTopN = $this->topNForSchedule($schedule, $topN);
+
             $ranked = $this->rankHeat($eventId, $schedule->id);
 
             $qualifiers = collect($ranked['rows'])
                 ->filter(fn ($row) => $row['position'] !== null && $row['position'] > 0 && ! $row['excluded'])
                 ->sortBy('position')
-                ->take($topN)
+                ->take($effectiveTopN)
                 ->map(fn ($row) => (int) $row['competitor_id'])
                 ->values()
                 ->all();
@@ -232,7 +290,7 @@ class CompetitionMultiRoundHeatService
                 'qualified' => true,
                 'schedule_id' => $scheduleId,
                 'round' => $round,
-                'top_n' => $topN,
+                'top_n' => $effectiveTopN,
                 'qualifiers' => $qualifiers,
                 'qualified_count' => count($qualifiers),
             ];
@@ -264,9 +322,11 @@ class CompetitionMultiRoundHeatService
             $completed = 0;
             $heats = [];
 
-            foreach ($schedules as $schedule) {
+            foreach ($schedules as $index => $schedule) {
+                $heatIndex = $index + 1;
+                $effectiveTopN = $this->effectiveTopNForHeat($class->id, $round, $heatIndex, $topN);
                 if (! $this->isHeatCompleteForAdvancement($schedule, $isTeam)) {
-                    $heats[] = ['schedule_id' => (int) $schedule->id, 'advanced' => 0, 'complete' => false];
+                    $heats[] = ['schedule_id' => (int) $schedule->id, 'advanced' => 0, 'complete' => false, 'top_n' => $effectiveTopN];
 
                     continue;
                 }
@@ -278,11 +338,11 @@ class CompetitionMultiRoundHeatService
                 $heatQualifiers = collect($ranked['rows'])
                     ->filter(fn ($row) => $row['position'] !== null && $row['position'] > 0 && ! $row['excluded'])
                     ->sortBy('position')
-                    ->take($topN)
+                    ->take($effectiveTopN)
                     ->map(fn ($row) => (int) $row['competitor_id'])
                     ->values();
 
-                $heats[] = ['schedule_id' => (int) $schedule->id, 'advanced' => $heatQualifiers->count(), 'complete' => true];
+                $heats[] = ['schedule_id' => (int) $schedule->id, 'advanced' => $heatQualifiers->count(), 'complete' => true, 'top_n' => $effectiveTopN];
 
                 foreach ($heatQualifiers as $competitorId) {
                     $qualifiers[] = $competitorId;

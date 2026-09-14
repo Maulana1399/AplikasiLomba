@@ -107,6 +107,22 @@ class Index extends Component
         $class->update(['is_active' => ! $class->is_active]);
     }
 
+    public function delete(int $id): void
+    {
+        Gate::authorize('manage-events');
+
+        $class = MasterParticipantClass::findOrFail($id);
+
+        if ($class->competitionCategories()->exists()) {
+            session()->flash('error', 'Kelas peserta tidak dapat dihapus karena masih digunakan oleh kategori lomba.');
+
+            return;
+        }
+
+        $class->delete();
+        session()->flash('success', 'Kelas peserta berhasil dihapus.');
+    }
+
     public function render()
     {
         return view('livewire.competition.participant-class.index', [

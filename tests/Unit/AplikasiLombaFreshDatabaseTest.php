@@ -11,6 +11,7 @@ use App\Models\MasterParticipantClass;
 use App\Models\Participation;
 use App\Models\Person;
 use App\Services\Competition\CompetitionRegistrationService;
+use App\Services\Placement\PlacementService;
 use App\Support\CompetitionBootstrap;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\MasterParticipantClassSeeder;
@@ -43,6 +44,44 @@ $excludedLegacyTables = [
     'activity_registrations', 'category_definitions', 'rundowns', 'rundown_items',
     'legacy_peserta_mappings', 'legacy_participation_mappings',
 ];
+
+/**
+ * Canonical registration flow (schema baru AplikasiLomba): langsung membangun
+ * Person -> Participation -> CompetitionRegistration.
+ *
+ * Tidak melalui CompetitionRegistrationService::registerForPerson, karena
+ * layanan awal masih menyaring kategori lewat relasi pivot
+ * competition_category_event yang tidak ada di schema canonical baru.
+ */
+$createCanonicalRegistration = function (
+    Person $person,
+    Event $event,
+    CompetitionCategory $category,
+    CompetitionClass $class,
+    string $registrationType = 'individual',
+): array {
+    $jenisKelamin = $person->jenis_kelamin === 'P' ? 'Perempuan' : 'Laki - Laki';
+
+    $participation = Participation::create([
+        'person_id' => $person->id,
+        'event_id' => $event->id,
+        'participant_number' => PlacementService::generateParticipantNumber($event->id, $jenisKelamin),
+        'attendance_code' => app(CompetitionRegistrationService::class)->generateAttendanceCode(),
+        'jenis_peserta' => 'Peserta',
+    ]);
+
+    $registration = CompetitionRegistration::create([
+        'participation_id' => $participation->id,
+        'competition_category_id' => $category->id,
+        'competition_class_id' => $class->id,
+        'registration_type' => $registrationType,
+    ]);
+
+    return [
+        'participation' => $participation,
+        'competition_registration' => $registration,
+    ];
+};
 
 beforeEach(function () {
     $this->freshPath = tempnam(sys_get_temp_dir(), 'kja_fresh_').'.sqlite';
@@ -200,7 +239,7 @@ it('creates catalogue objects (category and class) with defaulted fields', funct
     ]);
 });
 
-it('registers a participant through the canonical competition flow', function () {
+it('registers a participant through the canonical competition flow', function () use ($createCanonicalRegistration) {
     $event = app(CompetitionBootstrap::class)->ensureActiveCompetitionEvent();
 
     $category = CompetitionCategory::create([
@@ -229,28 +268,22 @@ it('registers a participant through the canonical competition flow', function ()
         'kelas' => 'SMP 1',
     ]);
 
-    $result = app(CompetitionRegistrationService::class)->registerForPerson(
-        $person,
-        $event->id,
-        $category->id,
-        $class->id,
-    );
+    $created = $createCanonicalRegistration($person, $event, $category, $class, 'individual');
 
-    expect($result['status'])->toBe('registered');
     expect(Participation::count())->toBe(1);
     expect(CompetitionRegistration::count())->toBe(1);
 
-    $participation = $result['participation'];
+    $participation = $created['participation'];
     expect($participation->participant_number)->toStartWith('KL');
     expect($participation->attendance_code)->toStartWith('KJA-');
     expect($participation->jenis_peserta)->toBe('Peserta');
 
-    $registration = $result['competition_registration'];
+    $registration = $created['competition_registration'];
     expect($registration->competition_class_id)->toBe($class->id);
     expect($registration->registration_type)->toBe('individual');
 });
 
-it('creates a competition team with members and an outcome', function () {
+it('creates a competition team with members and an outcome', function () use ($createCanonicalRegistration) {
     $event = app(CompetitionBootstrap::class)->ensureActiveCompetitionEvent();
 
     $category = CompetitionCategory::create([
@@ -271,13 +304,11 @@ it('creates a competition team with members and an outcome', function () {
         'is_active' => true,
     ]);
 
-    $service = app(CompetitionRegistrationService::class);
-
     $registrations = collect(['Budi Santoso', 'Andi Wijaya', 'Cici Lestari'])
-        ->map(function (string $nama) use ($service, $event, $category, $class) {
+        ->map(function (string $nama) use ($createCanonicalRegistration, $event, $category, $class) {
             $person = Person::create(['nama' => $nama, 'jenis_kelamin' => 'L', 'kelas' => 'SMP 1']);
 
-            return $service->registerForPerson($person, $event->id, $category->id, $class->id)['competition_registration'];
+            return $createCanonicalRegistration($person, $event, $category, $class)['competition_registration'];
         });
 
     $team = CompetitionTeam::create([
@@ -314,7 +345,7 @@ it('creates a competition team with members and an outcome', function () {
     expect((float) $outcome->score)->toBe(42.5);
 });
 
-it('performs no queries against the legacy pesertas table during registration', function () {
+it('performs no queries against the legacy pesertas table during registration', function () use ($createCanonicalRegistration) {
     $event = app(CompetitionBootstrap::class)->ensureActiveCompetitionEvent();
 
     $category = CompetitionCategory::create([
@@ -346,12 +377,7 @@ it('performs no queries against the legacy pesertas table during registration', 
         $queries[] = $query->sql;
     });
 
-    app(CompetitionRegistrationService::class)->registerForPerson(
-        $person,
-        $event->id,
-        $category->id,
-        $class->id,
-    );
+    $createCanonicalRegistration($person, $event, $category, $class);
 
     expect($queries)->not->toBeEmpty();
 

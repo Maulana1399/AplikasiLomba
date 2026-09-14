@@ -114,6 +114,28 @@ class Index extends Component
         $kelompok->update(['is_active' => ! $kelompok->is_active]);
     }
 
+    public function delete(int $id): void
+    {
+        Gate::authorize('manage-events');
+
+        $kelompok = kelompok::findOrFail($id);
+
+        if (\App\Models\Person::where('kelompok_id', $kelompok->id)->exists()) {
+            session()->flash('error', 'Kelompok tidak dapat dihapus karena masih digunakan oleh data peserta.');
+
+            return;
+        }
+
+        if (\App\Models\CompetitionTeam::where('kelompok_id', $kelompok->id)->exists()) {
+            session()->flash('error', 'Kelompok tidak dapat dihapus karena masih digunakan oleh tim lomba.');
+
+            return;
+        }
+
+        $kelompok->delete();
+        session()->flash('success', 'Kelompok berhasil dihapus.');
+    }
+
     public function render()
     {
         return view('livewire.competition.kelompok.index', [

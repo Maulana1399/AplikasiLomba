@@ -39,11 +39,17 @@ Route::prefix('competition')->middleware(['ensure.active-competition'])->group(f
         ->name('competition.participants');
 
     // 2. Setting
+    Route::get('setting/competitions', App\Livewire\Competition\Competition\Index::class)
+        ->name('competition.competition.index');
+
     Route::get('categories', App\Livewire\Competition\Category\Index::class)
         ->name('competition.category.index');
 
     Route::get('classes', App\Livewire\Competition\Class\Index::class)
         ->name('competition.class.index');
+
+    Route::get('setting/venues', App\Livewire\Competition\Venue\Index::class)
+        ->name('competition.venue.index');
 
     // 2b. Setting → Pilihan Dropdown (master data for registrasi dropdowns)
     Route::get('participant-classes', App\Livewire\Competition\ParticipantClass\Index::class)
@@ -58,6 +64,9 @@ Route::prefix('competition')->middleware(['ensure.active-competition'])->group(f
     // 3. Pembagian Tim
     Route::get('teams', App\Livewire\Competition\Team\Index::class)
         ->name('competition.teams');
+
+    Route::get('teams/list', App\Livewire\Competition\TeamList\Index::class)
+        ->name('competition.teams-list');
 
     // 4. Lomba
     Route::get('heat', App\Livewire\Competition\Heat\Index::class)

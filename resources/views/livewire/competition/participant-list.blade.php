@@ -7,13 +7,23 @@
 
     <div>
         <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Daftar Peserta Competition</h1>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Lihat peserta berdasarkan kategori dan kelas.</p>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Pilih lomba, lalu kategori dan kelas untuk menampilkan peserta.</p>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-3">
+        <div>
+            <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Lomba <span class="text-red-500">*</span></label>
+            <flux:select wire:model.live="competitionId" placeholder="Pilih lomba">
+                <flux:select.option value="all">Semua</flux:select.option>
+                @foreach ($competitions as $competition)
+                    <flux:select.option value="{{ $competition->id }}">{{ $competition->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
         <div>
             <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kategori</label>
-            <flux:select wire:model.live="competitionCategoryId" placeholder="Pilih kategori">
+            <flux:select wire:model.live="competitionCategoryId" placeholder="{{ $showingAllCompetition ? 'Tidak perlu dipilih' : (blank($competitionId) ? 'Pilih lomba terlebih dahulu' : 'Pilih kategori') }}" :disabled="$showingAllCompetition || blank($competitionId)">
+                <flux:select.option value="all">Semua</flux:select.option>
                 @foreach ($categories as $category)
                     <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
                 @endforeach
@@ -21,7 +31,7 @@
         </div>
         <div>
             <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kelas</label>
-            <flux:select wire:model.live="competitionClassId" placeholder="Pilih kelas">
+            <flux:select wire:model.live="competitionClassId" placeholder="{{ $showingAllCategory || $showingAllCompetition ? 'Tidak perlu dipilih' : (blank($competitionId) ? 'Pilih lomba terlebih dahulu' : 'Pilih kelas') }}" :disabled="$showingAllCategory || $showingAllCompetition || blank($competitionId) || blank($competitionCategoryId)">
                 @foreach ($classes as $class)
                     <flux:select.option value="{{ $class->id }}">{{ $class->name }}</flux:select.option>
                 @endforeach
@@ -60,8 +70,14 @@
                 @empty
                     <tr>
                         <td colspan="8" class="px-4 py-8 text-center text-sm text-zinc-500">
-                            @if ($competitionClassId)
+                            @if ($showingAllCompetition)
+                                Belum ada peserta terdaftar di lomba mana pun.
+                            @elseif ($showingAllCategory)
+                                Belum ada peserta terdaftar di lomba ini.
+                            @elseif ($competitionClassId)
                                 Belum ada peserta di kelas ini.
+                            @elseif (blank($competitionId))
+                                Pilih lomba untuk menampilkan peserta.
                             @else
                                 Pilih kategori dan kelas untuk menampilkan peserta.
                             @endif

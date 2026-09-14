@@ -28,8 +28,10 @@
 
                     {{-- 2. Setting --}}
                     <flux:navlist.group expandable heading="Setting" class="grid">
-                        <flux:navlist.item icon="cog-6-tooth" :href="route('competition.category.index', absolute: false)" :current="request()->routeIs('competition.category.index')" wire:navigate>{{ __('Kategori') }}</flux:navlist.item>
+                        <flux:navlist.item icon="cog-6-tooth" :href="route('competition.competition.index', absolute: false)" :current="request()->routeIs('competition.competition.index')" wire:navigate>{{ __('Lomba') }}</flux:navlist.item>
+                        <flux:navlist.item :href="route('competition.category.index', absolute: false)" :current="request()->routeIs('competition.category.index')" wire:navigate>{{ __('Kategori') }}</flux:navlist.item>
                         <flux:navlist.item :href="route('competition.class.index', absolute: false)" :current="request()->routeIs('competition.class.index')" wire:navigate>{{ __('Kelas') }}</flux:navlist.item>
+                        <flux:navlist.item :href="route('competition.venue.index', absolute: false)" :current="request()->routeIs('competition.venue.index')" wire:navigate>{{ __('Venue') }}</flux:navlist.item>
 
                         <flux:navlist.group expandable heading="{{ __('Pilihan Dropdown') }}" class="grid">
                             <flux:navlist.item :href="route('competition.participant-class.index', absolute: false)" :current="request()->routeIs('competition.participant-class.index')" wire:navigate>{{ __('Kelas Peserta') }}</flux:navlist.item>
@@ -40,7 +42,8 @@
 
                     {{-- 3. Pembagian Tim --}}
                     <flux:navlist.group expandable heading="Pembagian Tim" class="grid">
-                        <flux:navlist.item icon="users" :href="route('competition.teams', absolute: false)" :current="request()->routeIs('competition.teams')" wire:navigate>{{ __('Tim') }}</flux:navlist.item>
+                        <flux:navlist.item icon="users" :href="route('competition.teams', absolute: false)" :current="request()->routeIs('competition.teams')" wire:navigate>{{ __('Pembentukan Tim') }}</flux:navlist.item>
+                        <flux:navlist.item icon="clipboard-document-list" :href="route('competition.teams-list', absolute: false)" :current="request()->routeIs('competition.teams-list')" wire:navigate>{{ __('Daftar Tim') }}</flux:navlist.item>
                     </flux:navlist.group>
 
                     {{-- 4. Lomba --}}

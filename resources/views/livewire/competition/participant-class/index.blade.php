@@ -94,6 +94,8 @@
                                     <flux:button wire:click="toggleActive({{ $class->id }})" size="sm" variant="{{ $class->is_active ? 'danger' : 'primary' }}">
                                         {{ $class->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                     </flux:button>
+                                    <flux:button wire:click="delete({{ $class->id }})" size="sm" variant="danger"
+                                        wire:confirm="Yakin hapus kelas peserta ini? Tindakan tidak dapat dibatalkan.">Hapus</flux:button>
                                 </div>
                             </td>
                         </tr>

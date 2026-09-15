@@ -574,6 +574,255 @@ class CompetitionHeatManagerService
     }
 
     // -------------------------------------------------------------------------
+    // Team Heat — assignment manual (operator memilih Team ke heat)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Masukkan satu Team ke sebuah heat pada sebuah round.
+     *
+     * Heat yang sudah dimulai (`Playing`/`Waiting Result`/`Finished`) atau yang
+     * sudah punya hasil TIDAK bisa diubah. Satu team tidak boleh berada di dua
+     * heat pada round yang sama; kapasitas heat dihormati (`required_participants`).
+     *
+     * @return array{assigned: bool, schedule_id: int, heat_index: int, team_id: int}
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function assignTeamToHeat(int $eventId, int $classId, int $round, int $heatIndex, int $teamId): array
+    {
+        return DB::transaction(function () use ($eventId, $classId, $round, $heatIndex, $teamId) {
+            $class = $this->classInEvent($eventId, $classId);
+            $this->assertTeamHeatClass($class);
+
+            $team = CompetitionTeam::where('event_id', $eventId)
+                ->where('competition_class_id', $class->id)
+                ->where('is_active', true)
+                ->find($teamId);
+
+            if ($team === null) {
+                throw ValidationException::withMessages(['team' => 'Team tidak ditemukan atau tidak aktif pada kelas ini.']);
+            }
+
+            $schedules = $this->multiRound->roundSchedules($class->id, $round);
+            $target = $this->heatForIndex($schedules, $heatIndex);
+
+            if ($target === null) {
+                throw ValidationException::withMessages(['heat' => 'Heat tidak ditemukan pada round ini.']);
+            }
+
+            $this->assertHeatEditable($target, 'Heat sudah berjalan/berhasil; team tidak bisa diubah.');
+
+            $duplicate = $schedules
+                ->filter(fn ($schedule) => (int) $schedule->id !== (int) $target->id)
+                ->first(fn ($schedule) => $schedule->scheduleEntries()->where('competition_team_id', $teamId)->exists());
+
+            if ($duplicate !== null) {
+                throw ValidationException::withMessages(['team' => 'Team '.$team->name.' sudah berada di heat lain pada round ini.']);
+            }
+
+            if ($target->scheduleEntries()->count() >= (int) $target->required_participants) {
+                throw ValidationException::withMessages(['heat' => 'Kapasitas heat sudah penuh ('.$target->required_participants.' slot).']);
+            }
+
+            CompetitionScheduleEntry::create([
+                'competition_schedule_id' => $target->id,
+                'competition_team_id' => $teamId,
+                'order_number' => (int) ($target->scheduleEntries()->max('order_number') ?? 0) + 1,
+            ]);
+
+            $this->autoReady($target);
+
+            return [
+                'assigned' => true,
+                'schedule_id' => (int) $target->id,
+                'heat_index' => $heatIndex,
+                'team_id' => (int) $teamId,
+            ];
+        });
+    }
+
+    /**
+     * Keluarkan satu Team dari sebuah heat pada sebuah round (sebelum dimulai).
+     *
+     * @return array{removed: bool, schedule_id: int, heat_index: int, team_id: int}
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function removeTeamFromHeat(int $eventId, int $classId, int $round, int $heatIndex, int $teamId): array
+    {
+        return DB::transaction(function () use ($eventId, $classId, $round, $heatIndex, $teamId) {
+            $class = $this->classInEvent($eventId, $classId);
+            $this->assertTeamHeatClass($class);
+
+            $schedules = $this->multiRound->roundSchedules($class->id, $round);
+            $target = $this->heatForIndex($schedules, $heatIndex);
+
+            if ($target === null) {
+                throw ValidationException::withMessages(['heat' => 'Heat tidak ditemukan pada round ini.']);
+            }
+
+            $this->assertHeatEditable($target, 'Heat sudah berjalan/berhasil; team tidak bisa diubah.');
+
+            $entry = CompetitionScheduleEntry::where('competition_schedule_id', $target->id)
+                ->where('competition_team_id', $teamId)
+                ->first();
+
+            if ($entry === null) {
+                throw ValidationException::withMessages(['team' => 'Team tidak berada di heat ini.']);
+            }
+
+            $entry->delete();
+
+            return [
+                'removed' => true,
+                'schedule_id' => (int) $target->id,
+                'heat_index' => $heatIndex,
+                'team_id' => (int) $teamId,
+            ];
+        });
+    }
+
+    /**
+     * Pindahkan satu Team antar heat pada round yang sama (sebelum dimulai).
+     *
+     * @return array{moved: bool, schedule_id: ?int, heat_index: int, team_id: int}
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function moveTeamBetweenHeats(int $eventId, int $classId, int $round, int $fromHeatIndex, int $toHeatIndex, int $teamId): array
+    {
+        return DB::transaction(function () use ($eventId, $classId, $round, $fromHeatIndex, $toHeatIndex, $teamId) {
+            $class = $this->classInEvent($eventId, $classId);
+            $this->assertTeamHeatClass($class);
+
+            if ($fromHeatIndex === $toHeatIndex) {
+                return ['moved' => true, 'schedule_id' => null, 'heat_index' => $fromHeatIndex, 'team_id' => (int) $teamId];
+            }
+
+            $schedules = $this->multiRound->roundSchedules($class->id, $round);
+            $from = $this->heatForIndex($schedules, $fromHeatIndex);
+            $to = $this->heatForIndex($schedules, $toHeatIndex);
+
+            if ($from === null || $to === null) {
+                throw ValidationException::withMessages(['heat' => 'Heat tidak ditemukan pada round ini.']);
+            }
+
+            $this->assertHeatEditable($from, 'Heat asal sudah berjalan/berhasil; team tidak bisa diubah.');
+            $this->assertHeatEditable($to, 'Heat tujuan sudah berjalan/berhasil; team tidak bisa diubah.');
+
+            $entry = CompetitionScheduleEntry::where('competition_schedule_id', $from->id)
+                ->where('competition_team_id', $teamId)
+                ->first();
+
+            if ($entry === null) {
+                throw ValidationException::withMessages(['team' => 'Team tidak berada di heat asal.']);
+            }
+
+            $duplicate = $schedules
+                ->filter(fn ($schedule) => ! in_array((int) $schedule->id, [(int) $from->id, (int) $to->id], true))
+                ->first(fn ($schedule) => $schedule->scheduleEntries()->where('competition_team_id', $teamId)->exists());
+
+            if ($duplicate !== null) {
+                throw ValidationException::withMessages(['team' => 'Team sudah berada di heat lain pada round ini.']);
+            }
+
+            if ($to->scheduleEntries()->count() >= (int) $to->required_participants) {
+                throw ValidationException::withMessages(['heat' => 'Kapasitas heat tujuan sudah penuh ('.$to->required_participants.' slot).']);
+            }
+
+            $entry->update([
+                'competition_schedule_id' => $to->id,
+                'order_number' => (int) ($to->scheduleEntries()->max('order_number') ?? 0) + 1,
+            ]);
+
+            $this->autoReady($to);
+
+            return [
+                'moved' => true,
+                'schedule_id' => (int) $to->id,
+                'heat_index' => $toHeatIndex,
+                'team_id' => (int) $teamId,
+            ];
+        });
+    }
+
+    /**
+     * Distribusi otomatis (helper/preview) — mengacak seluruh Team kelas lalu
+     * mengisi heat round ini secara round-robin kapasitas.
+     *
+     * Ini HANYA helper: hasilnya tetap bisa diubah operator lewat
+     * `moveTeamBetweenHeats` / `removeTeamFromHeat`. Bukan bersifat aturan
+     * berbasis urutan DB. Menolak bila round sudah berjalan atau sudah punya hasil.
+     *
+     * @return array{assigned: bool, heat_count: int, teams_assigned: int, schedule_ids: array<int, int>}
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function autoAssignRound(int $eventId, int $classId, int $round): array
+    {
+        return DB::transaction(function () use ($eventId, $classId, $round) {
+            $class = $this->classInEvent($eventId, $classId);
+            $this->assertTeamHeatClass($class);
+
+            $schedules = $this->multiRound->roundSchedules($class->id, $round);
+
+            if ($schedules->isEmpty()) {
+                throw ValidationException::withMessages(['heat' => 'Belum ada heat pada round ini. Buat heat terlebih dahulu.']);
+            }
+
+            $started = $schedules->first(fn ($schedule) => in_array($schedule->status, ['Playing', 'Waiting Result', 'Finished'], true));
+
+            if ($started !== null) {
+                throw ValidationException::withMessages(['heat' => 'Round sudah dimulai; distribusi otomatis tidak diizinkan.']);
+            }
+
+            if (CompetitionHeatResult::whereIn('competition_schedule_id', $schedules->pluck('id'))->exists()) {
+                throw ValidationException::withMessages(['heat' => 'Round sudah punya hasil; distribusi otomatis tidak diizinkan.']);
+            }
+
+            $teams = CompetitionTeam::where('competition_class_id', $class->id)
+                ->where('is_active', true)
+                ->orderBy('id')
+                ->get();
+
+            if ($teams->isEmpty()) {
+                throw ValidationException::withMessages(['team' => 'Belum ada team aktif pada kelas ini.']);
+            }
+
+            CompetitionScheduleEntry::whereIn('competition_schedule_id', $schedules->pluck('id'))->delete();
+
+            $shuffled = $teams->shuffle()->values();
+            $position = 0;
+            $assigned = 0;
+            $scheduleIds = [];
+
+            foreach ($schedules as $schedule) {
+                $capacity = max(0, (int) $schedule->required_participants);
+                $order = 1;
+
+                for ($slot = 0; $slot < $capacity && $position < $shuffled->count(); $slot++, $position++) {
+                    CompetitionScheduleEntry::create([
+                        'competition_schedule_id' => $schedule->id,
+                        'competition_team_id' => $shuffled[$position]->id,
+                        'order_number' => $order++,
+                    ]);
+                    $assigned++;
+                }
+
+                $this->autoReady($schedule);
+                $scheduleIds[] = (int) $schedule->id;
+            }
+
+            return [
+                'assigned' => $assigned > 0,
+                'heat_count' => $schedules->count(),
+                'teams_assigned' => $assigned,
+                'schedule_ids' => $scheduleIds,
+            ];
+        });
+    }
+
+    // -------------------------------------------------------------------------
     // Internal
     // -------------------------------------------------------------------------
 
@@ -595,9 +844,16 @@ class CompetitionHeatManagerService
     /**
      * Inti generate heat: format adalah sumber kebenaran kapasitas.
      *
-     * `participants_per_heat` → `required_participants` tiap heat, kompetitor
-     * di-chunk per `participants_per_heat`. Mengabaikan kapasitas/state schedule
-     * lama. Null bila tidak ada kompetitor (tidak ada heat dibuat).
+     * `participants_per_heat` → `required_participants` tiap heat.
+     *
+     * - Individual Heat: kompetitor di-chunk per `participants_per_heat` sejalan
+     *   dengan engine heat existing (urutan didasarkan pada pool registrasi).
+     * - Team Heat: heat dibuat KOSONG — TIDAK ada auto-assign berbasis urutan
+     *   DB. Pemilihan Team ke heat dilakukan operator secara eksplisit melalui
+     *   `assignTeamToHeat` / `moveTeamBetweenHeats` / `removeTeamFromHeat`.
+     *
+     * Mengabaikan kapasitas/state schedule lama. Null bila tidak ada kompetitor
+     * (tidak ada heat dibuat).
      *
      * @return array{generated: bool, round: int, heat_count: int, competitors_used: int, schedule_ids: array<int, int>}|null
      */
@@ -614,21 +870,25 @@ class CompetitionHeatManagerService
         $heatCount = (int) ceil($competitors->count() / $perHeat);
         $scheduleIds = [];
 
-        foreach ($competitors->chunk($perHeat) as $chunkIndex => $chunk) {
+        for ($heat = 1; $heat <= $heatCount; $heat++) {
             $schedule = CompetitionSchedule::create([
                 'competition_class_id' => $class->id,
                 'status' => 'Scheduled',
                 'required_participants' => $perHeat,
-                'sort_order' => ($round * 100) + ($chunkIndex + 1),
+                'sort_order' => ($round * 100) + $heat,
             ]);
 
-            $order = 1;
-            foreach ($chunk as $competitor) {
-                CompetitionScheduleEntry::create([
-                    'competition_schedule_id' => $schedule->id,
-                    $this->competitorColumn($isTeam) => $this->competitorId($competitor),
-                    'order_number' => $order++,
-                ]);
+            if (! $isTeam) {
+                $chunk = $competitors->forPage($heat, $perHeat);
+
+                $order = 1;
+                foreach ($chunk as $competitor) {
+                    CompetitionScheduleEntry::create([
+                        'competition_schedule_id' => $schedule->id,
+                        $this->competitorColumn($isTeam) => $this->competitorId($competitor),
+                        'order_number' => $order++,
+                    ]);
+                }
             }
 
             if ($schedule->canAutoReady()) {
@@ -642,7 +902,7 @@ class CompetitionHeatManagerService
             'generated' => true,
             'round' => $round,
             'heat_count' => $heatCount,
-            'competitors_used' => $competitors->count(),
+            'competitors_used' => $isTeam ? 0 : $competitors->count(),
             'schedule_ids' => $scheduleIds,
         ];
     }
@@ -650,6 +910,43 @@ class CompetitionHeatManagerService
     private function competitorColumn(bool $isTeam): string
     {
         return $isTeam ? 'competition_team_id' : 'competition_registration_id';
+    }
+
+    private function heatForIndex(Collection $schedules, int $heatIndex): ?CompetitionSchedule
+    {
+        $index = 0;
+
+        foreach ($schedules as $schedule) {
+            $index++;
+
+            if ($index === $heatIndex) {
+                return $schedule;
+            }
+        }
+
+        return null;
+    }
+
+    private function assertTeamHeatClass(CompetitionClass $class): void
+    {
+        if ($class->format !== CompetitionFormat::TEAM_HEAT) {
+            throw ValidationException::withMessages(['heat' => 'Assignment team hanya untuk format Team Heat.']);
+        }
+    }
+
+    private function assertHeatEditable(CompetitionSchedule $schedule, string $message): void
+    {
+        if (in_array($schedule->status, ['Playing', 'Waiting Result', 'Finished'], true)
+            || CompetitionHeatResult::where('competition_schedule_id', $schedule->id)->exists()) {
+            throw ValidationException::withMessages(['heat' => $message]);
+        }
+    }
+
+    private function autoReady(CompetitionSchedule $schedule): void
+    {
+        if ($schedule->status === 'Scheduled' && $schedule->canAutoReady()) {
+            $schedule->update(['status' => 'Ready']);
+        }
     }
 
     private function competitorId($competitor): int

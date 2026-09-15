@@ -3,16 +3,24 @@
 namespace App\Livewire\Competition\Heat;
 
 use App\Models\CompetitionClass;
+use App\Models\CompetitionSchedule;
+use App\Models\CompetitionTeam;
 use App\Services\Competition\CompetitionHeatManagerService;
 use App\Services\Competition\CompetitionMultiRoundHeatService;
 use App\Support\ActiveEventContext;
 use App\Support\CompetitionResultType;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 class Index extends Component
 {
     public string $selectedClassId = '';
+
+    public ?string $categoryId = null;
+
+    public string $statusFilter = '';
 
     public bool $showFormatForm = false;
 
@@ -24,11 +32,25 @@ class Index extends Component
 
     public int $formatQualifiers = 3;
 
+    public int $teamRound = 1;
+
+    /** @var array<int, int> peta teamId => heatIndex tujuan assignment */
+    public array $assignTargets = [];
+
+    /** @var array<int, int> peta teamId => heatIndex tujuan pindah */
+    public array $moveTargets = [];
+
+    public string $teamSearch = '';
+
     public function mount(): void
     {
         app(ActiveEventContext::class)->requireCurrent();
+    }
 
-        $this->selectedClassId = (string) ($this->heatClasses()->first()?->id ?? '');
+    public function updatedTeamRound(): void
+    {
+        $this->assignTargets = [];
+        $this->moveTargets = [];
     }
 
     public function selectClass($classId): void
@@ -39,6 +61,17 @@ class Index extends Component
         $this->formatParticipants = 7;
         $this->formatMinParticipants = 2;
         $this->formatQualifiers = 3;
+        $this->teamRound = 1;
+        $this->assignTargets = [];
+        $this->moveTargets = [];
+        $this->teamSearch = '';
+        $this->resetErrorBag();
+    }
+
+    public function backToList(): void
+    {
+        $this->selectedClassId = '';
+        $this->showFormatForm = false;
         $this->resetErrorBag();
     }
 
@@ -57,8 +90,6 @@ class Index extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
         $this->validate([
             'formatRound' => 'required|integer|min:1',
             'formatParticipants' => 'required|integer|min:1|max:99',
@@ -71,7 +102,7 @@ class Index extends Component
         $service = app(CompetitionHeatManagerService::class);
 
         $service->upsertFormat(
-            $event->id,
+            $this->selectedEventId(),
             (int) $this->selectedClassId,
             $this->formatRound,
             $this->formatParticipants,
@@ -92,9 +123,7 @@ class Index extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
-        app(CompetitionHeatManagerService::class)->deleteFormat($event->id, $formatId);
+        app(CompetitionHeatManagerService::class)->deleteFormat($this->selectedEventId(), $formatId);
 
         session()->flash('success', 'Format heat dihapus.');
     }
@@ -103,10 +132,9 @@ class Index extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
         $service = app(CompetitionHeatManagerService::class);
 
-        $result = $service->generateRound($event->id, (int) $this->selectedClassId, $round);
+        $result = $service->generateRound($this->selectedEventId(), (int) $this->selectedClassId, $round);
 
         if (! $result['generated']) {
             session()->flash('error', $this->generateMessage($result['reason'] ?? 'unknown', $round));
@@ -114,17 +142,20 @@ class Index extends Component
             return;
         }
 
-        session()->flash('success', "Round {$round} dibuat: {$result['heat_count']} heat, {$result['competitors_used']} kompetitor dipasang ke heat.");
+        $class = CompetitionClass::find((int) $this->selectedClassId);
+
+        session()->flash('success', $class?->isTeamFormat()
+            ? "Round {$round} dibuat: {$result['heat_count']} heat (kosong). Silakan masukkan Team ke heat."
+            : "Round {$round} dibuat: {$result['heat_count']} heat, {$result['competitors_used']} kompetitor dipasang ke heat.");
     }
 
     public function advanceRound(int $round): void
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
         $service = app(CompetitionHeatManagerService::class);
 
-        $result = $service->generateNextRound($event->id, (int) $this->selectedClassId, $round);
+        $result = $service->generateNextRound($this->selectedEventId(), (int) $this->selectedClassId, $round);
 
         if (! $result['advanced']) {
             session()->flash('error', $this->advanceMessage($result['reason'] ?? 'unknown', $round, $result['next_round'] ?? $round + 1));
@@ -139,10 +170,9 @@ class Index extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
         $service = app(CompetitionHeatManagerService::class);
 
-        $result = $service->removeRoundSchedules($event->id, (int) $this->selectedClassId, $round);
+        $result = $service->removeRoundSchedules($this->selectedEventId(), (int) $this->selectedClassId, $round);
 
         if (! $result['deleted']) {
             session()->flash('error', $this->removeMessage($result['reason'] ?? 'unknown', $round));
@@ -157,10 +187,9 @@ class Index extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
         $service = app(CompetitionHeatManagerService::class);
 
-        $result = $service->rebuildRound($event->id, (int) $this->selectedClassId, $round);
+        $result = $service->rebuildRound($this->selectedEventId(), (int) $this->selectedClassId, $round);
 
         if (! $result['rebuilt']) {
             session()->flash('error', $this->rebuildMessage($result['reason'] ?? 'unknown', $round));
@@ -169,6 +198,93 @@ class Index extends Component
         }
 
         session()->flash('success', "Round {$round} dibangun ulang dari format: {$result['heat_count']} heat, {$result['competitors_used']} kompetitor dipasang.");
+    }
+
+    // -------------------------------------------------------------------------
+    // Team Heat — assignment manual
+    // -------------------------------------------------------------------------
+
+    public function assignTeam(int $round, int $teamId): void
+    {
+        Gate::authorize('manage-events');
+
+        $heatIndex = (int) ($this->assignTargets[$teamId] ?? 0);
+
+        if ($heatIndex < 1) {
+            session()->flash('error', 'Pilih heat tujuan untuk team ini terlebih dahulu.');
+
+            return;
+        }
+
+        try {
+            $result = app(CompetitionHeatManagerService::class)
+                ->assignTeamToHeat($this->selectedEventId(), (int) $this->selectedClassId, $round, $heatIndex, $teamId);
+
+            unset($this->assignTargets[$teamId]);
+
+            session()->flash('success', 'Team dipasang ke Heat '.str_pad((string) $result['heat_index'], 2, '0', STR_PAD_LEFT).'.');
+        } catch (ValidationException $e) {
+            session()->flash('error', $this->firstValidationMessage($e));
+        }
+    }
+
+    public function removeTeam(int $round, int $heatIndex, int $teamId): void
+    {
+        Gate::authorize('manage-events');
+
+        try {
+            app(CompetitionHeatManagerService::class)
+                ->removeTeamFromHeat($this->selectedEventId(), (int) $this->selectedClassId, $round, $heatIndex, $teamId);
+
+            session()->flash('success', 'Team dikeluarkan dari heat.');
+        } catch (ValidationException $e) {
+            session()->flash('error', $this->firstValidationMessage($e));
+        }
+    }
+
+    public function moveTeam(int $round, int $fromHeatIndex, int $teamId): void
+    {
+        Gate::authorize('manage-events');
+
+        $toHeatIndex = (int) ($this->moveTargets[$teamId] ?? 0);
+
+        if ($toHeatIndex < 1) {
+            session()->flash('error', 'Pilih heat tujuan untuk dipindah terlebih dahulu.');
+
+            return;
+        }
+
+        try {
+            app(CompetitionHeatManagerService::class)
+                ->moveTeamBetweenHeats($this->selectedEventId(), (int) $this->selectedClassId, $round, $fromHeatIndex, $toHeatIndex, $teamId);
+
+            unset($this->moveTargets[$teamId]);
+
+            session()->flash('success', 'Team dipindah ke Heat '.str_pad((string) $toHeatIndex, 2, '0', STR_PAD_LEFT).'.');
+        } catch (ValidationException $e) {
+            session()->flash('error', $this->firstValidationMessage($e));
+        }
+    }
+
+    public function autoAssignTeams(int $round): void
+    {
+        Gate::authorize('manage-events');
+
+        try {
+            $result = app(CompetitionHeatManagerService::class)
+                ->autoAssignRound($this->selectedEventId(), (int) $this->selectedClassId, $round);
+
+            session()->flash('success', 'Distribusi otomatis selesai: '.$result['teams_assigned'].' team dipasang ke '.$result['heat_count'].' heat. Susunan tetap bisa diubah sebelum pertandingan.');
+        } catch (ValidationException $e) {
+            session()->flash('error', $this->firstValidationMessage($e));
+        }
+    }
+
+    private function firstValidationMessage(ValidationException $e): string
+    {
+        $messages = $e->errors();
+
+        return $messages === [] ? $e->getMessage() : (string) reset($messages)[0];
     }
 
     private function validateFormat(int $participants, int $minParticipants, int $qualifiers): void
@@ -226,7 +342,6 @@ class Index extends Component
 
     public function render()
     {
-        $event = app(ActiveEventContext::class)->current();
         $service = app(CompetitionHeatManagerService::class);
         $multiRound = app(CompetitionMultiRoundHeatService::class);
 
@@ -237,9 +352,28 @@ class Index extends Component
         $rounds = collect();
         $poolCount = 0;
 
+        $isTeamHeat = $selected !== null && $selected->format === \App\Support\CompetitionFormat::TEAM_HEAT;
+        $teamRound = 1;
+        $availableTeams = collect();
+        $teamHeats = collect();
+        $assignableHeats = collect();
+        $heatCountForRound = null;
+        $activeTeamsCount = 0;
+
         if ($selected) {
             $poolCount = $service->competitorCount($selected->id);
             $formats = $service->formats($selected->id);
+
+            if ($isTeamHeat) {
+                $teamRound = $this->teamRoundFor($formats);
+                $schedules = $multiRound->roundSchedules($selected->id, $teamRound);
+
+                if ($this->teamRound !== $teamRound) {
+                    $this->teamRound = $teamRound;
+                }
+
+                $this->teamHeatData($selected, $schedules, $teamRound, $availableTeams, $teamHeats, $assignableHeats, $heatCountForRound, $activeTeamsCount);
+            }
 
             $rounds = $formats->map(function ($format) use ($service, $multiRound, $selected) {
                 $schedules = $multiRound->roundSchedules($selected->id, $format->round);
@@ -263,23 +397,53 @@ class Index extends Component
             'formats' => $formats,
             'rounds' => $rounds,
             'poolCount' => $poolCount,
+            'isTeamHeat' => $isTeamHeat,
+            'teamRound' => $teamRound,
+            'availableTeams' => $availableTeams,
+            'teamHeats' => $teamHeats,
+            'assignableHeats' => $assignableHeats,
+            'heatCountForRound' => $heatCountForRound,
+            'activeTeamsCount' => $activeTeamsCount,
+            'formatLabel' => $selected ? \App\Support\CompetitionFormat::label($selected->format) : '-',
             'resultTypeLabel' => $selected ? CompetitionResultType::label($selected->resultType()) : '-',
             'resultDirection' => $selected ? $this->directionLabel($selected->resultType()) : '-',
+            'categories' => \App\Models\CompetitionCategory::where('is_active', true)
+                ->whereHas('events', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'))
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(),
+            'statusLabels' => ['' => 'Semua Status', 'active' => 'Aktif', 'inactive' => 'Non Aktif'],
         ]);
     }
 
     private function heatClasses()
     {
-        $event = app(ActiveEventContext::class)->current();
         $service = app(CompetitionHeatManagerService::class);
 
-        return CompetitionClass::with('competitionCategory')
-            ->where('event_id', $event?->id)
-            ->where('is_active', true)
+        $query = CompetitionClass::with('competitionCategory')
             ->whereIn('format', $service::SUPPORTED_FORMATS)
-            ->orderBy('sort_order')
+            ->whereHas('event', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'));
+
+        if ($this->categoryId !== null && $this->categoryId !== '') {
+            $query->where('competition_category_id', $this->categoryId);
+        }
+
+        if ($this->statusFilter === 'active') {
+            $query->where('is_active', true);
+        } elseif ($this->statusFilter === 'inactive') {
+            $query->where('is_active', false);
+        } else {
+            $query->where('is_active', true);
+        }
+
+        return $query->orderBy('sort_order')
             ->orderBy('name')
             ->get();
+    }
+
+    private function selectedEventId(): int
+    {
+        return (int) CompetitionClass::findOrFail((int) $this->selectedClassId)->event_id;
     }
 
     private function directionLabel(string $resultType): string
@@ -287,6 +451,131 @@ class Index extends Component
         return CompetitionResultType::sortDirection($resultType) === 'asc'
             ? 'Terkecil menang (tercepat ranking terbaik)'
             : 'Terbesar menang (skor tertinggi ranking terbaik)';
+    }
+
+    private function teamRoundFor(Collection $formats): int
+    {
+        $rounds = $formats->pluck('round')->map(fn ($round) => (int) $round)->values();
+
+        if ($rounds->isEmpty()) {
+            return 1;
+        }
+
+        if ($rounds->contains((int) $this->teamRound)) {
+            return (int) $this->teamRound;
+        }
+
+        return (int) $rounds->first();
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, mixed>  $availableTeams
+     * @param  \Illuminate\Support\Collection<int, mixed>  $teamHeats
+     * @param  \Illuminate\Support\Collection<int, array{index: int, label: string}>  $assignableHeats
+     */
+    private function teamHeatData(
+        CompetitionClass $class,
+        Collection $schedules,
+        int $round,
+        Collection &$availableTeams,
+        Collection &$teamHeats,
+        Collection &$assignableHeats,
+        ?int &$heatCountForRound,
+        int &$activeTeamsCount,
+    ): void {
+        $service = app(CompetitionHeatManagerService::class);
+
+        $assignableHeats = $schedules->map(fn ($schedule, $index) => [
+            'index' => $index + 1,
+            'label' => 'Heat '.str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT),
+        ])->values();
+
+        $assignedTeamIds = $schedules->flatMap(fn ($schedule) => $schedule->scheduleEntries()->pluck('competition_team_id'))
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $activeTeamsCount = CompetitionTeam::where('competition_class_id', $class->id)
+            ->where('is_active', true)
+            ->count();
+
+        $availableTeams = CompetitionTeam::with([
+            'kelompok',
+            'players.competitionRegistration.participation.person',
+            'substitutes.competitionRegistration.participation.person',
+        ])
+            ->where('competition_class_id', $class->id)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->filter(fn ($team) => ! $assignedTeamIds->contains((int) $team->id))
+            ->map(fn ($team) => [
+                'id' => (int) $team->id,
+                'name' => $team->name,
+                'kelompok' => $team->kelompok?->kelompok_asal,
+                'players' => $this->memberNames($team->players),
+                'substitutes' => $this->memberNames($team->substitutes),
+            ])
+            ->values();
+
+        $teamHeats = $schedules->map(fn ($schedule, $index) => $this->teamHeatCard($schedule, $index + 1))->values();
+
+        $format = $service->formatForRound($class->id, $round);
+        $heatCountForRound = $schedules->isNotEmpty()
+            ? $schedules->count()
+            : ($format !== null ? $service->computeHeatCount($class->id, $round) : null);
+    }
+
+    private function memberNames(Collection $members): Collection
+    {
+        return $members
+            ->map(fn ($member) => $member->competitionRegistration?->participation?->person?->nama ?? null)
+            ->filter()
+            ->values();
+    }
+
+    private function teamHeatCard(CompetitionSchedule $schedule, int $heatIndex): array
+    {
+        $heatResults = \App\Models\CompetitionHeatResult::where('competition_schedule_id', $schedule->id)
+            ->get()
+            ->keyBy('competition_team_id');
+
+        $entries = $schedule->scheduleEntries()
+            ->with([
+                'team.kelompok',
+                'team.players.competitionRegistration.participation.person',
+                'team.substitutes.competitionRegistration.participation.person',
+            ])
+            ->orderBy('order_number')
+            ->orderBy('id')
+            ->get()
+            ->map(function ($entry) use ($heatResults) {
+                $team = $entry->team;
+                $heatResult = $heatResults->get($entry->competition_team_id);
+
+                return [
+                    'team_id' => $entry->competition_team_id,
+                    'name' => $team?->name ?? '-',
+                    'kelompok' => $team?->kelompok?->kelompok_asal,
+                    'players' => $team ? $this->memberNames($team->players) : collect(),
+                    'substitutes' => $team ? $this->memberNames($team->substitutes) : collect(),
+                    'position' => $heatResult?->position,
+                    'status' => $heatResult?->status,
+                ];
+            })
+            ->values();
+
+        return [
+            'id' => $schedule->id,
+            'heat_index' => $heatIndex,
+            'heat_label' => 'Heat '.str_pad((string) $heatIndex, 2, '0', STR_PAD_LEFT),
+            'sort_order' => $schedule->sort_order,
+            'status' => $schedule->status,
+            'required_participants' => $schedule->required_participants,
+            'participants_count' => $entries->count(),
+            'entries' => $entries,
+        ];
     }
 
     private function scheduleCard($schedule, CompetitionClass $class): array

@@ -48,11 +48,9 @@
 
                     {{-- 4. Lomba --}}
                     <flux:navlist.group expandable heading="Lomba" class="grid">
+                        <flux:navlist.item icon="clipboard-document-check" :href="route('competition.execution.index', absolute: false)" :current="request()->routeIs('competition.execution.index')" wire:navigate>{{ __('Eksekusi Lomba') }}</flux:navlist.item>
                         <flux:navlist.item icon="calendar" :href="route('competition.heat.index', absolute: false)" :current="request()->routeIs('competition.heat.index')" wire:navigate>{{ __('Heat') }}</flux:navlist.item>
                         <flux:navlist.item :href="route('competition.bracket-manager', absolute: false)" :current="request()->routeIs('competition.bracket-manager')" wire:navigate>{{ __('Bracket') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.match-center', absolute: false)" :current="request()->routeIs('competition.match-center')" wire:navigate>{{ __('Match Center') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.operator-dashboard', absolute: false)" :current="request()->routeIs('competition.operator-dashboard')" wire:navigate>{{ __('Operator') }}</flux:navlist.item>
-                        <flux:navlist.item :href="route('competition.official-panel', absolute: false)" :current="request()->routeIs('competition.official-panel')" wire:navigate>{{ __('Official Panel') }}</flux:navlist.item>
                     </flux:navlist.group>
                 </flux:navlist>
             @else

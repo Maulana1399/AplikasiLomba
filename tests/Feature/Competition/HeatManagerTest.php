@@ -35,7 +35,10 @@ function hm_event(array $overrides = []): Event
 
 function hm_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'HM Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'HM Cat '.str()->random(4)]);
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function hm_class(Event $event, CompetitionCategory $category, string $format = 'individual_heat', ?string $resultType = null): CompetitionClass
@@ -253,7 +256,7 @@ test('generate round expands pool into partial last heat when not divisible', fu
     expect($counts)->toBe([7, 7, 7, 7, 2]);
 });
 
-test('team heat generation assigns competition_team_id entries, not registrations', function () {
+test('team heat generation creates EMPTY heats (no auto-populate, capacity from format)', function () {
     $event = hm_event();
     $category = hm_category($event);
     $class = hm_class($event, $category, 'team_heat');
@@ -266,7 +269,30 @@ test('team heat generation assigns competition_team_id entries, not registration
 
     $result = hm_generate($event, $class, 1);
 
-    expect($result['heat_count'])->toBe(2);
+    expect($result['heat_count'])->toBe(2)
+        ->and($result['competitors_used'])->toBe(0);
+
+    $schedules = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+
+    expect($schedules)->toHaveCount(2)
+        ->and($schedules->pluck('required_participants')->all())->toBe([4, 4])
+        ->and($schedules->every(fn ($h) => $h->scheduleEntries()->count() === 0))->toBeTrue();
+});
+
+test('Team Heat assignment populates competition_team_id entries, not registrations', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $teamA = hm_team($event, $class, 'Tim A');
+    $teamB = hm_team($event, $class, 'Tim B');
+    hm_save_format($event, $class, 1, 4, 2);
+
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teamA->id);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teamB->id);
 
     $scheduleIds = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->pluck('id');
 
@@ -278,8 +304,280 @@ test('team heat generation assigns competition_team_id entries, not registration
         ->whereNotNull('competition_registration_id')
         ->count();
 
-    expect($teamEntries)->toBe(8)
+    expect($teamEntries)->toBe(2)
         ->and($individualEntries)->toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// Team Heat — assignment manual (operator memilih Team ke heat)
+// ---------------------------------------------------------------------------
+
+test('assignTeamToHeat assigns a team into a heat and auto-readies once min-participants reached', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $teamA = hm_team($event, $class, 'Tim Satu');
+    $teamB = hm_team($event, $class, 'Tim Dua');
+    hm_save_format($event, $class, 1, 4, 2);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $result = $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teamA->id);
+
+    expect($result['assigned'])->toBeTrue()
+        ->and($result['heat_index'])->toBe(1);
+
+    $heat = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->first();
+
+    expect($heat->scheduleEntries()->first()->competition_team_id)->toBe($teamA->id)
+        ->and($heat->status)->toBe('Scheduled');
+
+    // Min start default = 2 -> begitu team kedua masuk, heat otomatis Ready.
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teamB->id);
+
+    expect($heat->fresh()->status)->toBe('Ready');
+});
+
+test('assignTeamToHeat refuses when heat capacity is full', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $teams = [];
+    for ($i = 1; $i <= 4; $i++) {
+        $teams[] = hm_team($event, $class, 'Tim Ada '.$i);
+    }
+    $extra = hm_team($event, $class, 'Tim Ekstra');
+    hm_save_format($event, $class, 1, 4, 2);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+
+    foreach ($teams as $team) {
+        $service->assignTeamToHeat($event->id, $class->id, 1, 1, $team->id);
+    }
+
+    expect(fn () => $service->assignTeamToHeat($event->id, $class->id, 1, 1, $extra->id))
+        ->toThrow(ValidationException::class);
+});
+
+test('assignTeamToHeat refuses an inactive team or a team of another class', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+    $otherClass = hm_class($event, $category, 'team_heat');
+
+    $inactive = hm_team($event, $class, 'Tim Nonaktif');
+    $inactive->update(['is_active' => false]);
+
+    $foreign = hm_team($event, $otherClass, 'Tim Kelas Lain');
+
+    hm_save_format($event, $class, 1, 4, 2);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+
+    expect(fn () => $service->assignTeamToHeat($event->id, $class->id, 1, 1, $inactive->id))
+        ->toThrow(ValidationException::class)
+        ->and(fn () => $service->assignTeamToHeat($event->id, $class->id, 1, 1, $foreign->id))
+        ->toThrow(ValidationException::class);
+});
+
+test('assignTeamToHeat refuses a team already placed in another heat of the same round', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $team = hm_team($event, $class, 'Tim Satu');
+    $other = hm_team($event, $class, 'Tim Lain');
+    $fillA = hm_team($event, $class, 'Tim Isi A');
+    $fillB = hm_team($event, $class, 'Tim Isi B');
+
+    hm_save_format($event, $class, 1, 2, 1);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $team->id);
+
+    expect(fn () => $service->assignTeamToHeat($event->id, $class->id, 1, 2, $team->id))
+        ->toThrow(ValidationException::class);
+
+    $service->assignTeamToHeat($event->id, $class->id, 1, 2, $other->id);
+
+    $totalEntries = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)
+        ->sum(fn ($h) => $h->scheduleEntries()->count());
+
+    expect($totalEntries)->toBe(2);
+});
+
+test('assignTeamToHeat refuses modifications once a heat is locked or has results', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $team = hm_team($event, $class, 'Tim Mulai');
+    $other = hm_team($event, $class, 'Tim Baru');
+
+    hm_save_format($event, $class, 1, 4, 2);
+    hm_generate($event, $class, 1);
+
+    $heat = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->first();
+    $heat->update(['status' => 'Playing']);
+
+    $service = app(CompetitionHeatManagerService::class);
+
+    expect(fn () => $service->assignTeamToHeat($event->id, $class->id, 1, 1, $team->id))
+        ->toThrow(ValidationException::class);
+
+    $heat->update(['status' => 'Scheduled']);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $team->id);
+    hm_team_heat_result($heat, $team, 12.5, 'Lolos');
+
+    expect(fn () => $service->assignTeamToHeat($event->id, $class->id, 1, 1, $other->id))
+        ->toThrow(ValidationException::class);
+});
+
+test('assignment methods refuse for non-team-heat formats', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'individual_heat');
+
+    $person = hm_person('Atlet A');
+    hm_register($person, $event, $category, $class);
+
+    hm_save_format($event, $class, 1, 4, 2);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $regId = CompetitionRegistration::first()->id;
+
+    expect(fn () => $service->assignTeamToHeat($event->id, $class->id, 1, 1, $regId))
+        ->toThrow(ValidationException::class)
+        ->and(fn () => $service->autoAssignRound($event->id, $class->id, 1))
+        ->toThrow(ValidationException::class);
+});
+
+test('removeTeamFromHeat removes a team before start and refuses after', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $team = hm_team($event, $class, 'Tim Hapus');
+
+    hm_save_format($event, $class, 1, 4, 2);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $team->id);
+
+    $heat = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->first();
+    $heat->update(['status' => 'Playing']);
+
+    expect(fn () => $service->removeTeamFromHeat($event->id, $class->id, 1, 1, $team->id))
+        ->toThrow(ValidationException::class);
+
+    $heat->update(['status' => 'Scheduled']);
+
+    $result = $service->removeTeamFromHeat($event->id, $class->id, 1, 1, $team->id);
+
+    expect($result['removed'])->toBeTrue()
+        ->and($heat->fresh()->scheduleEntries()->count())->toBe(0);
+});
+
+test('moveTeamBetweenHeats moves a team to another heat, honoring capacity', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $teams = [];
+    for ($i = 1; $i <= 6; $i++) {
+        $teams[] = hm_team($event, $class, 'Tim M '.$i);
+    }
+
+    hm_save_format($event, $class, 1, 2, 1);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teams[0]->id);
+
+    $result = $service->moveTeamBetweenHeats($event->id, $class->id, 1, 1, 3, $teams[0]->id);
+
+    expect($result['moved'])->toBeTrue()
+        ->and($result['heat_index'])->toBe(3);
+
+    $schedules = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+
+    expect($schedules->get(0)->scheduleEntries()->count())->toBe(0)
+        ->and($schedules->get(2)->scheduleEntries()->first()->competition_team_id)->toBe($teams[0]->id);
+
+    // Isi heat 3 penuh (2/2) -> memindahkan team dari heat 1 harus ditolak.
+    $service->assignTeamToHeat($event->id, $class->id, 1, 3, $teams[1]->id);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teams[2]->id);
+
+    expect(fn () => $service->moveTeamBetweenHeats($event->id, $class->id, 1, 1, 3, $teams[2]->id))
+        ->toThrow(ValidationException::class);
+});
+
+test('autoAssignRound distributes all active teams round-robin and stays editable', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $teams = [];
+    for ($i = 1; $i <= 10; $i++) {
+        $teams[] = hm_team($event, $class, 'Tim A '.$i);
+    }
+
+    hm_save_format($event, $class, 1, 4, 2);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $result = $service->autoAssignRound($event->id, $class->id, 1);
+
+    expect($result['assigned'])->toBeTrue()
+        ->and($result['teams_assigned'])->toBe(10)
+        ->and($result['heat_count'])->toBe(3);
+
+    $schedules = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+
+    expect($schedules->map(fn ($h) => $h->scheduleEntries()->count())->all())->toBe([4, 4, 2]);
+
+    $assignedEver = $schedules->flatMap(fn ($h) => $h->scheduleEntries()->pluck('competition_team_id'))->map(fn ($id) => (int) $id);
+
+    expect($assignedEver->unique()->count())->toBe(10);
+
+    // Hasil distribusi otomatis tetap bisa diubah operator.
+    $firstHeat = $schedules->first();
+    $movedTeamId = (int) $firstHeat->scheduleEntries()->first()->competition_team_id;
+
+    $service->removeTeamFromHeat($event->id, $class->id, 1, 1, $movedTeamId);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 3, $movedTeamId);
+
+    $afterMove = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+
+    expect($afterMove->get(0)->scheduleEntries()->pluck('competition_team_id')->contains($movedTeamId))->toBeFalse()
+        ->and($afterMove->get(2)->scheduleEntries()->pluck('competition_team_id')->contains($movedTeamId))->toBeTrue();
+});
+
+test('autoAssignRound refuses when round is started or already has results', function () {
+    $event = hm_event();
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $team = hm_team($event, $class, 'Tim Satu');
+
+    hm_save_format($event, $class, 1, 4, 2);
+    hm_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $team->id);
+
+    $heat = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->first();
+    $heat->update(['status' => 'Playing']);
+
+    expect(fn () => $service->autoAssignRound($event->id, $class->id, 1))
+        ->toThrow(ValidationException::class);
 });
 
 // ---------------------------------------------------------------------------
@@ -490,6 +788,40 @@ test('F2. Heat Manager page creates format and generates heats via Livewire acti
     $component->assertSee('ROUND 1');
 });
 
+test('F4. Team Heat page renders Team Tersedia + assigns a team via Livewire action', function () {
+    $admin = User::factory()->create(['role' => Role::SuperAdmin]);
+    $event = hm_event();
+    app(\App\Support\ActiveEventContext::class)->set($event);
+    $this->actingAs($admin);
+
+    $category = hm_category($event);
+    $class = hm_class($event, $category, 'team_heat');
+
+    $teamA = hm_team($event, $class, 'Tim Livewire A');
+    hm_team($event, $class, 'Tim Livewire B');
+
+    $component = \Livewire::test(\App\Livewire\Competition\Heat\Index::class);
+
+    $component->set('selectedClassId', (string) $class->id)
+        ->set('formatRound', 1)
+        ->set('formatParticipants', 4)
+        ->set('formatQualifiers', 2)
+        ->call('createFormat')
+        ->call('generateRound', 1);
+
+    expect(app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->count())->toBe(1);
+
+    $component->assertSee('Team Tersedia')
+        ->assertSee('Tim Livewire A');
+
+    $component->set('assignTargets', [$teamA->id => 1])
+        ->call('assignTeam', 1, $teamA->id);
+
+    $heat = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->first();
+
+    expect($heat->scheduleEntries()->first()->competition_team_id)->toBe($teamA->id);
+});
+
 // ---------------------------------------------------------------------------
 // G. Incomplete heat — no advancement
 // ---------------------------------------------------------------------------
@@ -601,8 +933,19 @@ test('team heat advancement advances teams (not individuals) into next round', f
 
     hm_generate($event, $class, 1);
 
-    $heat = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->first();
-    $heat2 = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->last();
+    $service = app(CompetitionHeatManagerService::class);
+
+    $schedules = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+
+    foreach ($schedules as $h => $heat) {
+        $chunk = array_slice($teams, $h * 4, 4);
+        foreach ($chunk as $i => $team) {
+            $service->assignTeamToHeat($event->id, $class->id, 1, $h + 1, $team->id);
+        }
+    }
+
+    $heat = $schedules->first();
+    $heat2 = $schedules->last();
 
     foreach ($heat->scheduleEntries()->pluck('competition_team_id') as $i => $teamId) {
         hm_team_heat_result($heat, CompetitionTeam::find($teamId), 90.0 + $i, 'Lolos');

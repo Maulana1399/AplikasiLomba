@@ -69,6 +69,9 @@ Route::prefix('competition')->middleware(['ensure.active-competition'])->group(f
         ->name('competition.teams-list');
 
     // 4. Lomba
+    Route::get('execution', App\Livewire\Competition\Execution\Index::class)
+        ->name('competition.execution.index');
+
     Route::get('heat', App\Livewire\Competition\Heat\Index::class)
         ->name('competition.heat.index');
 

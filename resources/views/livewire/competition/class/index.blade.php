@@ -21,6 +21,53 @@
         </div>
     @endif
 
+    <div class="grid gap-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-2 lg:grid-cols-5">
+        <div>
+            <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Lomba</label>
+            <flux:select wire:model.live="filterEventId">
+                <flux:select.option value="">Semua</flux:select.option>
+                @foreach ($events as $event)
+                    <flux:select.option value="{{ $event->id }}">{{ $event->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kategori</label>
+            <flux:select wire:model.live="filterCategoryId">
+                <flux:select.option value="">Semua</flux:select.option>
+                @foreach ($this->filterCategories as $category)
+                    <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Gender</label>
+            <flux:select wire:model.live="filterGender">
+                <flux:select.option value="">Semua</flux:select.option>
+                <flux:select.option value="L">Laki - Laki</flux:select.option>
+                <flux:select.option value="P">Perempuan</flux:select.option>
+                <flux:select.option value="M">Campuran</flux:select.option>
+            </flux:select>
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Format</label>
+            <flux:select wire:model.live="filterFormat">
+                <flux:select.option value="">Semua</flux:select.option>
+                @foreach ($this->formatOptions() as $value => $label)
+                    <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                @endforeach
+            </flux:select>
+        </div>
+        <div>
+            <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Status</label>
+            <flux:select wire:model.live="filterStatus">
+                <flux:select.option value="">Semua</flux:select.option>
+                <flux:select.option value="active">Active</flux:select.option>
+                <flux:select.option value="inactive">Inactive</flux:select.option>
+            </flux:select>
+        </div>
+    </div>
+
     @if ($showCreateForm)
         <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
             <h2 class="mb-4 text-lg font-semibold text-zinc-900 dark:text-white">Kelas Baru</h2>

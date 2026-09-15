@@ -67,6 +67,51 @@ class Index extends Component
 
     public bool $processing = false;
 
+    /*
+     * ---------------------------------------------------------------------
+     * FILTER HALAMAN
+     * ---------------------------------------------------------------------
+     *
+     * Hierarki:
+     * - Pilih Lomba  -> Kategori hanya menampilkan kategori untuk Lomba tsb.
+     * - Pilih Kategori -> daftar kelas hanya untuk Lomba + Kategori tsb.
+     * - Gender / Format / Status bersifat tambahan.
+     *
+     * Nilai '' berarti "Semua" (tidak membatasi).
+     *
+     * Saat Lomba berubah -> Kategori di-reset.
+     * Saat Kategori berubah -> pilihan kelas (daftar baris) menyesuaikan.
+     */
+    public string $filterEventId = '';
+
+    public string $filterCategoryId = '';
+
+    public string $filterGender = '';
+
+    public string $filterFormat = '';
+
+    public string $filterStatus = '';
+
+    public function updatedFilterEventId(): void
+    {
+        $this->filterCategoryId = '';
+        $this->resetValidation();
+    }
+
+    public function updatedFilterCategoryId(): void
+    {
+        $this->resetValidation();
+    }
+
+    public function getFilterCategoriesProperty(): \Illuminate\Support\Collection
+    {
+        if ($this->filterEventId === '' || $this->filterEventId === '0') {
+            return collect();
+        }
+
+        return $this->getCategoriesForEvent($this->filterEventId);
+    }
+
     public function mount(): void
     {
         $event = app(ActiveEventContext::class)->requireCurrent();
@@ -390,6 +435,35 @@ class Index extends Component
         return view('livewire.competition.class.index', [
             'classes' => CompetitionClass::with('competitionCategory', 'event')
                 ->whereHas('event', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'))
+                ->when(
+                    $this->filterEventId !== '' && $this->filterEventId !== '0',
+                    fn ($q) => $q->where('event_id', (int) $this->filterEventId)
+                )
+                ->when(
+                    $this->filterCategoryId !== '' && $this->filterCategoryId !== '0',
+                    fn ($q) => $q->where('competition_category_id', (int) $this->filterCategoryId)
+                )
+                ->when(
+                    $this->filterGender !== '' && $this->filterGender !== 'all',
+                    fn ($q) => $q->where('gender', $this->filterGender)
+                )
+                ->when(
+                    $this->filterFormat !== '' && $this->filterFormat !== 'all',
+                    function ($q) {
+                        if ($this->filterFormat === 'individual_scoring') {
+                            $q->where('format', CompetitionFormat::INDIVIDUAL_MASS)
+                                ->where('result_type', CompetitionResultType::SCORE);
+
+                            return;
+                        }
+
+                        $q->where('format', $this->filterFormat);
+                    }
+                )
+                ->when(
+                    $this->filterStatus !== '' && $this->filterStatus !== 'all',
+                    fn ($q) => $q->where('is_active', $this->filterStatus === 'active')
+                )
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),

@@ -26,11 +26,15 @@ function setting_event(array $overrides = []): Event
 
 function setting_category(Event $event, array $overrides = []): CompetitionCategory
 {
-    return CompetitionCategory::create(array_merge([
+    $category = CompetitionCategory::create(array_merge([
         'event_id' => $event->id,
         'name' => 'Kategori Setting '.str()->random(6),
         'code' => strtoupper(str()->random(6)),
     ], $overrides));
+
+    $category->events()->syncWithoutDetaching([$event->id]);
+
+    return $category;
 }
 
 function setting_class(Event $event, CompetitionCategory $category, array $overrides = []): CompetitionClass

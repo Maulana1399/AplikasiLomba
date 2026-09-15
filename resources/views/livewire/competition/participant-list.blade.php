@@ -22,7 +22,7 @@
         </div>
         <div>
             <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kategori</label>
-            <flux:select wire:model.live="competitionCategoryId" placeholder="{{ $showingAllCompetition ? 'Tidak perlu dipilih' : (blank($competitionId) ? 'Pilih lomba terlebih dahulu' : 'Pilih kategori') }}" :disabled="$showingAllCompetition || blank($competitionId)">
+            <flux:select wire:key="category-select-{{ $competitionId }}" wire:model.live="competitionCategoryId" placeholder="{{ $showingAllCompetition ? 'Tidak perlu dipilih' : (blank($competitionId) ? 'Pilih lomba terlebih dahulu' : 'Pilih kategori') }}" :disabled="$showingAllCompetition || blank($competitionId)">
                 <flux:select.option value="all">Semua</flux:select.option>
                 @foreach ($categories as $category)
                     <flux:select.option value="{{ $category->id }}">{{ $category->name }}</flux:select.option>
@@ -31,7 +31,7 @@
         </div>
         <div>
             <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Kelas</label>
-            <flux:select wire:model.live="competitionClassId" placeholder="{{ $showingAllCategory || $showingAllCompetition ? 'Tidak perlu dipilih' : (blank($competitionId) ? 'Pilih lomba terlebih dahulu' : 'Pilih kelas') }}" :disabled="$showingAllCategory || $showingAllCompetition || blank($competitionId) || blank($competitionCategoryId)">
+            <flux:select wire:key="class-select-{{ $competitionId }}-{{ $competitionCategoryId }}" wire:model.live="competitionClassId" placeholder="{{ $showingAllCategory || $showingAllCompetition ? 'Tidak perlu dipilih' : (blank($competitionId) ? 'Pilih lomba terlebih dahulu' : 'Pilih kelas') }}" :disabled="$showingAllCategory || $showingAllCompetition || blank($competitionId) || blank($competitionCategoryId)">
                 @foreach ($classes as $class)
                     <flux:select.option value="{{ $class->id }}">{{ $class->name }}</flux:select.option>
                 @endforeach

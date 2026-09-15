@@ -52,6 +52,9 @@
                         <flux:navlist.item icon="calendar" :href="route('competition.heat.index', absolute: false)" :current="request()->routeIs('competition.heat.index')" wire:navigate>{{ __('Heat') }}</flux:navlist.item>
                         <flux:navlist.item :href="route('competition.bracket-manager', absolute: false)" :current="request()->routeIs('competition.bracket-manager')" wire:navigate>{{ __('Bracket') }}</flux:navlist.item>
                     </flux:navlist.group>
+
+                    {{-- 5. Hasil --}}
+                    <flux:navlist.item icon="trophy" :href="route('competition.results.index', absolute: false)" :current="request()->routeIs('competition.results.index')" wire:navigate>{{ __('Hasil') }}</flux:navlist.item>
                 </flux:navlist>
             @else
                 <div class="px-3 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">

@@ -87,6 +87,10 @@ Route::prefix('competition')->middleware(['ensure.active-competition'])->group(f
     Route::get('bracket-manager', App\Livewire\Competition\BracketManager::class)
         ->name('competition.bracket-manager');
 
+    // 5. Hasil
+    Route::get('results', App\Livewire\Competition\Result\Index::class)
+        ->name('competition.results.index');
+
     // Schedule workflows — internal engine dependency (Heat/Bracket/Match/Result),
     // reachable from the match workflow, not exposed as a top-level menu.
     Route::get('schedules/{schedule}/outcomes', App\Livewire\Competition\Schedule\OutcomeManager::class)

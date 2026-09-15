@@ -174,7 +174,15 @@
              LIST KELAS
              ============================================================= --}}
         <div class="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-            <div class="grid gap-4 sm:grid-cols-2">
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <flux:select wire:model.live="filterEventId" label="Lomba">
+                        <option value="">Semua Lomba</option>
+                        @foreach ($events as $event)
+                            <option value="{{ $event->id }}">{{ $event->name }}</option>
+                        @endforeach
+                    </flux:select>
+                </div>
                 <div>
                     <flux:select wire:model.live="filterCategoryId" label="Kategori">
                         <option value="">Semua Kategori</option>
@@ -198,6 +206,7 @@
             <table class="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
                 <thead class="bg-zinc-50 dark:bg-zinc-900">
                     <tr class="text-left text-xs font-medium uppercase tracking-wide text-zinc-500">
+                        <th class="px-4 py-3">Lomba</th>
                         <th class="px-4 py-3">Kelas Lomba</th>
                         <th class="px-4 py-3">Kategori</th>
                         <th class="px-4 py-3">Format</th>
@@ -210,6 +219,7 @@
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     @forelse ($classes as $row)
                         <tr>
+                            <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">{{ $row['event_name'] }}</td>
                             <td class="px-4 py-3 font-medium text-zinc-900 dark:text-white">{{ $row['name'] }}
                                 <p class="text-xs font-normal text-zinc-400">Gender {{ $row['gender'] }}</p>
                             </td>
@@ -235,7 +245,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-10 text-center text-sm text-zinc-500">
+                            <td colspan="8" class="px-4 py-10 text-center text-sm text-zinc-500">
                                 Belum ada kelas lomba pada event ini dengan format eksekusi yang tersedia.
                             </td>
                         </tr>

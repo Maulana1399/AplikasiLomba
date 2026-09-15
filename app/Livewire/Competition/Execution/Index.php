@@ -9,6 +9,7 @@ use App\Models\CompetitionRegistration;
 use App\Models\CompetitionSchedule;
 use App\Models\CompetitionScheduleEntry;
 use App\Models\CompetitionTeam;
+use App\Models\Event;
 use App\Services\Competition\CompetitionResultService;
 use App\Services\Competition\CompetitionWorkflowService;
 use App\Support\ActiveEventContext;
@@ -39,6 +40,8 @@ class Index extends Component
 {
     public string $selectedClassId = '';
 
+    public string $filterEventId = '';
+
     public string $filterCategoryId = '';
 
     public string $filterFormat = '';
@@ -61,7 +64,15 @@ class Index extends Component
 
     public function mount(): void
     {
-        app(ActiveEventContext::class)->requireCurrent();
+        $event = app(ActiveEventContext::class)->requireCurrent();
+        $this->filterEventId = (string) $event->id;
+    }
+
+    public function updatedFilterEventId(): void
+    {
+        $this->filterCategoryId = '';
+        $this->selectedClassId = '';
+        $this->resetValidation();
     }
 
     public function updatedFilterCategoryId(): void
@@ -74,17 +85,26 @@ class Index extends Component
         $this->resetValidation();
     }
 
+    public function getEventsProperty(): \Illuminate\Support\Collection
+    {
+        return Event::where('event_type', 'competition')
+            ->where('status', 'active')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+    }
+
     public function getFilterCategoriesProperty(): \Illuminate\Support\Collection
     {
-        $event = app(ActiveEventContext::class)->current();
+        $query = CompetitionCategory::where('is_active', true);
 
-        if ($event === null) {
-            return collect();
+        if ($this->filterEventId === '' || $this->filterEventId === '0') {
+            $query->whereHas('events', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'));
+        } else {
+            $query->whereHas('events', fn ($q) => $q->where('events.id', (int) $this->filterEventId));
         }
 
-        return CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event->id))
-            ->where('is_active', true)
-            ->orderBy('sort_order')
+        return $query->orderBy('sort_order')
             ->orderBy('name')
             ->get();
     }
@@ -119,8 +139,8 @@ class Index extends Component
         $this->processing = true;
 
         try {
-            $event = app(ActiveEventContext::class)->requireCurrent();
-            $class = CompetitionClass::where('event_id', $event->id)->findOrFail((int) $this->selectedClassId);
+            $class = CompetitionClass::whereHas('event', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'))
+                ->findOrFail((int) $this->selectedClassId);
 
             if (! $this->isMass($class)) {
                 session()->flash('error', 'Format ini tidak dieksekusi via jadwal massal. Gunakan Bracket / Panel Official.');
@@ -152,8 +172,8 @@ class Index extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-        $class = CompetitionClass::where('event_id', $event->id)->findOrFail((int) $this->selectedClassId);
+        $class = CompetitionClass::whereHas('event', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'))
+            ->findOrFail((int) $this->selectedClassId);
 
         $schedule = $this->massSchedule($class);
 
@@ -311,32 +331,33 @@ class Index extends Component
 
     public function render()
     {
-        $event = app(ActiveEventContext::class)->current();
+        $activeEvent = app(ActiveEventContext::class)->current();
 
-        $classes = collect();
-        if ($event !== null) {
-            $query = CompetitionClass::with('competitionCategory')
-                ->where('event_id', $event->id)
-                ->whereIn('format', $this->executableFormats());
+        $query = CompetitionClass::with('competitionCategory', 'event')
+            ->whereIn('format', $this->executableFormats());
 
-            if ($this->filterCategoryId !== '' && $this->filterCategoryId !== '0') {
-                $query->where('competition_category_id', (int) $this->filterCategoryId);
-            }
-
-            $this->applyFormatFilter($query);
-
-            $classes = $query->orderBy('sort_order')
-                ->orderBy('name')
-                ->get()
-                ->map(fn (CompetitionClass $class) => $this->classRow($class));
+        if ($this->filterEventId !== '' && $this->filterEventId !== '0') {
+            $query->where('event_id', (int) $this->filterEventId);
+        } else {
+            $query->whereHas('event', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'));
         }
+
+        if ($this->filterCategoryId !== '' && $this->filterCategoryId !== '0') {
+            $query->where('competition_category_id', (int) $this->filterCategoryId);
+        }
+
+        $this->applyFormatFilter($query);
+
+        $classes = $query->orderBy('sort_order')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (CompetitionClass $class) => $this->classRow($class));
 
         $selected = null;
         $detail = null;
 
-        if ($this->selectedClassId !== '' && $event !== null) {
+        if ($this->selectedClassId !== '') {
             $class = CompetitionClass::with('competitionCategory')
-                ->where('event_id', $event->id)
                 ->find((int) $this->selectedClassId);
 
             if ($class !== null) {
@@ -355,6 +376,7 @@ class Index extends Component
             'formatLabel' => $selected ? $this->formatLabel($selected) : '-',
             'resultTypeLabel' => $selected ? CompetitionResultType::label($selected->resultType()) : '-',
             'categories' => $this->filterCategories,
+            'events' => $this->events,
         ]);
     }
 
@@ -371,6 +393,7 @@ class Index extends Component
         return [
             'id' => $class->id,
             'name' => $class->name,
+            'event_name' => $class->event?->name ?? '-',
             'category' => $class->competitionCategory?->name ?? '-',
             'format' => $this->formatLabel($class),
             'result_type' => CompetitionResultType::label($class->resultType()),

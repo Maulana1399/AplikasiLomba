@@ -264,7 +264,7 @@ test('all five agreed formats can be selected in class settings', function () {
         CompetitionFormat::INDIVIDUAL_MASS,
         CompetitionFormat::INDIVIDUAL_VS_INDIVIDUAL,
         CompetitionFormat::TEAM_VS_TEAM,
-        CompetitionFormat::INDIVIDUAL_HEAT,
+        CompetitionFormat::TEAM_HEAT,
         'individual_scoring',
     ];
 
@@ -275,6 +275,7 @@ test('all five agreed formats can be selected in class settings', function () {
             ->set('newName', 'Kelas '.$index)
             ->set('newGender', 'M')
             ->set('newFormat', $format)
+            ->set('newTeamSize', $format === CompetitionFormat::TEAM_HEAT ? '4' : '')
             ->call('create')
             ->assertHasNoErrors();
     }
@@ -323,7 +324,8 @@ test('all four result types can be selected in class settings', function () {
             ->set('newCompetitionCategoryId', (string) $category->id)
             ->set('newName', 'Kelas '.$index)
             ->set('newGender', 'M')
-            ->set('newFormat', CompetitionFormat::INDIVIDUAL_HEAT)
+            ->set('newFormat', CompetitionFormat::TEAM_HEAT)
+            ->set('newTeamSize', '4')
             ->set('newResultType', $resultType)
             ->call('create')
             ->assertHasNoErrors();
@@ -331,6 +333,125 @@ test('all four result types can be selected in class settings', function () {
 
     expect(CompetitionClass::where('event_id', $event->id)->pluck('result_type')->unique()->values()->all())
         ->toContain(...$resultTypes);
+});
+
+test('UI Heat is stored internally as team_heat', function () {
+    $event = setting_event();
+    app(ActiveEventContext::class)->set($event);
+    $user = setting_admin();
+    $category = setting_category($event);
+
+    Livewire::actingAs($user)
+        ->test(ClassIndex::class)
+        ->set('newCompetitionCategoryId', (string) $category->id)
+        ->set('newName', 'Kelas Heat')
+        ->set('newGender', 'M')
+        ->set('newFormat', CompetitionFormat::TEAM_HEAT)
+        ->set('newTeamSize', '4')
+        ->call('create')
+        ->assertHasNoErrors();
+
+    $class = CompetitionClass::where('event_id', $event->id)->first();
+
+    expect($class->format)->toBe(CompetitionFormat::TEAM_HEAT)
+        ->and($class->team_size)->toBe(4);
+});
+
+test('Heat format requires team_size greater than 1 on create', function () {
+    $event = setting_event();
+    app(ActiveEventContext::class)->set($event);
+    $user = setting_admin();
+    $category = setting_category($event);
+
+    foreach (['', '1', '0'] as $teamSize) {
+        Livewire::actingAs($user)
+            ->test(ClassIndex::class)
+            ->set('newCompetitionCategoryId', (string) $category->id)
+            ->set('newName', 'Kelas Heat')
+            ->set('newGender', 'M')
+            ->set('newFormat', CompetitionFormat::TEAM_HEAT)
+            ->set('newTeamSize', $teamSize)
+            ->call('create')
+            ->assertHasErrors(['newTeamSize']);
+    }
+
+    expect(CompetitionClass::where('event_id', $event->id)->count())->toBe(0);
+});
+
+test('Heat format requires team_size greater than 1 on update', function () {
+    $event = setting_event();
+    app(ActiveEventContext::class)->set($event);
+    $user = setting_admin();
+    $category = setting_category($event);
+    $class = setting_class($event, $category, ['format' => CompetitionFormat::TEAM_HEAT, 'team_size' => 4]);
+
+    Livewire::actingAs($user)
+        ->test(ClassIndex::class)
+        ->call('edit', $class->id)
+        ->set('editTeamSize', '1')
+        ->call('update')
+        ->assertHasErrors(['editTeamSize']);
+
+    expect($class->fresh()->team_size)->toBe(4);
+});
+
+test('non-heat formats do not require team_size', function () {
+    $event = setting_event();
+    app(ActiveEventContext::class)->set($event);
+    $user = setting_admin();
+    $category = setting_category($event);
+
+    Livewire::actingAs($user)
+        ->test(ClassIndex::class)
+        ->set('newCompetitionCategoryId', (string) $category->id)
+        ->set('newName', 'Kelas Massa')
+        ->set('newGender', 'M')
+        ->set('newFormat', CompetitionFormat::INDIVIDUAL_MASS)
+        ->set('newTeamSize', '')
+        ->call('create')
+        ->assertHasNoErrors();
+
+    $class = CompetitionClass::where('event_id', $event->id)->first();
+
+    expect($class->format)->toBe(CompetitionFormat::INDIVIDUAL_MASS)
+        ->and($class->team_size)->toBeNull();
+});
+
+test('individual_heat and team_mass are not offered by the class UI', function () {
+    $event = setting_event();
+    app(ActiveEventContext::class)->set($event);
+    $user = setting_admin();
+
+    Livewire::actingAs($user)
+        ->test(ClassIndex::class)
+        ->assertSet('newFormat', '')
+        ->assertDontSee('Individual Heat')
+        ->assertDontSee('Team Mass');
+
+    $options = app(ClassIndex::class)->formatOptions();
+
+    expect(array_key_exists(CompetitionFormat::INDIVIDUAL_HEAT, $options))->toBeFalse()
+        ->and(array_key_exists(CompetitionFormat::TEAM_MASS, $options))->toBeFalse()
+        ->and($options[CompetitionFormat::TEAM_HEAT])->toBe('Heat');
+});
+
+test('individual_heat cannot be created via the class UI', function () {
+    $event = setting_event();
+    app(ActiveEventContext::class)->set($event);
+    $user = setting_admin();
+    $category = setting_category($event);
+
+    Livewire::actingAs($user)
+        ->test(ClassIndex::class)
+        ->set('newCompetitionCategoryId', (string) $category->id)
+        ->set('newName', 'Kelas Sala')
+        ->set('newGender', 'M')
+        ->set('newFormat', CompetitionFormat::INDIVIDUAL_HEAT)
+        ->set('newTeamSize', '4')
+        ->call('create')
+        ->assertHasErrors(['newFormat']);
+
+    expect(CompetitionClass::where('event_id', $event->id)->count())->toBe(0);
 });
 
 test('class can be edited via settings including winner_count', function () {

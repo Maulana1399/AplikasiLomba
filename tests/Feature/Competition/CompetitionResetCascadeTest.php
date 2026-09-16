@@ -36,7 +36,11 @@ function crc_event(array $overrides = []): Event
 
 function crc_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CRC Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CRC Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function crc_class(Event $event, CompetitionCategory $category, string $format = 'individual_vs_individual'): CompetitionClass

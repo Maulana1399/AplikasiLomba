@@ -24,6 +24,7 @@
                     <flux:navlist.group expandable heading="Registrasi" class="grid">
                         <flux:navlist.item icon="user-plus" :href="route('competition.registration', absolute: false)" :current="request()->routeIs('competition.registration')" wire:navigate>{{ __('Registrasi Peserta') }}</flux:navlist.item>
                         <flux:navlist.item :href="route('competition.participants', absolute: false)" :current="request()->routeIs('competition.participants')" wire:navigate>{{ __('Daftar Peserta') }}</flux:navlist.item>
+                        <flux:navlist.item icon="check-badge" :href="route('competition.reregistration', absolute: false)" :current="request()->routeIs('competition.reregistration')" wire:navigate>{{ __('Registrasi Ulang') }}</flux:navlist.item>
                     </flux:navlist.group>
 
                     {{-- 2. Setting --}}

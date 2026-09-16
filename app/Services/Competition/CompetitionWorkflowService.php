@@ -886,11 +886,9 @@ class CompetitionWorkflowService
 
         if ($schedule->status === 'Scheduled' && $schedule->canAutoReady()) {
             $schedule->update(['status' => 'Ready']);
-        } elseif (in_array($schedule->status, ['Ready', 'Scheduled'], true) && ! $schedule->canAutoReady()) {
-            $assignedCount = $schedule->scheduleEntries()->count();
-            if ($assignedCount < $schedule->required_participants) {
-                $schedule->update(['status' => 'Scheduled']);
-            }
+        } elseif (in_array($schedule->status, ['Ready', 'Scheduled'], true)
+            && $schedule->scheduleEntries()->count() < $schedule->minParticipantsToStart()) {
+            $schedule->update(['status' => 'Scheduled']);
         }
 
         $schedule->refresh();

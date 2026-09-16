@@ -51,6 +51,7 @@
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Kategori</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Kelas</th>
                     <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Tipe</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Status</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -66,10 +67,17 @@
                         <td class="px-4 py-3 text-sm">
                             <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ $reg->registration_type }}</span>
                         </td>
+                        <td class="px-4 py-3 text-sm">
+                            @if ($reg->participation?->isReregistered())
+                                <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">Sudah Daftar Ulang</span>
+                            @else
+                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900 dark:text-amber-200">Belum Daftar Ulang</span>
+                            @endif
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="px-4 py-8 text-center text-sm text-zinc-500">
+                        <td colspan="9" class="px-4 py-8 text-center text-sm text-zinc-500">
                             @if ($showingAllCompetition)
                                 Belum ada peserta terdaftar di lomba mana pun.
                             @elseif ($showingAllCategory)

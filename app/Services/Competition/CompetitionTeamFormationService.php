@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
  * Two formation modes:
  *
  * 1. Based on Group (formForClass / previewForClass)
- *    - Only team formats (team_vs_team / team_mass) can be auto-formed.
+ *    - Only team formats (team_vs_team / team_heat) can be auto-formed.
  *    - One Kelompok = one Team per CompetitionClass.
  *    - Team size = `CompetitionClass.team_size` bila diset, default kelompok terkecil.
  *    - Remaining participants of each Kelompok become substitutes (excess/cadangan).
@@ -360,7 +360,7 @@ class CompetitionTeamFormationService
      * Laki-Laki vs Perempuan gap and do not worsen the kelas spread
      * (same-kelas swaps are naturally preferred for the latter).
      *
-     * @param array<int, list<int>> $teams
+     * @param  array<int, list<int>>  $teams
      */
     private function balanceGenders(array &$teams, Collection $registrations): void
     {
@@ -467,7 +467,7 @@ class CompetitionTeamFormationService
     /**
      * Index tim dengan jumlah anggota paling sedikit (tie-break acak).
      *
-     * @param array<int, list<int>> $teams
+     * @param  array<int, list<int>>  $teams
      */
     private function smallestTeamIndex(array $teams): int
     {
@@ -492,9 +492,9 @@ class CompetitionTeamFormationService
 
     private function guardTeamFormat(CompetitionClass $class): void
     {
-        if ($class->format !== CompetitionFormat::TEAM_VS_TEAM) {
+        if (! in_array($class->format, [CompetitionFormat::TEAM_VS_TEAM, CompetitionFormat::TEAM_HEAT], true)) {
             throw ValidationException::withMessages([
-                'class' => 'Pembagian tim hanya untuk format team_vs_team.',
+                'class' => 'Pembagian tim hanya untuk format team_vs_team / team_heat.',
             ]);
         }
     }

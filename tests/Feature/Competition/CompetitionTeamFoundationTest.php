@@ -38,7 +38,11 @@ function ctf_kelompok(string $name): kelompok
 
 function ctf_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'Cabang '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'Cabang '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function ctf_class(Event $event, CompetitionCategory $category, string $format = 'team_vs_team'): CompetitionClass

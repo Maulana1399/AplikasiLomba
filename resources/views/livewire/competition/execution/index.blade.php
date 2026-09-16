@@ -5,14 +5,18 @@
         <span class="text-zinc-800 dark:text-zinc-200 font-medium">Eksekusi Lomba</span>
     </div>
 
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Eksekusi Lomba</h1>
             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Massal / Individual Scoring / Individual vs Individual / Team vs Team.</p>
         </div>
-        @if ($selected)
-            <flux:button wire:click="backToList" variant="ghost" icon="arrow-left">Kembali ke Daftar</flux:button>
-        @endif
+        <div class="flex shrink-0">
+            @if ($selected)
+                <flux:button :href="route('competition.execution.index', absolute: false)" variant="ghost" icon="arrow-left" size="sm">Kembali</flux:button>
+            @else
+                <flux:button :href="route('competition.dashboard', absolute: false)" variant="ghost" icon="arrow-left" size="sm">Kembali</flux:button>
+            @endif
+        </div>
     </div>
 
     @if (session('success'))

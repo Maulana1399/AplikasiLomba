@@ -14,6 +14,7 @@ use App\Models\Person;
 use App\Services\Competition\CompetitionHeatManagerService;
 use App\Services\Competition\CompetitionMultiRoundHeatService;
 use App\Services\Competition\CompetitionRegistrationService;
+use App\Support\ActiveEventContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -34,7 +35,10 @@ function tbd_event(): Event
 
 function tbd_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'TBD Cat']);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'TBD Cat']);
+    $category->events()->syncWithoutDetaching([$event->id]);
+
+    return $category;
 }
 
 function tbd_class(Event $event, CompetitionCategory $cat, string $format = 'individual_heat', string $resultType = 'time'): CompetitionClass
@@ -652,6 +656,8 @@ test('L. Team Heat: distribusi balanced tidak regression (2 heat x 3 tim, top 2 
 
     tbd_generate($event, $class, 1);
 
+    app(CompetitionHeatManagerService::class)->autoAssignRound($event->id, $class->id, 1);
+
     $round1 = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
     expect($round1)->toHaveCount(2);
 
@@ -678,4 +684,581 @@ test('L. Team Heat: distribusi balanced tidak regression (2 heat x 3 tim, top 2 
 
     expect($round2)->toHaveCount(1)
         ->and($round2->first()->scheduleEntries()->count())->toBe(4);
+});
+
+// ---------------------------------------------------------------------------
+// M. Round 1 (generateRound) harus SEIMBANG — UAT 10/4 → 4,3,3 bukan 4,4,2
+// ---------------------------------------------------------------------------
+
+test('M. Round 1: 10 regs capacity 4 → distribusi 4,3,3 (bukan 4,4,2)', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat);
+    tbd_register_n($event, $cat, $class, 10);
+
+    tbd_format($event, $class, 1, 4, 2);
+
+    $result = tbd_generate($event, $class, 1);
+
+    expect($result['generated'])->toBeTrue()
+        ->and($result['heat_count'])->toBe(3);
+
+    $sizes = tbd_heat_sizes($class, 1);
+
+    expect($sizes)->toBe([4, 3, 3])
+        ->and(max($sizes) - min($sizes))->toBeLessThanOrEqual(1)
+        ->and($sizes)->not->toBe([4, 4, 2]);
+});
+
+test('M2. Round 1: tidak ada peserta hilang atau duplikat setelah distribusi seimbang', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat);
+    $regs = tbd_register_n($event, $cat, $class, 10);
+
+    tbd_format($event, $class, 1, 4, 2);
+    tbd_generate($event, $class, 1);
+
+    $registeredIds = collect($regs)->pluck('id')->map(fn ($id) => (int) $id)->sort()->values();
+
+    $assignedIds = app(CompetitionMultiRoundHeatService::class)
+        ->roundSchedules($class->id, 1)
+        ->flatMap(fn ($heat) => $heat->scheduleEntries()->pluck('competition_registration_id'))
+        ->map(fn ($id) => (int) $id);
+
+    expect($assignedIds->count())->toBe(10)
+        ->and($assignedIds->unique()->count())->toBe(10)
+        ->and($assignedIds->sort()->values()->all())->toBe($registeredIds->all());
+});
+
+test('M3. Round 1 balanced lalu generateNextRound tetap berjalan seimbang', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat);
+    tbd_register_n($event, $cat, $class, 10);
+
+    tbd_format($event, $class, 1, 4, 4);
+    tbd_format($event, $class, 2, 4, 2);
+
+    tbd_generate($event, $class, 1);
+
+    expect(tbd_heat_sizes($class, 1))->toBe([4, 3, 3]);
+
+    $time = 60.0;
+    foreach (app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1) as $heat) {
+        foreach ($heat->scheduleEntries()->pluck('competition_registration_id') as $regId) {
+            tbd_result($heat, CompetitionRegistration::find($regId), $time++, 'Lolos');
+        }
+        tbd_rank_and_finish($event, $heat);
+    }
+
+    // top 4 per heat → heat1=4, heat2=3, heat3=3 = 10 qualifiers.
+    $result = tbd_generate_next($event, $class, 1);
+
+    expect($result['advanced'])->toBeTrue()
+        ->and($result['qualifiers'])->toBe(10);
+
+    $sizes = tbd_heat_sizes($class, 2);
+
+    // R2 capacity=4; 10/4 ceil=3 → balanced [4,3,3].
+    expect($sizes)->toBe([4, 3, 3])
+        ->and(max($sizes) - min($sizes))->toBeLessThanOrEqual(1);
+});
+
+// ---------------------------------------------------------------------------
+// N. Team Heat: pakai team existing (Pembagian Tim), tidak dipecah/diacak
+// ---------------------------------------------------------------------------
+
+test('N. Team Heat: generateRound tidak auto-assign & komposisi tim tidak diubah Heat', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'team_heat', 'time');
+
+    tbd_format($event, $class, 1, 4, 2);
+
+    $regs = tbd_register_n($event, $cat, $class, 10);
+
+    $signature = [];
+    for ($i = 0; $i < 10; $i++) {
+        $team = CompetitionTeam::create([
+            'event_id' => $event->id,
+            'competition_class_id' => $class->id,
+            'name' => "Tim Pembagian {$i}",
+            'kelompok_id' => kelompok::create(['kelompok_asal' => "Klp {$i}"])->id,
+            'is_active' => true,
+        ]);
+        \App\Models\CompetitionTeamMember::create([
+            'competition_team_id' => $team->id,
+            'competition_registration_id' => $regs[$i]->id,
+            'is_substitute' => false,
+            'sort_order' => 1,
+        ]);
+        $signature[$team->id] = $regs[$i]->id;
+    }
+
+    // Generate Round 1: Team Heat dibuat KOSONG (tidak ada auto-assign).
+    tbd_generate($event, $class, 1);
+
+    $heats = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+
+    expect($heats)->toHaveCount(3)
+        ->and($heats->sum(fn ($h) => $h->scheduleEntries()->count()))->toBe(0);
+
+    // Distribusi otomatis seimbang, memakai team existing (bukan bikin tim baru).
+    $result = app(CompetitionHeatManagerService::class)->autoAssignRound($event->id, $class->id, 1);
+
+    expect($result['teams_assigned'])->toBe(10);
+
+    $sizes = $heats->map(fn ($h) => $h->scheduleEntries()->count())->all();
+    expect($sizes)->toBe([4, 3, 3]);
+
+    // Tidak ada entry berbasis registration; semua menunjuk competition_team_id.
+    expect(CompetitionScheduleEntry::whereIn('competition_schedule_id', $heats->pluck('id'))
+        ->whereNotNull('competition_registration_id')->count())->toBe(0);
+
+    $assignedTeamIds = $heats->flatMap(fn ($h) => $h->scheduleEntries()->pluck('competition_team_id'))
+        ->map(fn ($id) => (int) $id)
+        ->sort()
+        ->values()
+        ->all();
+
+    expect($assignedTeamIds)->toBe(collect(array_keys($signature))->sort()->values()->all());
+
+    // Komposisi anggota tim tetap identik (Pembagian Tim tidak diubah Heat).
+    foreach ($signature as $teamId => $registrationId) {
+        $member = \App\Models\CompetitionTeamMember::where('competition_team_id', $teamId)
+            ->where('is_substitute', false)
+            ->first();
+
+        expect((int) $member?->competition_registration_id)->toBe((int) $registrationId);
+    }
+});
+
+// ---------------------------------------------------------------------------
+// O. Proof: TeamMember tidak berubah setelah Generate Heat
+// ---------------------------------------------------------------------------
+
+test('O. Team Heat: TeamMember identik sebelum & sesudah Generate Heat + Auto Distribusi', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'team_heat', 'time');
+    $regs = tbd_register_n($event, $cat, $class, 12);
+
+    tbd_format($event, $class, 1, 4, 2);
+
+    // 4 tim x (2 pemain + 1 cadangan) = 12 anggota, komposisi final dari Pembagian Tim.
+    $teams = [];
+    foreach (array_chunk($regs, 3) as $chunkIndex => $chunk) {
+        $team = CompetitionTeam::create([
+            'event_id' => $event->id,
+            'competition_class_id' => $class->id,
+            'name' => 'Tim Proof '.$chunkIndex,
+            'kelompok_id' => kelompok::create(['kelompok_asal' => 'Klp Proof '.$chunkIndex])->id,
+            'is_active' => true,
+        ]);
+        foreach ($chunk as $memberIndex => $reg) {
+            \App\Models\CompetitionTeamMember::create([
+                'competition_team_id' => $team->id,
+                'competition_registration_id' => $reg->id,
+                'is_substitute' => $memberIndex >= 2,
+                'sort_order' => $memberIndex + 1,
+            ]);
+        }
+        $teams[] = $team;
+    }
+
+    $signature = \App\Models\CompetitionTeamMember::orderBy('id')->get()
+        ->map(fn ($m) => [
+            (int) $m->competition_team_id,
+            (int) $m->competition_registration_id,
+            (bool) $m->is_substitute,
+            (int) $m->sort_order,
+        ])
+        ->all();
+
+    tbd_generate($event, $class, 1);
+    app(CompetitionHeatManagerService::class)->autoAssignRound($event->id, $class->id, 1);
+
+    expect(\App\Models\CompetitionTeamMember::orderBy('id')->get()
+        ->map(fn ($m) => [
+            (int) $m->competition_team_id,
+            (int) $m->competition_registration_id,
+            (bool) $m->is_substitute,
+            (int) $m->sort_order,
+        ])
+        ->all())->toBe($signature)
+        ->and(collect($teams)->sum(fn ($t) => $t->members()->count()))->toBe(12)
+        ->and(\App\Models\CompetitionTeamMember::where('is_substitute', true)->count())->toBe(4);
+});
+
+// ---------------------------------------------------------------------------
+// P. Proof: Team selalu menjadi SATU entry di Heat (bukan per anggota)
+// ---------------------------------------------------------------------------
+
+test('P. Team Heat: setiap entry menunjuk satu competition_team_id, bukan anggota', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'team_heat', 'time');
+    $regs = tbd_register_n($event, $cat, $class, 10);
+
+    tbd_format($event, $class, 1, 4, 2);
+
+    foreach ($regs as $i => $reg) {
+        $team = CompetitionTeam::create([
+            'event_id' => $event->id,
+            'competition_class_id' => $class->id,
+            'name' => 'Tim '.$i,
+            'kelompok_id' => kelompok::create(['kelompok_asal' => 'Klp '.$i])->id,
+            'is_active' => true,
+        ]);
+        \App\Models\CompetitionTeamMember::create([
+            'competition_team_id' => $team->id,
+            'competition_registration_id' => $reg->id,
+            'is_substitute' => false,
+            'sort_order' => 1,
+        ]);
+    }
+
+    app(CompetitionHeatManagerService::class)->generateRound($event->id, $class->id, 1);
+    app(CompetitionHeatManagerService::class)->autoAssignRound($event->id, $class->id, 1);
+
+    $heats = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+    $entries = CompetitionScheduleEntry::whereIn('competition_schedule_id', $heats->pluck('id'))->get();
+
+    expect($entries)->toHaveCount(10) // 10 tim = 10 entry (bukan 10+ anggota)
+        ->and($entries->every(fn ($e) => $e->competition_team_id !== null && $e->competition_registration_id === null))->toBeTrue()
+        ->and(CompetitionScheduleEntry::whereIn('competition_schedule_id', $heats->pluck('id'))
+            ->whereNotNull('competition_registration_id')->count())->toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// Q. Proof: Team tidak pernah split antar Heat
+// ---------------------------------------------------------------------------
+
+test('Q. Team Heat: satu tim hanya ada di SATU heat dalam satu round (tidak split)', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'team_heat', 'time');
+    $regs = tbd_register_n($event, $cat, $class, 12);
+
+    tbd_format($event, $class, 1, 3, 2);
+
+    $teamIds = [];
+    foreach (array_chunk($regs, 3) as $i => $chunk) {
+        $team = CompetitionTeam::create([
+            'event_id' => $event->id,
+            'competition_class_id' => $class->id,
+            'name' => 'Tim '.$i,
+            'kelompok_id' => kelompok::create(['kelompok_asal' => 'Klp '.$i])->id,
+            'is_active' => true,
+        ]);
+        $teamIds[] = (int) $team->id;
+        foreach ($chunk as $memberIndex => $reg) {
+            \App\Models\CompetitionTeamMember::create([
+                'competition_team_id' => $team->id,
+                'competition_registration_id' => $reg->id,
+                'is_substitute' => false,
+                'sort_order' => $memberIndex + 1,
+            ]);
+        }
+    }
+
+    tbd_generate($event, $class, 1);
+    app(CompetitionHeatManagerService::class)->autoAssignRound($event->id, $class->id, 1);
+
+    $heats = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+
+    // 4 tim (masing-masing 3 anggota) → 4 entry, setiap tim muncul tepat satu kali
+    // di seluruh round (union antar heat saling asing).
+    $allTeamEntries = $heats->flatMap(fn ($h) => $h->scheduleEntries()->pluck('competition_team_id'))
+        ->map(fn ($id) => (int) $id)
+        ->all();
+
+    expect($allTeamEntries)->toHaveCount(4)
+        ->and($allTeamEntries)->toHaveCount(collect($allTeamEntries)->unique()->count())
+        ->and(collect($allTeamEntries)->unique()->sort()->values()->all())->toBe(collect($teamIds)->sort()->values()->all());
+
+    // Per-heat: tidak ada tim yang sama di 2 heat berbeda.
+    foreach ($heats as $heat) {
+        $ids = $heat->scheduleEntries()->pluck('competition_team_id')->map(fn ($id) => (int) $id);
+        expect($ids->unique()->count())->toBe($ids->count());
+    }
+});
+
+// ---------------------------------------------------------------------------
+// R. Proof: Round berikutnya mempertahankan Team sebagai unit
+// ---------------------------------------------------------------------------
+
+test('R. Team Heat: R2 menahan entri sebagai Team (bukan pecahan anggota)', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'team_heat', 'time');
+    $regs = tbd_register_n($event, $cat, $class, 6);
+
+    tbd_format($event, $class, 1, 3, 2);
+    tbd_format($event, $class, 2, 4, 2);
+
+    $teams = [];
+    foreach ($regs as $i => $reg) {
+        $team = CompetitionTeam::create([
+            'event_id' => $event->id,
+            'competition_class_id' => $class->id,
+            'name' => 'Tim '.$i,
+            'kelompok_id' => kelompok::create(['kelompok_asal' => 'Klp '.$i])->id,
+            'is_active' => true,
+        ]);
+        \App\Models\CompetitionTeamMember::create([
+            'competition_team_id' => $team->id,
+            'competition_registration_id' => $reg->id,
+            'is_substitute' => false,
+            'sort_order' => 1,
+        ]);
+        $teams[] = $team;
+    }
+
+    tbd_generate($event, $class, 1);
+    app(CompetitionHeatManagerService::class)->autoAssignRound($event->id, $class->id, 1);
+
+    $time = 60.0;
+    foreach (app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1) as $heat) {
+        foreach ($heat->scheduleEntries()->pluck('competition_team_id') as $teamId) {
+            CompetitionHeatResult::updateOrCreate(
+                ['competition_schedule_id' => $heat->id, 'competition_team_id' => $teamId],
+                ['score' => $time++, 'status' => 'Lolos', 'position' => null],
+            );
+        }
+        app(CompetitionMultiRoundHeatService::class)->rankHeat($event->id, $heat->id);
+        $heat->update(['status' => 'Finished']);
+    }
+
+    $advance = tbd_generate_next($event, $class, 1);
+
+    expect($advance['advanced'])->toBeTrue()
+        ->and($advance['qualifiers'])->toBe(4); // 2 heat x top-2
+
+    $round2 = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 2);
+    $round2Entries = CompetitionScheduleEntry::whereIn('competition_schedule_id', $round2->pluck('id'))->get();
+
+    // Entri R2 = team (competition_team_id), bukan per anggota; jumlah tim = jumlah entry.
+    expect($round2Entries)->toHaveCount(4)
+        ->and($round2Entries->every(fn ($e) => $e->competition_team_id !== null && $e->competition_registration_id === null))->toBeTrue();
+
+    // Team yang maju adalah subset dari tim awal & tetap bias satu entry per tim.
+    $advancedTeamIds = $round2Entries->pluck('competition_team_id')->map(fn ($id) => (int) $id)->all();
+    expect(collect($advancedTeamIds)->unique()->count())->toBe(4)
+        ->and(collect($advancedTeamIds))->each(fn ($id) => $id->toBeIn(collect($teams)->pluck('id')->map(fn ($id) => (int) $id)->all()));
+});
+
+// ---------------------------------------------------------------------------
+// S. Proof: Individual Heat tetap menggunakan CompetitionRegistration
+// ---------------------------------------------------------------------------
+
+test('S. Individual Heat tetap memakai CompetitionRegistration (bukan team)', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'individual_heat', 'time');
+    $regs = tbd_register_n($event, $cat, $class, 8);
+
+    tbd_format($event, $class, 1, 4, 2);
+    tbd_format($event, $class, 2, 4, 2);
+
+    tbd_generate($event, $class, 1);
+
+    $round1 = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
+
+    $round1Entries = CompetitionScheduleEntry::whereIn('competition_schedule_id', $round1->pluck('id'))->get();
+
+    expect($round1Entries)->toHaveCount(8)
+        ->and($round1Entries->every(fn ($e) => $e->competition_registration_id !== null && $e->competition_team_id === null))->toBeTrue()
+        ->and(CompetitionScheduleEntry::whereIn('competition_schedule_id', $round1->pluck('id'))
+            ->whereNotNull('competition_team_id')->count())->toBe(0)
+        ->and(\App\Models\CompetitionTeamMember::count())->toBe(0);
+
+    // Lanjut ke R2: tetap berbasis CompetitionRegistration.
+    $time = 60.0;
+    foreach ($round1 as $heat) {
+        foreach ($heat->scheduleEntries()->pluck('competition_registration_id') as $regId) {
+            tbd_result($heat, CompetitionRegistration::find($regId), $time++, 'Lolos');
+        }
+        tbd_rank_and_finish($event, $heat);
+    }
+
+    $advance = tbd_generate_next($event, $class, 1);
+
+    expect($advance['advanced'])->toBeTrue()
+        ->and($advance['qualifiers'])->toBe(4); // 2 heat x top-2 dari 8 peserta
+
+    $round2 = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 2);
+    $round2Entries = CompetitionScheduleEntry::whereIn('competition_schedule_id', $round2->pluck('id'))->get();
+
+    expect($round2Entries)->toHaveCount(4)
+        ->and($round2Entries->every(fn ($e) => $e->competition_registration_id !== null && $e->competition_team_id === null))->toBeTrue();
+});
+
+// ---------------------------------------------------------------------------
+// T. Proof: EntryManager (Peserta/Team) HANYA menulis competition_team_id,
+//    TIDAK pernah mengubah CompositionTim (Team/Member).
+// ---------------------------------------------------------------------------
+
+test('T. EntryManager assign/unassign team heat hanya menyentuh ScheduleEntry, team & anggota identik', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'team_heat', 'time');
+    $regs = tbd_register_n($event, $cat, $class, 3);
+
+    $team = CompetitionTeam::create([
+        'event_id' => $event->id,
+        'competition_class_id' => $class->id,
+        'name' => 'Tim EM',
+        'kelompok_id' => kelompok::create(['kelompok_asal' => 'Klp EM'])->id,
+        'is_active' => true,
+    ]);
+    foreach ($regs as $i => $reg) {
+        \App\Models\CompetitionTeamMember::create([
+            'competition_team_id' => $team->id,
+            'competition_registration_id' => $reg->id,
+            'is_substitute' => $i >= 2,
+            'sort_order' => $i + 1,
+        ]);
+    }
+
+    $heat = CompetitionSchedule::create([
+        'competition_class_id' => $class->id,
+        'status' => 'Scheduled',
+        'required_participants' => 3,
+        'sort_order' => 101,
+    ]);
+
+    $signature = fn () => \App\Models\CompetitionTeamMember::orderBy('id')->get()
+        ->map(fn ($m) => [
+            (int) $m->competition_team_id,
+            (int) $m->competition_registration_id,
+            (bool) $m->is_substitute,
+            (int) $m->sort_order,
+        ])
+        ->all();
+
+    $before = $signature();
+
+    app(ActiveEventContext::class)->set($event);
+
+    $component = Livewire::test(\App\Livewire\Competition\Schedule\EntryManager::class, ['schedule' => $heat])
+        ->set('isTeam', true);
+
+    $component->call('assign', (int) $team->id);
+    $component->call('unassign', (int) $team->id);
+    $component->call('assign', (int) $team->id);
+
+    expect($signature())->toBe($before)
+        ->and(\App\Models\CompetitionTeam::find($team->id)->name)->toBe('Tim EM')
+        ->and(CompetitionScheduleEntry::where('competition_schedule_id', $heat->id)->count())->toBe(1)
+        ->and(CompetitionScheduleEntry::where('competition_schedule_id', $heat->id)->whereNotNull('competition_team_id')->count())->toBe(1)
+        ->and(CompetitionScheduleEntry::where('competition_schedule_id', $heat->id)->whereNotNull('competition_registration_id')->count())->toBe(0)
+        ->and(\App\Models\CompetitionTeamMember::count())->toBe(3);
+});
+
+// ---------------------------------------------------------------------------
+// U. Proof: assign/move/remove Team antar Heat tidak mengubah CompositionTim.
+// ---------------------------------------------------------------------------
+
+test('U. assignTeamToHeat / moveTeamBetweenHeats / removeTeamFromHeat menjaga komposisi team', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'team_heat', 'time');
+    $regs = tbd_register_n($event, $cat, $class, 8);
+
+    // 4 tim, masing-masing 2 anggota.
+    $teams = [];
+    foreach (array_chunk($regs, 2) as $i => $chunk) {
+        $team = CompetitionTeam::create([
+            'event_id' => $event->id,
+            'competition_class_id' => $class->id,
+            'name' => 'Tim Move '.$i,
+            'kelompok_id' => kelompok::create(['kelompok_asal' => 'Klp Move '.$i])->id,
+            'is_active' => true,
+        ]);
+        foreach ($chunk as $j => $reg) {
+            \App\Models\CompetitionTeamMember::create([
+                'competition_team_id' => $team->id,
+                'competition_registration_id' => $reg->id,
+                'is_substitute' => $j >= 2,
+                'sort_order' => $j + 1,
+            ]);
+        }
+        $teams[] = $team;
+    }
+
+    $signature = fn () => \App\Models\CompetitionTeamMember::orderBy('id')->get()
+        ->map(fn ($m) => [
+            (int) $m->competition_team_id,
+            (int) $m->competition_registration_id,
+            (bool) $m->is_substitute,
+            (int) $m->sort_order,
+        ])
+        ->all();
+
+    $before = $signature();
+
+    // 2 heat, kapasitas (2, 2) — dibentuk dari 4 tim via generate (kosong) lalu assign.
+    tbd_format($event, $class, 1, 2, 1, 1);
+    tbd_generate($event, $class, 1);
+
+    $service = app(CompetitionHeatManagerService::class);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teams[0]->id);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teams[1]->id);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 2, $teams[2]->id);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 2, $teams[3]->id);
+
+    // Pindah tim 0 dari heat 1 ke heat 2: heat 2 penuh (2/2), jadi pindah dgn
+    // remove dari heat 2 lalu move tim 0; tim 2 dikembalikan di akhir.
+    $service->removeTeamFromHeat($event->id, $class->id, 1, 2, $teams[2]->id);
+    $service->moveTeamBetweenHeats($event->id, $class->id, 1, 1, 2, $teams[0]->id);
+    $service->removeTeamFromHeat($event->id, $class->id, 1, 2, $teams[0]->id);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 1, $teams[0]->id);
+    $service->assignTeamToHeat($event->id, $class->id, 1, 2, $teams[2]->id);
+
+    expect($signature())->toBe($before)
+        ->and(collect($teams)->pluck('name')->all())->toBe(['Tim Move 0', 'Tim Move 1', 'Tim Move 2', 'Tim Move 3'])
+        ->and(\App\Models\CompetitionTeamMember::count())->toBe(8)
+        ->and(CompetitionScheduleEntry::whereIn('competition_team_id', collect($teams)->pluck('id'))->count())->toBe(4)
+        ->and(CompetitionScheduleEntry::whereIn('competition_team_id', collect($teams)->pluck('id'))->whereNull('competition_registration_id')->count())->toBe(4)
+        ->and(CompetitionScheduleEntry::whereIn('competition_team_id', collect($teams)->pluck('id'))->whereNotNull('competition_registration_id')->count())->toBe(0);
+});
+
+// ---------------------------------------------------------------------------
+// V. Proof: format di luar kelola Heat (individual_mass / team_vs_team) tidak
+//    pernah di-generate sebagai heat ber-peserta. Class harus team_heat.
+// ---------------------------------------------------------------------------
+
+test('V. generateRound menolak non-team-heat saat assign; heat team tetap 1 entry per team', function () {
+    $event = tbd_event();
+    $cat = tbd_category($event);
+    $class = tbd_class($event, $cat, 'team_vs_team', 'time');
+    $regs = tbd_register_n($event, $cat, $class, 4);
+
+    foreach ($regs as $i => $reg) {
+        $team = CompetitionTeam::create([
+            'event_id' => $event->id,
+            'competition_class_id' => $class->id,
+            'name' => 'Tim '.'A'.$i,
+            'kelompok_id' => kelompok::create(['kelompok_asal' => 'Klp '.'A'.$i])->id,
+            'is_active' => true,
+        ]);
+        \App\Models\CompetitionTeamMember::create([
+            'competition_team_id' => $team->id,
+            'competition_registration_id' => $reg->id,
+            'is_substitute' => false,
+            'sort_order' => 1,
+        ]);
+    }
+
+    $service = app(CompetitionHeatManagerService::class);
+
+    // Upsert format untuk kelas team_vs_team ditolak (bukan format Heat).
+    expect(fn () => tbd_format($event, $class, 1, 2, 1))
+        ->toThrow(\Illuminate\Validation\ValidationException::class);
+
+    expect(\App\Models\CompetitionTeam::count())->toBe(4)
+        ->and(\App\Models\CompetitionTeamMember::count())->toBe(4)
+        ->and(CompetitionSchedule::where('competition_class_id', $class->id)->count())->toBe(0);
 });

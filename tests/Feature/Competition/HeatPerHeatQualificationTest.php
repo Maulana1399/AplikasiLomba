@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\CompetitionHeatResult;
-use App\Models\CompetitionScheduleEntry;
 use App\Services\Competition\CompetitionHeatManagerService;
 use App\Services\Competition\CompetitionMultiRoundHeatService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -20,7 +19,11 @@ function hph_event(array $overrides = []): \App\Models\Event
 
 function hph_category(\App\Models\Event $event): \App\Models\CompetitionCategory
 {
-    return \App\Models\CompetitionCategory::create(['event_id' => $event->id, 'name' => 'HPH Cat '.str()->random(4)]);
+    $category = \App\Models\CompetitionCategory::create(['event_id' => $event->id, 'name' => 'HPH Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function hph_class(\App\Models\Event $event, \App\Models\CompetitionCategory $category, string $format = 'individual_heat'): \App\Models\CompetitionClass

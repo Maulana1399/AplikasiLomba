@@ -1,9 +1,9 @@
 <?php
 
 use App\Enums\Role;
-use App\Livewire\Competition\ParticipantClass\Index as ParticipantClassIndex;
 use App\Livewire\Competition\Desa\Index as DesaIndex;
 use App\Livewire\Competition\Kelompok\Index as KelompokIndex;
+use App\Livewire\Competition\ParticipantClass\Index as ParticipantClassIndex;
 use App\Models\desa;
 use App\Models\kelompok;
 use App\Models\MasterParticipantClass;

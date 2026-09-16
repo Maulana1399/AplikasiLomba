@@ -30,7 +30,11 @@ function cge_event(array $overrides = []): Event
 
 function cge_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CGE Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CGE Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function cge_class(Event $event, CompetitionCategory $category, string $format, ?string $resultType = null): CompetitionClass

@@ -43,7 +43,11 @@ function tm_kelompok(string $name): kelompok
 
 function tm_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'Cabang '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'Cabang '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function tm_class(Event $event, CompetitionCategory $category, array $overrides = []): CompetitionClass
@@ -542,23 +546,26 @@ test('swapMembers rejects swapping inside the same team', function () {
 // E2E — Pembagian Tim UI
 // ---------------------------------------------------------------------------
 
-test('Pembagian Tim page only offers team_vs_team classes', function () {
+test('Pembagian Tim page offers team_vs_team & team_heat and hides non-team formats', function () {
     $event = tm_event();
     app(ActiveEventContext::class)->set($event);
     $user = User::factory()->create(['role' => Role::Admin]);
     $category = tm_category($event);
     $teamClass = tm_class($event, $category, ['name' => 'Voli Beregu']);
+    $heatClass = tm_class($event, $category, ['name' => 'Estafet Beregu', 'format' => CompetitionFormat::TEAM_HEAT]);
     tm_class($event, $category, ['name' => 'Lari 100m', 'format' => CompetitionFormat::INDIVIDUAL_MASS]);
 
     $component = Livewire::actingAs($user)
         ->test(TeamIndex::class)
         ->set('competitionCategoryId', (string) $category->id);
 
-    expect($component->classes->pluck('id'))->toContain($teamClass->id);
+    expect($component->classes->pluck('id'))->toContain($teamClass->id)
+        ->and($component->classes->pluck('id'))->toContain($heatClass->id);
 
-    foreach ($component->classes as $class) {
-        expect($class->format)->toBe(CompetitionFormat::TEAM_VS_TEAM);
-    }
+    $formats = $component->classes->pluck('format')->values()->all();
+    expect($formats)->toContain(CompetitionFormat::TEAM_VS_TEAM)
+        ->and($formats)->toContain(CompetitionFormat::TEAM_HEAT)
+        ->and($formats)->not->toContain(CompetitionFormat::INDIVIDUAL_MASS);
 });
 
 test('Pembagian Tim UI forms teams via preview then generate (balanced)', function () {

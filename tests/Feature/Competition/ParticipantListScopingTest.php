@@ -125,7 +125,7 @@ test('dropdown Lomba hanya memuat event FASDA; event UAT bernama sama TIDAK ikut
 });
 
 test('selecting "Khotbah" memilih event FASDA (F26), bukan event UAT bernama sama', function () {
-    [$fasdaKhotbah, $uatKhotbah, $catF, , $classF, ] = pl_fasda_uat_khotbah_world();
+    [$fasdaKhotbah, $uatKhotbah, $catF, , $classF] = pl_fasda_uat_khotbah_world();
 
     pl_register($fasdaKhotbah, $catF, $classF, pl_participant($fasdaKhotbah, 'Peserta Khotbah Fasda'));
 
@@ -203,7 +203,7 @@ test('lomba + kategori + kelas: validates event, category AND class via competit
 });
 
 test('registration bocor lintas event: class milik Khotbah + participation event UAT tidak tampil di Khotbah', function () {
-    [$fasdaKhotbah, $uatKhotbah, $catF, , $classF, ] = pl_fasda_uat_khotbah_world();
+    [$fasdaKhotbah, $uatKhotbah, $catF, , $classF] = pl_fasda_uat_khotbah_world();
 
     pl_register($fasdaKhotbah, $catF, $classF, pl_participant($fasdaKhotbah, 'Peserta Khotbah Fasda'));
 

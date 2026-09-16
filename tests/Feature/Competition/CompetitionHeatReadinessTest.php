@@ -31,7 +31,10 @@ function chrt_event(array $overrides = []): Event
 
 function chrt_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CHRT Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CHRT Cat '.str()->random(4)]);
+    $category->events()->syncWithoutDetaching([$event->id]);
+
+    return $category;
 }
 
 function chrt_class(Event $event, CompetitionCategory $category, string $format = 'individual_heat', ?string $resultType = null): CompetitionClass
@@ -358,4 +361,81 @@ test('10. splitting non-penuh valid: 9 -> [5,4] dua-duanya Ready; next round ter
         ->and($next->required_participants)->toBe(4)
         ->and($next->minParticipantsToStart())->toBe(2)
         ->and($next->status)->toBe('Ready');
+});
+
+// ---------------------------------------------------------------------------
+// Status Heat: under-capacity (>= min start) TIDAK boleh diturunkan ke
+// Scheduled oleh rekonsiliasi. Kapasitas bukan syarat start.
+// ---------------------------------------------------------------------------
+
+test('11. under-capacity heat (>= min start) tetap Ready setelah checkAutoReady', function () {
+    $event = chrt_event();
+    $category = chrt_category($event);
+    $class = chrt_class($event, $category);
+    chrt_register_many($event, $category, $class, 10);
+
+    // 10 / capacity 4 → 3 heat, min start 2 (default).
+    chrt_save_format($event, $class, 1, 4, 2);
+    chrt_generate($event, $class, 1);
+
+    $heats = chrt_round_schedules($class, 1);
+
+    expect($heats->map(fn ($h) => $h->scheduleEntries()->count())->all())->toBe([4, 3, 3])
+        ->and($heats->every(fn ($h) => $h->status === 'Ready'))->toBeTrue();
+
+    $workflow = app(CompetitionWorkflowService::class);
+
+    foreach ($heats as $heat) {
+        $workflow->checkAutoReady($heat->refresh());
+    }
+
+    $refreshed = $heats->map(fn ($heat) => $heat->fresh());
+
+    // Heat yang terisi >= min start tetap Ready meski di bawah kapasitas.
+    expect($refreshed->every(fn ($h) => $h->status === 'Ready'))->toBeTrue()
+        ->and($refreshed->every(fn ($h) => $h->isReadyForStart()))->toBeTrue();
+});
+
+test('12. heat di bawah min start tetap diturunkan/dibiarkan Scheduled (state machine)', function () {
+    $event = chrt_event();
+    $category = chrt_category($event);
+    $class = chrt_class($event, $category);
+    chrt_save_format($event, $class, 1, 5, 2);
+
+    // 1 peserta < min start 2 → tidak boleh Ready.
+    $heat = CompetitionSchedule::create([
+        'competition_class_id' => $class->id,
+        'status' => 'Ready', // sengaja salah: rekonsiliasi harus menurunkannya
+        'required_participants' => 5,
+        'sort_order' => 101,
+    ]);
+    CompetitionScheduleEntry::create([
+        'competition_schedule_id' => $heat->id,
+        'competition_registration_id' => chrt_register(chrt_person('CHRT Single'), $event, $category, $class)->id,
+    ]);
+
+    app(CompetitionWorkflowService::class)->checkAutoReady($heat->refresh());
+
+    expect($heat->fresh()->status)->toBe('Scheduled');
+});
+
+test('13. distribuksi seimbang: heat 3/4 (>= min 2) Ready, bukan Scheduled', function () {
+    $event = chrt_event();
+    $category = chrt_category($event);
+    $class = chrt_class($event, $category);
+    chrt_register_many($event, $category, $class, 3);
+    chrt_save_format($event, $class, 1, 4, 2);
+
+    chrt_generate($event, $class, 1);
+
+    $heat = chrt_first_heat($class, 1);
+
+    expect($heat->required_participants)->toBe(4)
+        ->and($heat->scheduleEntries()->count())->toBe(3)
+        ->and($heat->minParticipantsToStart())->toBe(2)
+        ->and($heat->status)->toBe('Ready');
+
+    app(CompetitionWorkflowService::class)->checkAutoReady($heat->refresh());
+
+    expect($heat->fresh()->status)->toBe('Ready');
 });

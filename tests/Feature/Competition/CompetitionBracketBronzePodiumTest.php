@@ -39,7 +39,11 @@ function cbbp_event(array $overrides = []): Event
 
 function cbbp_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CBBP Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CBBP Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function cbbp_class(Event $event, CompetitionCategory $category, string $format = 'individual_vs_individual'): CompetitionClass

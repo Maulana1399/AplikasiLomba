@@ -27,7 +27,11 @@ function r_event(array $overrides = []): Event
 
 function r_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function r_class(Event $event, CompetitionCategory $category): CompetitionClass

@@ -27,7 +27,11 @@ function r4f_event(array $overrides = []): Event
 
 function r4f_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'R4F Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'R4F Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function r4f_class(Event $event, CompetitionCategory $category, string $format = 'team_vs_team'): CompetitionClass

@@ -11,7 +11,6 @@ use App\Models\CompetitionTeamMember;
 use App\Models\CompetitionTeamOutcome;
 use App\Models\Event;
 use App\Models\kelompok;
-use App\Models\Participation;
 use App\Models\Person;
 use App\Services\Competition\CompetitionRegistrationService;
 use App\Services\Competition\CompetitionTeamFormationService;
@@ -256,19 +255,111 @@ test('preview tidak menulis DB untuk kedua mode', function () {
         ->and($bp['team_count'])->toBe(2);
 });
 
-test('format team_mass dan team_heat ditolak oleh formation service', function () {
+test('formation service menerima team_heat & team_vs_team dan menolak team_mass', function () {
     $event = fix_event();
     $category = fix_category($event);
     $km = fix_kelompok('KM Fmt');
-    foreach ([CompetitionFormat::TEAM_MASS, CompetitionFormat::TEAM_HEAT] as $format) {
-        $class = fix_class($event, $category, $format, ['name' => 'Fmt '.str()->random(4)]);
-        fix_register(fix_person("P {$format}", $km), $event, $category, $class);
-        $svc = app(CompetitionTeamFormationService::class);
-        expect(fn () => $svc->formForClass($event->id, $class->id))->toThrow(ValidationException::class);
-        expect(fn () => $svc->previewForClass($event->id, $class->id))->toThrow(ValidationException::class);
-        expect(fn () => $svc->formBalancedForClass($event->id, $class->id, 2))->toThrow(ValidationException::class);
-        expect(fn () => $svc->previewBalancedForClass($event->id, $class->id, 2))->toThrow(ValidationException::class);
+
+    $svc = app(CompetitionTeamFormationService::class);
+
+    $massClass = fix_class($event, $category, CompetitionFormat::TEAM_MASS, ['name' => 'Fmt mass '.str()->random(4)]);
+    fix_register(fix_person('M1', $km), $event, $category, $massClass);
+    fix_register(fix_person('M2', $km), $event, $category, $massClass);
+    expect(fn () => $svc->formForClass($event->id, $massClass->id))->toThrow(ValidationException::class);
+    expect(fn () => $svc->previewForClass($event->id, $massClass->id))->toThrow(ValidationException::class);
+    expect(fn () => $svc->formBalancedForClass($event->id, $massClass->id, 2))->toThrow(ValidationException::class);
+    expect(fn () => $svc->previewBalancedForClass($event->id, $massClass->id, 2))->toThrow(ValidationException::class);
+    expect(CompetitionTeam::where('competition_class_id', $massClass->id)->count())->toBe(0);
+
+    foreach ([CompetitionFormat::TEAM_VS_TEAM, CompetitionFormat::TEAM_HEAT] as $format) {
+        $class = fix_class($event, $category, $format, ['name' => 'Fmt '.$format.' '.str()->random(4)]);
+        fix_register(fix_person('P1', $km), $event, $category, $class);
+        fix_register(fix_person('P2', $km), $event, $category, $class);
+        expect(fn () => $svc->formForClass($event->id, $class->id))->not->toThrow(ValidationException::class);
+        expect(CompetitionTeam::where('competition_class_id', $class->id)->count())->toBe(1);
+
+        $balancedClass = fix_class($event, $category, $format, ['name' => 'Fmt bal '.$format.' '.str()->random(4), 'team_size' => 1]);
+        fix_register(fix_person('B1', $km), $event, $category, $balancedClass);
+        fix_register(fix_person('B2', $km), $event, $category, $balancedClass);
+        expect(fn () => $svc->formBalancedForClass($event->id, $balancedClass->id))->not->toThrow(ValidationException::class);
+        expect(CompetitionTeam::where('competition_class_id', $balancedClass->id)->count())->toBe(2);
     }
+});
+
+test('team_heat membentuk CompetitionTeam mode Berdasarkan Kelompok tanpa kehilangan/duplikasi', function () {
+    $event = fix_event();
+    $category = fix_category($event);
+    $class = fix_class($event, $category, CompetitionFormat::TEAM_HEAT, ['team_size' => 2]);
+    $km1 = fix_kelompok('KM TH1');
+    $km2 = fix_kelompok('KM TH2');
+    foreach (range(1, 3) as $i) {
+        fix_register(fix_person("G1-{$i}", $km1), $event, $category, $class);
+    }
+    foreach (range(1, 2) as $i) {
+        fix_register(fix_person("G2-{$i}", $km2), $event, $category, $class);
+    }
+
+    $result = app(CompetitionTeamFormationService::class)->formForClass($event->id, $class->id);
+
+    expect($result['teams'])->toHaveCount(2);
+    foreach ($result['teams'] as $slot) {
+        expect($slot['team'])->toBeInstanceOf(CompetitionTeam::class);
+    }
+
+    $teams = CompetitionTeam::where('competition_class_id', $class->id)->get();
+    expect($teams)->toHaveCount(2)
+        ->and($teams->pluck('kelompok_id'))->toContain($km1->id)
+        ->and($teams->pluck('kelompok_id'))->toContain($km2->id);
+
+    $members = CompetitionTeamMember::whereHas('team', fn ($q) => $q->where('competition_class_id', $class->id))->get();
+    expect($members)->toHaveCount(5)
+        ->and($members->pluck('competition_registration_id')->unique())->toHaveCount(5);
+});
+
+test('team_heat membentuk CompetitionTeam mode Acak & Seimbang tanpa kehilangan/duplikasi', function () {
+    $event = fix_event();
+    $category = fix_category($event);
+    $class = fix_class($event, $category, CompetitionFormat::TEAM_HEAT, ['team_size' => 2]);
+    $km1 = fix_kelompok('KM THB1');
+    $km2 = fix_kelompok('KM THB2');
+    foreach (range(1, 5) as $i) {
+        fix_register(fix_person("B-{$i}", $i % 2 ? $km1 : $km2), $event, $category, $class);
+    }
+
+    $result = app(CompetitionTeamFormationService::class)->formBalancedForClass($event->id, $class->id);
+
+    expect($result['team_count'])->toBe(3);
+    foreach ($result['teams'] as $slot) {
+        expect($slot['team'])->toBeInstanceOf(CompetitionTeam::class);
+    }
+
+    $teams = CompetitionTeam::where('competition_class_id', $class->id)->get();
+    expect($teams)->toHaveCount(3);
+
+    $members = CompetitionTeamMember::whereHas('team', fn ($q) => $q->where('competition_class_id', $class->id))->get();
+    expect($members)->toHaveCount(5)
+        ->and($members->pluck('competition_registration_id')->unique())->toHaveCount(5);
+});
+
+test('preview team_heat DB-free untuk kedua mode', function () {
+    $event = fix_event();
+    $category = fix_category($event);
+    $groupClass = fix_class($event, $category, CompetitionFormat::TEAM_HEAT, ['name' => 'TH group '.str()->random(4)]);
+    $balancedClass = fix_class($event, $category, CompetitionFormat::TEAM_HEAT, ['name' => 'TH balanced '.str()->random(4), 'team_size' => 2]);
+    $km = fix_kelompok('KM THP');
+    foreach (range(1, 4) as $i) {
+        fix_register(fix_person("GP{$i}", $km), $event, $category, $groupClass);
+        fix_register(fix_person("BP{$i}", $km), $event, $category, $balancedClass);
+    }
+
+    $svc = app(CompetitionTeamFormationService::class);
+    $gp = $svc->previewForClass($event->id, $groupClass->id);
+    $bp = $svc->previewBalancedForClass($event->id, $balancedClass->id);
+
+    expect(CompetitionTeam::count())->toBe(0)
+        ->and(CompetitionTeamMember::count())->toBe(0)
+        ->and($gp['teams'])->toBeArray()
+        ->and($bp['team_count'])->toBe(2);
 });
 
 test('team_vs_team tetap berhasil untuk kedua mode', function () {

@@ -95,6 +95,9 @@ class CompetitionHeatManagerService
         int $qualifiersPerHeat,
         int $minParticipantsToStart = 2,
     ): array {
+        $class = CompetitionClass::find($classId);
+        $unit = ($class !== null && $class->isTeamFormat()) ? 'tim' : 'peserta';
+
         $errors = [];
 
         if ($round < 1) {
@@ -102,15 +105,15 @@ class CompetitionHeatManagerService
         }
 
         if ($participantsPerHeat < 1) {
-            $errors[] = 'Peserta per heat harus lebih dari 0.';
+            $errors[] = ucfirst($unit).' per heat harus lebih dari 0.';
         }
 
         if ($minParticipantsToStart < 1) {
-            $errors[] = 'Minimum peserta untuk start harus lebih dari 0.';
+            $errors[] = 'Minimum '.$unit.' untuk start harus lebih dari 0.';
         }
 
         if ($minParticipantsToStart > $participantsPerHeat) {
-            $errors[] = 'Minimum peserta untuk start tidak boleh melebihi peserta per heat.';
+            $errors[] = 'Minimum '.$unit.' untuk start tidak boleh melebihi '.$unit.' per heat.';
         }
 
         if ($qualifiersPerHeat < 1) {
@@ -118,10 +121,8 @@ class CompetitionHeatManagerService
         }
 
         if ($qualifiersPerHeat > $participantsPerHeat) {
-            $errors[] = 'Jumlah lolos tidak boleh melebihi peserta per heat.';
+            $errors[] = 'Jumlah lolos tidak boleh melebihi '.$unit.' per heat.';
         }
-
-        $class = CompetitionClass::find($classId);
 
         if ($class === null) {
             $errors[] = 'Kelas tidak ditemukan.';
@@ -307,6 +308,50 @@ class CompetitionHeatManagerService
         return $estimatedQualifiers === 0
             ? null
             : (int) ceil($estimatedQualifiers / $format->participants_per_heat);
+    }
+
+    /**
+     * Apakah heat round ini perlu dibangun ulang dari format saat ini?
+     *
+     * `needs_rebuild` = true bila sudah ada heat pada round tsb DAN:
+     * - jumlah heat tidak lagi sama dengan perhitungan format
+     *   (`ceil(eligible_team_count / teams_per_heat)`), ATAU
+     * - kapasitas (`required_participants`) salah satu heat tidak sama dengan
+     *   `participants_per_heat` format.
+     *
+     * Dipakai UI untuk menampilkan aksi "Generate Ulang Babak Ini" — bukan
+     * untuk rebuild otomatis. Menghitung ulang dari CompetitionTeam (bukan
+     * member/participant); `team_size`, `min_participants_to_start`, dan
+     * `qualifiers_per_heat` tidak memengaruhi jumlah heat.
+     */
+    public function needsRebuild(int $classId, int $round): bool
+    {
+        $format = $this->formatForRound($classId, $round);
+
+        if ($format === null) {
+            return false;
+        }
+
+        $schedules = $this->multiRound->roundSchedules($classId, $round);
+
+        if ($schedules->isEmpty()) {
+            return false;
+        }
+
+        // Round 1: jumlah heat dapat dihitung persis dari CompetitionTeam aktif
+        // (ceil(eligible_team_count / teams_per_heat)). Round > 1 bergantung pada
+        // pool qualifier yang bersifat dinamis, jadi hanya kapasitas yang dicek.
+        if ($round <= 1) {
+            $expected = $this->computeHeatCount($classId, $round);
+
+            if ($expected !== null && $schedules->count() !== $expected) {
+                return true;
+            }
+        }
+
+        return $schedules->contains(
+            fn ($schedule) => (int) $schedule->required_participants !== (int) $format->participants_per_heat
+        );
     }
 
     // -------------------------------------------------------------------------
@@ -747,12 +792,16 @@ class CompetitionHeatManagerService
     }
 
     /**
-     * Distribusi otomatis (helper/preview) — mengacak seluruh Team kelas lalu
-     * mengisi heat round ini secara round-robin kapasitas.
+     * Distribusi otomatis (helper/preview) — mengacak urutan seluruh Team kelas
+     * lalu mengisi heat round ini secara SEIMBANG (least-filled, selisih entry
+     * antar heat maksimal 1; mis. 10 team / 3 heat → 4,3,3 bukan 4,4,2).
      *
      * Ini HANYA helper: hasilnya tetap bisa diubah operator lewat
      * `moveTeamBetweenHeats` / `removeTeamFromHeat`. Bukan bersifat aturan
      * berbasis urutan DB. Menolak bila round sudah berjalan atau sudah punya hasil.
+     *
+     * Komposisi tim TIDAK disentuh: entri tetap menunjuk `competition_team_id`
+     * dari Pembagian Tim; Heat tidak pernah membuat/mengacak anggota tim.
      *
      * @return array{assigned: bool, heat_count: int, teams_assigned: int, schedule_ids: array<int, int>}
      *
@@ -791,31 +840,51 @@ class CompetitionHeatManagerService
 
             CompetitionScheduleEntry::whereIn('competition_schedule_id', $schedules->pluck('id'))->delete();
 
+            $scheduleList = $schedules->values();
+            $capacities = $scheduleList->map(fn ($schedule) => max(0, (int) $schedule->required_participants))->all();
+            $counts = array_fill(0, $scheduleList->count(), 0);
+
             $shuffled = $teams->shuffle()->values();
-            $position = 0;
             $assigned = 0;
             $scheduleIds = [];
 
-            foreach ($schedules as $schedule) {
-                $capacity = max(0, (int) $schedule->required_participants);
-                $order = 1;
+            // Isi heat dengan jumlah paling sedikit lebih dulu (least-filled):
+            // selisih entry antar heat maksimal 1 dan kapasitas tetap dihormati.
+            foreach ($shuffled as $team) {
+                $target = null;
 
-                for ($slot = 0; $slot < $capacity && $position < $shuffled->count(); $slot++, $position++) {
-                    CompetitionScheduleEntry::create([
-                        'competition_schedule_id' => $schedule->id,
-                        'competition_team_id' => $shuffled[$position]->id,
-                        'order_number' => $order++,
-                    ]);
-                    $assigned++;
+                foreach ($scheduleList as $index => $schedule) {
+                    if ($counts[$index] >= $capacities[$index]) {
+                        continue;
+                    }
+
+                    if ($target === null || $counts[$index] < $counts[$target]) {
+                        $target = $index;
+                    }
                 }
 
+                if ($target === null) {
+                    break;
+                }
+
+                $counts[$target]++;
+
+                CompetitionScheduleEntry::create([
+                    'competition_schedule_id' => $scheduleList[$target]->id,
+                    'competition_team_id' => $team->id,
+                    'order_number' => $counts[$target],
+                ]);
+                $assigned++;
+            }
+
+            foreach ($scheduleList as $schedule) {
                 $this->autoReady($schedule);
                 $scheduleIds[] = (int) $schedule->id;
             }
 
             return [
                 'assigned' => $assigned > 0,
-                'heat_count' => $schedules->count(),
+                'heat_count' => $scheduleList->count(),
                 'teams_assigned' => $assigned,
                 'schedule_ids' => $scheduleIds,
             ];
@@ -846,8 +915,9 @@ class CompetitionHeatManagerService
      *
      * `participants_per_heat` → `required_participants` tiap heat.
      *
-     * - Individual Heat: kompetitor di-chunk per `participants_per_heat` sejalan
-     *   dengan engine heat existing (urutan didasarkan pada pool registrasi).
+     * - Individual Heat: kompetitor dibagi SECARA SEIMBANG (selisih entry antar
+     *   heat maksimal 1, mis. 10/4 → 4,3,3 bukan 4,4,2), urutan identity tetap
+     *   berdasarkan pool registrasi.
      * - Team Heat: heat dibuat KOSONG — TIDAK ada auto-assign berbasis urutan
      *   DB. Pemilihan Team ke heat dilakukan operator secara eksplisit melalui
      *   `assignTeamToHeat` / `moveTeamBetweenHeats` / `removeTeamFromHeat`.
@@ -867,10 +937,21 @@ class CompetitionHeatManagerService
             return null;
         }
 
-        $heatCount = (int) ceil($competitors->count() / $perHeat);
+        $total = $competitors->count();
+        $heatCount = (int) ceil($total / $perHeat);
+
+        // Distribusi seimbang: selisih jumlah entry antar heat maksimal 1.
+        // base = floor(total / heatCount); `extra` heat pertama mendapat +1.
+        // (Bukan pemotongan per kapasitas penuh yang menghasilkan 4,4,2.)
+        $base = intdiv($total, $heatCount);
+        $extra = $total % $heatCount;
+
         $scheduleIds = [];
+        $offset = 0;
 
         for ($heat = 1; $heat <= $heatCount; $heat++) {
+            $heatSize = $base + ($heat <= $extra ? 1 : 0);
+
             $schedule = CompetitionSchedule::create([
                 'competition_class_id' => $class->id,
                 'status' => 'Scheduled',
@@ -879,7 +960,8 @@ class CompetitionHeatManagerService
             ]);
 
             if (! $isTeam) {
-                $chunk = $competitors->forPage($heat, $perHeat);
+                $chunk = $competitors->slice($offset, $heatSize)->values();
+                $offset += $heatSize;
 
                 $order = 1;
                 foreach ($chunk as $competitor) {
@@ -902,7 +984,7 @@ class CompetitionHeatManagerService
             'generated' => true,
             'round' => $round,
             'heat_count' => $heatCount,
-            'competitors_used' => $isTeam ? 0 : $competitors->count(),
+            'competitors_used' => $isTeam ? 0 : $total,
             'schedule_ids' => $scheduleIds,
         ];
     }

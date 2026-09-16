@@ -38,6 +38,10 @@ Route::prefix('competition')->middleware(['ensure.active-competition'])->group(f
     Route::get('participants', App\Livewire\Competition\ParticipantList::class)
         ->name('competition.participants');
 
+    // 1b. Registrasi Ulang (operasional hari pelaksanaan)
+    Route::get('reregistration', App\Livewire\Competition\Reregistration::class)
+        ->name('competition.reregistration');
+
     // 2. Setting
     Route::get('setting/competitions', App\Livewire\Competition\Competition\Index::class)
         ->name('competition.competition.index');

@@ -3,8 +3,8 @@
 use App\Enums\Role;
 use App\Livewire\Competition\Registration;
 use App\Models\CompetitionCategory;
-use App\Models\CompetitionClass;
 use App\Models\CompetitionCategoryExclusive;
+use App\Models\CompetitionClass;
 use App\Models\desa;
 use App\Models\kelompok;
 use App\Models\MasterParticipantClass;
@@ -45,6 +45,7 @@ beforeEach(function () {
         'code' => 'SPR',
         'is_active' => true,
     ]);
+    $this->category->events()->attach($this->event);
     $this->class = CompetitionClass::create([
         'event_id' => $this->event->id,
         'competition_category_id' => $this->category->id,
@@ -142,6 +143,7 @@ test('exclusivity blocks registration when person already in conflicting categor
         'code' => 'JAU',
         'is_active' => true,
     ]);
+    $conflictCat->events()->attach($this->event);
 
     CompetitionCategoryExclusive::create([
         'competition_category_id' => $this->category->id,

@@ -47,11 +47,15 @@ function makeEvent(array $overrides = []): Event
 
 function makeCategory(Event $event, array $overrides = []): CompetitionCategory
 {
-    return CompetitionCategory::create(array_merge([
+    $category = CompetitionCategory::create(array_merge([
         'event_id' => $event->id,
         'name' => 'Kategori Test',
         'code' => strtoupper(str()->random(6)),
     ], $overrides));
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function makeClass(Event $event, CompetitionCategory $category, array $overrides = []): CompetitionClass

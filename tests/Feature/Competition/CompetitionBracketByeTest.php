@@ -29,7 +29,11 @@ function bye_event(array $overrides = []): \App\Models\Event
 
 function bye_category(\App\Models\Event $event): \App\Models\CompetitionCategory
 {
-    return \App\Models\CompetitionCategory::create(['event_id' => $event->id, 'name' => 'BYE Cat '.str()->random(4)]);
+    $category = \App\Models\CompetitionCategory::create(['event_id' => $event->id, 'name' => 'BYE Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function bye_class(\App\Models\Event $event, \App\Models\CompetitionCategory $category, string $format = 'individual_vs_individual'): \App\Models\CompetitionClass

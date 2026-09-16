@@ -14,12 +14,14 @@ class ParticipantList extends Component
     /**
      * Penanda struktural cabang lomba FASDA.
      *
-     * Fasda2026Seeder membuat competition_category & competition_class
-     * dengan `code` berawalan "F26-" (lihat categoryCode()/classCode()).
-     * Event competition lain (UAT dummy, dummy aplikasi lomba, dll.)
-     * memakai code "uat-*", "TNX", atau null — sehingga tidak masuk
-     * dropdown Lomba, sekalipun namanya sama dengan lomba FASDA
-     * (mis. "Khotbah" milik UAT vs "Khotbah" FASDA).
+     * Fasda2026Seeder membuat competition_class dengan `code` berawalan "F26-".
+     * Sebaliknya, kelas operasional yang dibuat AplikasiLombaSeeder atau lewat
+     * UI (mis. lomba "Mewarnai") TIDAK punya `code` (null). Keduanya adalah
+     * lomba valid dan harus muncul di dropdown.
+     *
+     * Yang dikecualikan hanya kelas ber-`code` eksplisit milik data uji/demo
+     * (mis. "uat-*", "CLS-*"), agar event dummy bernama sama dengan lomba
+     * FASDA (mis. "Khotbah" UAT vs "Khotbah" FASDA) tidak ikut muncul.
      */
     private const FASDA_CLASS_CODE_PREFIX = 'F26-';
 
@@ -65,9 +67,13 @@ class ParticipantList extends Component
                 fn ($query) => $query
                     ->where('is_active', true)
                     ->where(
-                        'code',
-                        'like',
-                        self::FASDA_CLASS_CODE_PREFIX.'%'
+                        fn ($class) => $class
+                            ->whereNull('code')
+                            ->orWhere(
+                                'code',
+                                'like',
+                                self::FASDA_CLASS_CODE_PREFIX.'%'
+                            )
                     )
             )
             ->orderBy('name')
@@ -147,10 +153,8 @@ class ParticipantList extends Component
                 'competitions' => $this->competitions,
                 'categories' => $this->categories,
                 'classes' => $this->classes,
-                'showingAllCompetition' =>
-                    $this->isShowingAllCompetition(),
-                'showingAllCategory' =>
-                    $this->isShowingAllCategory(),
+                'showingAllCompetition' => $this->isShowingAllCompetition(),
+                'showingAllCategory' => $this->isShowingAllCategory(),
             ]
         );
     }

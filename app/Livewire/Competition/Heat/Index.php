@@ -197,7 +197,11 @@ class Index extends Component
             return;
         }
 
-        session()->flash('success', "Round {$round} dibangun ulang dari format: {$result['heat_count']} heat, {$result['competitors_used']} kompetitor dipasang.");
+        $class = CompetitionClass::find((int) $this->selectedClassId);
+
+        session()->flash('success', $class?->isTeamFormat()
+            ? "Round {$round} dibangun ulang dari format: {$result['heat_count']} heat (kosong). Silakan distribusikan Team."
+            : "Round {$round} dibangun ulang dari format: {$result['heat_count']} heat, {$result['competitors_used']} kompetitor dipasang.");
     }
 
     // -------------------------------------------------------------------------
@@ -289,13 +293,22 @@ class Index extends Component
 
     private function validateFormat(int $participants, int $minParticipants, int $qualifiers): void
     {
+        $unit = $this->selectedIsTeamHeat() ? 'tim' : 'peserta';
+
         if ($minParticipants > $participants) {
-            $this->addError('formatMinParticipants', 'Minimum peserta untuk start tidak boleh melebihi peserta per heat.');
+            $this->addError('formatMinParticipants', "Minimum {$unit} untuk start tidak boleh melebihi {$unit} per heat.");
         }
 
         if ($qualifiers > $participants) {
-            $this->addError('formatQualifiers', 'Jumlah lolos tidak boleh melebihi peserta per heat.');
+            $this->addError('formatQualifiers', "Jumlah lolos tidak boleh melebihi {$unit} per heat.");
         }
+    }
+
+    private function selectedIsTeamHeat(): bool
+    {
+        $class = CompetitionClass::find((int) $this->selectedClassId);
+
+        return $class !== null && $class->format === \App\Support\CompetitionFormat::TEAM_HEAT;
     }
 
     private function generateMessage(string $reason, int $round): string
@@ -359,6 +372,7 @@ class Index extends Component
         $assignableHeats = collect();
         $heatCountForRound = null;
         $activeTeamsCount = 0;
+        $teamNeedsRebuild = false;
 
         if ($selected) {
             $poolCount = $service->competitorCount($selected->id);
@@ -371,6 +385,8 @@ class Index extends Component
                 if ($this->teamRound !== $teamRound) {
                     $this->teamRound = $teamRound;
                 }
+
+                $teamNeedsRebuild = $service->needsRebuild($selected->id, $teamRound);
 
                 $this->teamHeatData($selected, $schedules, $teamRound, $availableTeams, $teamHeats, $assignableHeats, $heatCountForRound, $activeTeamsCount);
             }
@@ -404,6 +420,7 @@ class Index extends Component
             'assignableHeats' => $assignableHeats,
             'heatCountForRound' => $heatCountForRound,
             'activeTeamsCount' => $activeTeamsCount,
+            'teamNeedsRebuild' => $teamNeedsRebuild,
             'formatLabel' => $selected ? \App\Support\CompetitionFormat::label($selected->format) : '-',
             'resultTypeLabel' => $selected ? CompetitionResultType::label($selected->resultType()) : '-',
             'resultDirection' => $selected ? $this->directionLabel($selected->resultType()) : '-',

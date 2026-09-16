@@ -6,6 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Participation extends Model
 {
+    public const STATUS_BELUM_DAFTAR_ULANG = 'Belum Daftar Ulang';
+
+    public const STATUS_SUDAH_DAFTAR_ULANG = 'Sudah Daftar Ulang';
+
+    private const SUDAH_DAFTAR_ULANG_VALUES = [
+        self::STATUS_SUDAH_DAFTAR_ULANG,
+        'checked_in',
+    ];
+
     protected $fillable = [
         'person_id',
         'event_id',
@@ -54,5 +63,17 @@ class Participation extends Model
     public function competitionRegistrations()
     {
         return $this->hasMany(CompetitionRegistration::class);
+    }
+
+    public function isReregistered(): bool
+    {
+        return in_array($this->status_registrasi, self::SUDAH_DAFTAR_ULANG_VALUES, true);
+    }
+
+    public function reregistrationStatusLabel(): string
+    {
+        return $this->isReregistered()
+            ? self::STATUS_SUDAH_DAFTAR_ULANG
+            : self::STATUS_BELUM_DAFTAR_ULANG;
     }
 }

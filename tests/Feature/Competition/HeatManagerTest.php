@@ -238,7 +238,7 @@ test('generate round is idempotent — refuses to duplicate round heats', functi
         ->and(app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)->count())->toBe(2);
 });
 
-test('generate round expands pool into partial last heat when not divisible', function () {
+test('generate round distributes pool balanced with max difference 1 when not divisible', function () {
     $event = hm_event();
     $category = hm_category($event);
     $class = hm_class($event, $category);
@@ -253,7 +253,9 @@ test('generate round expands pool into partial last heat when not divisible', fu
     $counts = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1)
         ->map(fn ($h) => $h->scheduleEntries()->count())->all();
 
-    expect($counts)->toBe([7, 7, 7, 7, 2]);
+    // 30 / 7 ceil = 5 heats; base=6, extra=0 → [6,6,6,6,6], bukan [7,7,7,7,2].
+    expect($counts)->toBe([6, 6, 6, 6, 6])
+        ->and(max($counts) - min($counts))->toBeLessThanOrEqual(1);
 });
 
 test('team heat generation creates EMPTY heats (no auto-populate, capacity from format)', function () {
@@ -519,7 +521,7 @@ test('moveTeamBetweenHeats moves a team to another heat, honoring capacity', fun
         ->toThrow(ValidationException::class);
 });
 
-test('autoAssignRound distributes all active teams round-robin and stays editable', function () {
+test('autoAssignRound distributes all active teams balanced (max diff 1) and stays editable', function () {
     $event = hm_event();
     $category = hm_category($event);
     $class = hm_class($event, $category, 'team_heat');
@@ -541,7 +543,11 @@ test('autoAssignRound distributes all active teams round-robin and stays editabl
 
     $schedules = app(CompetitionMultiRoundHeatService::class)->roundSchedules($class->id, 1);
 
-    expect($schedules->map(fn ($h) => $h->scheduleEntries()->count())->all())->toBe([4, 4, 2]);
+    $sizes = $schedules->map(fn ($h) => $h->scheduleEntries()->count())->all();
+
+    // 10 team / 3 heat → 4,3,3 (bukan 4,4,2).
+    expect($sizes)->toBe([4, 3, 3])
+        ->and(max($sizes) - min($sizes))->toBeLessThanOrEqual(1);
 
     $assignedEver = $schedules->flatMap(fn ($h) => $h->scheduleEntries()->pluck('competition_team_id'))->map(fn ($id) => (int) $id);
 

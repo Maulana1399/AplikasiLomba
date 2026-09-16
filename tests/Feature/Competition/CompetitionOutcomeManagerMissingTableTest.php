@@ -37,7 +37,11 @@ function cmt_event(array $overrides = []): Event
 
 function cmt_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CMT Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CMT Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function cmt_class(Event $event, CompetitionCategory $category): CompetitionClass

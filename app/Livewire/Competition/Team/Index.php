@@ -28,6 +28,15 @@ class Index extends Component
 
     public bool $showPreview = false;
 
+    /**
+     * Format yang boleh diproses Pembagian Tim: `team_vs_team` dan `team_heat`.
+     * `team_mass` dan format non-team tidak diekspos.
+     */
+    private const FORMABLE_FORMATS = [
+        CompetitionFormat::TEAM_VS_TEAM,
+        CompetitionFormat::TEAM_HEAT,
+    ];
+
     /** @var array<string, mixed>|null */
     public ?array $preview = null;
 
@@ -75,8 +84,8 @@ class Index extends Component
     }
 
     /**
-     * Kelas yang membutuhkan tim dan tersedia di 5 format UI = `team_vs_team`.
-     * `team_mass`/`team_heat` tidak diekspos di menu Pembagian Tim (legacy/engine).
+     * Kelas yang bisa diisi tim (Pembagian Tim) = `team_vs_team` dan `team_heat`.
+     * `team_mass` dan format non-team tidak diekspos di menu Pembagian Tim.
      */
     public function getClassesProperty()
     {
@@ -85,7 +94,7 @@ class Index extends Component
         }
 
         return CompetitionClass::where('competition_category_id', $this->competitionCategoryId)
-            ->where('format', CompetitionFormat::TEAM_VS_TEAM)
+            ->whereIn('format', self::FORMABLE_FORMATS)
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -110,7 +119,7 @@ class Index extends Component
 
         return CompetitionClass::where('id', $this->competitionClassId)
             ->where('competition_category_id', $this->competitionCategoryId)
-            ->where('format', CompetitionFormat::TEAM_VS_TEAM)
+            ->whereIn('format', self::FORMABLE_FORMATS)
             ->where('is_active', true)
             ->first();
     }

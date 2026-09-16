@@ -32,6 +32,7 @@ beforeEach(function () {
         'event_id' => $this->event->id,
         'name' => 'Lomba Adzan',
     ]);
+    $this->category->events()->attach($this->event);
 
     $this->class = CompetitionClass::create([
         'event_id' => $this->event->id,

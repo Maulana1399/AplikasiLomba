@@ -6,7 +6,10 @@
     </div>
 
     <div>
-        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{{ $categoryName }} / {{ $className }}</h1>
+        <div class="flex items-center gap-2">
+            <flux:button :href="route('competition.execution.index', absolute: false)" variant="ghost" icon="arrow-left" size="sm">Kembali</flux:button>
+            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{{ $categoryName }} / {{ $className }}</h1>
+        </div>
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             Venue: {{ $venueName }} &middot; Input hasil peserta
             &middot; Result type: <span class="font-medium text-zinc-800 dark:text-zinc-200">{{ \App\Support\CompetitionResultType::label($resultType) }}</span>
@@ -36,16 +39,16 @@
     @if (! empty($podium))
         <div class="grid gap-3 sm:grid-cols-3">
             @foreach ($podium as $entry)
-                <div class="rounded-xl border p-4 text-center {{ $entry['position'] === 1 ? 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/40' : ($entry['position'] === 2 ? 'border-zinc-300 bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900' : 'border-orange-200 bg-orange-50/60 dark:border-orange-800 dark:bg-orange-950/30') }}">
-                    <p class="text-xs font-medium uppercase tracking-wide {{ $entry['position'] === 1 ? 'text-amber-600 dark:text-amber-400' : ($entry['position'] === 2 ? 'text-zinc-500' : 'text-orange-600 dark:text-orange-400') }}">
+                <div class="rounded-xl border p-4 text-center {{ $entry['position'] === 1 ? 'border-amber-300 bg-amber-50 dark:border-amber-500 dark:bg-amber-950' : ($entry['position'] === 2 ? 'border-zinc-300 bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900' : 'border-orange-200 bg-orange-50/60 dark:border-orange-700 dark:bg-orange-950') }}">
+                    <p class="text-xs font-semibold uppercase tracking-wide {{ $entry['position'] === 1 ? 'text-amber-700 dark:text-amber-300' : ($entry['position'] === 2 ? 'text-zinc-600 dark:text-zinc-300' : 'text-orange-700 dark:text-orange-300') }}">
                         Juara {{ $entry['position'] }}
                     </p>
                     <p class="mt-1 truncate font-semibold text-zinc-900 dark:text-white">{{ $entry['person_name'] ?? $entry['team_name'] ?? '-' }}</p>
                     @if (! empty($entry['participant_number']))
-                        <p class="text-xs text-zinc-500">{{ $entry['participant_number'] }}</p>
+                        <p class="text-xs text-zinc-600 dark:text-zinc-300">{{ $entry['participant_number'] }}</p>
                     @endif
                     @if (array_key_exists('score', $entry) && $entry['score'] !== null)
-                        <p class="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        <p class="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-200">
                             {{ $isHeat ? 'Waktu: '. \App\Support\CompetitionTime::format($entry['score']) : 'Skor: '.$entry['score'] }}
                         </p>
                     @endif
@@ -60,18 +63,18 @@
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
                 <thead class="bg-zinc-50 dark:bg-zinc-900">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">No</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Team</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Posisi</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Skor</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Keterangan</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">No</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Team</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Posisi</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Skor</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Keterangan</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
                     @forelse ($teamOutcomes as $index => $row)
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $loop->iteration }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $loop->iteration }}</td>
                             <td class="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">{{ $row['team_name'] }}</td>
                             <td class="px-4 py-2">
                                 <flux:input wire:model="teamOutcomes.{{ $index }}.position" type="number" min="0" size="sm" placeholder="-" class="w-16" />
@@ -94,7 +97,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-sm text-zinc-500">Belum ada team terdaftar di jadwal ini. Tambahkan team lewat "Atur Peserta".</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">Belum ada team terdaftar di jadwal ini. Tambahkan team lewat "Atur Peserta".</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -125,27 +128,27 @@
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
                 <thead class="bg-zinc-50 dark:bg-zinc-900">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">No</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">{{ $isTeamHeat ? 'Team' : 'Nama' }}</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">No. Peserta</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">No</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{{ $isTeamHeat ? 'Team' : 'Nama' }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">No. Peserta</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                             @if ($resultType === \App\Support\CompetitionResultType::TIME)
                                 Waktu (M:SS.mmm)
                             @else
                                 {{ \App\Support\CompetitionResultType::label($resultType) }}
                             @endif
                         </th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Catatan</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Posisi Final</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Catatan</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Posisi Final</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
                     @forelse ($heatResults as $index => $row)
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $loop->iteration }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $loop->iteration }}</td>
                             <td class="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">{{ $row['person_name'] ?? $row['team_name'] ?? '-' }}</td>
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $row['participant_number'] ?? ($isTeamHeat ? 'Team' : '-') }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $row['participant_number'] ?? ($isTeamHeat ? 'Team' : '-') }}</td>
                             <td class="px-4 py-2">
                                 @if ($resultType === \App\Support\CompetitionResultType::TIME)
                                     <flux:input wire:model="heatResults.{{ $index }}.timeText" size="sm" placeholder="1:32.500" class="w-28" />
@@ -169,7 +172,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-sm text-zinc-500">Belum ada peserta terdaftar di heat ini.</td>
+                            <td colspan="7" class="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">Belum ada peserta terdaftar di heat ini.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -203,23 +206,23 @@
             <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
                 <thead class="bg-zinc-50 dark:bg-zinc-900">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">No</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Nama</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">No. Peserta</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Desa</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Posisi</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Status</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Skor</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">Keterangan</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">No</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Nama</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">No. Peserta</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Desa</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Posisi</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Status</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Skor</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Keterangan</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
                     @forelse ($outcomes as $index => $outcome)
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-900/50">
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $loop->iteration }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $loop->iteration }}</td>
                             <td class="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-white">{{ $outcome['person_name'] }}</td>
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $outcome['participant_number'] }}</td>
-                            <td class="px-4 py-3 text-sm text-zinc-500">{{ $outcome['desa'] }} / {{ $outcome['kelompok'] }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $outcome['participant_number'] }}</td>
+                            <td class="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $outcome['desa'] }} / {{ $outcome['kelompok'] }}</td>
                             <td class="px-4 py-2">
                                 <flux:input wire:model="outcomes.{{ $index }}.position" type="number" min="0" size="sm" placeholder="-" class="w-16" />
                             </td>
@@ -241,7 +244,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-sm text-zinc-500">Belum ada peserta terdaftar di kelas ini.</td>
+                            <td colspan="8" class="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">Belum ada peserta terdaftar di kelas ini.</td>
                         </tr>
                     @endforelse
                 </tbody>

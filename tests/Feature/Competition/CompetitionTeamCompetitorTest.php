@@ -35,7 +35,11 @@ function ctc_event(array $overrides = []): Event
 
 function ctc_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CTC Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CTC Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function ctc_class(Event $event, CompetitionCategory $category, string $format = 'team_mass'): CompetitionClass

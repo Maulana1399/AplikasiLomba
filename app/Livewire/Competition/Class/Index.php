@@ -147,13 +147,21 @@ class Index extends Component
         $this->resetValidation('editCompetitionCategoryId');
     }
 
+    /**
+     * 5 format UI yang diekspos AplikasiLomba.
+     *
+     * Untuk saat ini seluruh lomba dengan format "Heat" adalah LOMBA BEREGU.
+     * Pilihan UI "Heat" SELALU disimpan sebagai internal
+     * `CompetitionFormat::TEAM_HEAT` — individual_heat & team_mass tidak
+     * diekspos dari Setting.
+     */
     public function formatOptions(): array
     {
         return [
             CompetitionFormat::INDIVIDUAL_MASS => 'Massal',
             CompetitionFormat::INDIVIDUAL_VS_INDIVIDUAL => 'Individual vs Individual',
             CompetitionFormat::TEAM_VS_TEAM => 'Team vs Team',
-            CompetitionFormat::INDIVIDUAL_HEAT => 'Heat',
+            CompetitionFormat::TEAM_HEAT => 'Heat',
             'individual_scoring' => 'Individual Scoring',
         ];
     }
@@ -214,7 +222,7 @@ class Index extends Component
                 'newResultType' => 'nullable|in:'.implode(',', CompetitionResultType::ALL),
                 'newWinnerCount' => 'nullable|integer|min:1|max:100',
                 'newHonorableMentionCount' => 'nullable|integer|min:0|max:100',
-                'newTeamSize' => 'nullable|integer|min:1|max:100',
+                'newTeamSize' => $this->teamSizeRule($this->newFormat),
                 'newCompetitionCategoryId' => 'required|exists:competition_categories,id',
             ]);
 
@@ -262,6 +270,21 @@ class Index extends Component
         return 'in:'.implode(',', array_keys($this->formatOptions()));
     }
 
+    /**
+     * Aturan tinjauan ukuran tim.
+     *
+     * Format Heat ("team_heat") adalah LOMBA BEREGU, jadi ukuran tim wajib
+     * diisi lebih dari 1. Format lain tetap opsional.
+     */
+    public function teamSizeRule(string $uiFormat): array
+    {
+        if ($uiFormat === CompetitionFormat::TEAM_HEAT) {
+            return ['required', 'integer', 'min:2', 'max:100'];
+        }
+
+        return ['nullable', 'integer', 'min:1', 'max:100'];
+    }
+
     public function storedFormatRule(): string
     {
         return 'in:'.implode(',', array_merge(CompetitionFormat::ALL, ['individual_scoring']));
@@ -303,7 +326,7 @@ class Index extends Component
             'editResultType' => 'nullable|in:'.implode(',', CompetitionResultType::ALL),
             'editWinnerCount' => 'nullable|integer|min:1|max:100',
             'editHonorableMentionCount' => 'nullable|integer|min:0|max:100',
-            'editTeamSize' => 'nullable|integer|min:1|max:100',
+            'editTeamSize' => $this->teamSizeRule($this->editFormat),
             'editCompetitionCategoryId' => 'required|exists:competition_categories,id',
         ]);
 

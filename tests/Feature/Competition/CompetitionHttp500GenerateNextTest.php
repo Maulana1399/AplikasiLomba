@@ -33,7 +33,11 @@ function t500_event(): Event
 
 function t500_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'T500 Cat']);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'T500 Cat']);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function t500_class(Event $event, CompetitionCategory $cat, string $format = 'individual_heat', string $resultType = 'time'): CompetitionClass
@@ -428,6 +432,14 @@ test('8. Team heat: R1 → R2 balanced, tidak 500', function () {
     $multiRound = app(CompetitionMultiRoundHeatService::class);
     $round1 = $multiRound->roundSchedules($class->id, 1);
     expect($round1)->toHaveCount(2);
+
+    // Team heat: generate hanya membuat heat kosong — tim harus di-assign dulu.
+    $heatService = app(CompetitionHeatManagerService::class);
+    collect($round1)->values()->each(function ($heat, $idx) use (&$teams, $heatService, $event, $class) {
+        collect(array_splice($teams, 0, 3))->each(function ($team) use ($heatService, $event, $class, $idx) {
+            $heatService->assignTeamToHeat($event->id, $class->id, 1, $idx + 1, $team->id);
+        });
+    });
 
     $time = 60.0;
     foreach ($round1 as $heat) {

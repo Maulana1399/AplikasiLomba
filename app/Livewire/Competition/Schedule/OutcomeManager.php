@@ -38,11 +38,27 @@ class OutcomeManager extends Component
     /** Top-N per heat dari format (source-of-truth) untuk round heat ini. */
     public ?int $formatTopN = null;
 
+    /**
+     * Event milik kelas schedule ini — sumber konteks yang benar.
+     *
+     * Route dapat memuat schedule dari event mana pun (route model binding tidak
+     * di-scope ke active event), sementara query result-service bersifat
+     * event-scoped (`findOrFail`). Memakai active event session membuat halaman
+     * 404 ketika schedule berasal dari event yang berbeda dari active event.
+     */
+    public ?int $eventId = null;
+
     public function mount(CompetitionSchedule $schedule): void
     {
-        app(ActiveEventContext::class)->requireCurrent();
+        $context = app(ActiveEventContext::class);
+        $context->requireCurrent();
 
         $this->schedule = $schedule->load(['competitionClass.competitionCategory', 'venue']);
+
+        $this->eventId = $schedule->competitionClass?->event_id !== null
+            ? (int) $schedule->competitionClass->event_id
+            : $context->id();
+
         $format = $schedule->competitionClass?->format;
         $this->isTeamHeat = $format === CompetitionFormat::TEAM_HEAT;
         $this->isHeat = in_array($format, [CompetitionFormat::INDIVIDUAL_HEAT, CompetitionFormat::TEAM_HEAT], true);
@@ -368,11 +384,11 @@ class OutcomeManager extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
+        $eventId = $this->eventId;
         $service = app(CompetitionResultService::class);
 
         if ($this->isTeam) {
-            $result = $service->rankTeams($event->id, $this->schedule->competition_class_id);
+            $result = $service->rankTeams($eventId, $this->schedule->competition_class_id);
 
             if (! $result['ranked']) {
                 session()->flash('error', 'Auto-ranking team tidak tersedia untuk format win/loss.');
@@ -386,7 +402,7 @@ class OutcomeManager extends Component
             return;
         }
 
-        $result = $service->rankSchedule($event->id, $this->schedule->id);
+        $result = $service->rankSchedule($eventId, $this->schedule->id);
 
         if (! $result['ranked']) {
             session()->flash('error', 'Auto-ranking tidak tersedia untuk format win/loss.');
@@ -405,9 +421,7 @@ class OutcomeManager extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
-        $result = app(CompetitionResultService::class)->aggregateHeatResults($event->id, $this->schedule->competition_class_id);
+        $result = app(CompetitionResultService::class)->aggregateHeatResults($this->eventId, $this->schedule->competition_class_id);
 
         if (! $result['ranked']) {
             session()->flash('error', 'Aggregasi final tidak tersedia untuk format win/loss.');
@@ -426,9 +440,7 @@ class OutcomeManager extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
-        $result = app(CompetitionMultiRoundHeatService::class)->rankHeat($event->id, $this->schedule->id);
+        $result = app(CompetitionMultiRoundHeatService::class)->rankHeat($this->eventId, $this->schedule->id);
 
         if (! $result['ranked']) {
             session()->flash('error', 'Ranking heat tidak tersedia untuk format win/loss.');
@@ -466,10 +478,8 @@ class OutcomeManager extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
         $result = app(CompetitionMultiRoundHeatService::class)
-            ->qualifyHeat($event->id, $this->schedule->id, $topN);
+            ->qualifyHeat($this->eventId, $this->schedule->id, $topN);
 
         if (! $result['qualified']) {
             $message = match ($result['reason'] ?? null) {
@@ -493,8 +503,6 @@ class OutcomeManager extends Component
     {
         Gate::authorize('manage-events');
 
-        $event = app(ActiveEventContext::class)->requireCurrent();
-
         $service = app(CompetitionMultiRoundHeatService::class);
         $finalRound = $this->round;
 
@@ -502,7 +510,7 @@ class OutcomeManager extends Component
             $finalRound = $service->nextRound($this->schedule->competition_class_id, $finalRound);
         }
 
-        $result = $service->finalizePodium($event->id, $this->schedule->competition_class_id, $finalRound);
+        $result = $service->finalizePodium($this->eventId, $this->schedule->competition_class_id, $finalRound);
 
         if (! $result['finalized']) {
             session()->flash('error', 'Finalisasi podium tidak tersedia untuk format win/loss.');
@@ -535,21 +543,21 @@ class OutcomeManager extends Component
 
     public function getPodiumProperty(): array
     {
-        $event = app(ActiveEventContext::class)->requireCurrent();
+        $eventId = $this->eventId;
         $service = app(CompetitionResultService::class);
         $format = $this->schedule->competitionClass?->format;
         $winnerCount = $this->schedule->competitionClass?->winner_count ?? 3;
 
         if ($this->isTeam) {
-            return $service->podiumForTeams($event->id, $this->schedule->competition_class_id, $winnerCount);
+            return $service->podiumForTeams($eventId, $this->schedule->competition_class_id, $winnerCount);
         }
 
         // Heat & vs-format (bracket) memakai podium final kelas; mass memakai podium schedule.
         if ($this->isHeat || in_array($format, [CompetitionFormat::INDIVIDUAL_VS_INDIVIDUAL, CompetitionFormat::TEAM_VS_TEAM], true)) {
-            return $service->podiumForClass($event->id, $this->schedule->competition_class_id, $winnerCount);
+            return $service->podiumForClass($eventId, $this->schedule->competition_class_id, $winnerCount);
         }
 
-        return $service->podiumForSchedule($event->id, $this->schedule->id, $winnerCount);
+        return $service->podiumForSchedule($eventId, $this->schedule->id, $winnerCount);
     }
 
     public function render()

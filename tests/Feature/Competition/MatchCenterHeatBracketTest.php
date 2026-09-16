@@ -40,7 +40,11 @@ function mhb_event(array $overrides = []): Event
 
 function mhb_category(Event $event): CompetitionCategory
 {
-    return CompetitionCategory::create(['event_id' => $event->id, 'name' => 'MHB Cat '.str()->random(4)]);
+    $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'MHB Cat '.str()->random(4)]);
+
+    $category->events()->attach($event);
+
+    return $category;
 }
 
 function mhb_class(Event $event, CompetitionCategory $category, string $format): CompetitionClass

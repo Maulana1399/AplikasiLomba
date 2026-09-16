@@ -68,25 +68,32 @@
                         @error('formatRound') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Peserta per Heat</label>
-                        <flux:input wire:model="formatParticipants" type="number" min="1" max="99" placeholder="7" />
+                        <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $isTeamHeat ? 'Tim per Heat' : 'Peserta per Heat' }}</label>
+                        <flux:input wire:model="formatParticipants" type="number" min="1" max="99" placeholder="{{ $isTeamHeat ? '4' : '7' }}" />
                         @error('formatParticipants') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Minimum Peserta Untuk Start</label>
+                        <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $isTeamHeat ? 'Minimum Tim Untuk Start' : 'Minimum Peserta Untuk Start' }}</label>
                         <flux:input wire:model="formatMinParticipants" type="number" min="1" max="99" placeholder="2" />
                         @error('formatMinParticipants') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Lolos per Heat</label>
-                        <flux:input wire:model="formatQualifiers" type="number" min="1" max="99" placeholder="3" />
+                        <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $isTeamHeat ? 'Tim Lolos per Heat' : 'Lolos per Heat' }}</label>
+                        <flux:input wire:model="formatQualifiers" type="number" min="1" max="99" placeholder="{{ $isTeamHeat ? '2' : '3' }}" />
                         @error('formatQualifiers') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
-                <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
-                    Contoh: 28 peserta, 7 per heat, 3 lolos → 4 heat, 12 qualifier keseluruhan.
-                    Jumlah lolos tidak boleh melebihi peserta per heat. Minimum peserta untuk start adalah syarat agar heat bisa dimainkan tanpa harus penuh (default 2).
-                </p>
+                @if ($isTeamHeat)
+                    <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        Contoh: 16 tim, 4 tim per heat, 2 tim lolos → 4 heat, 8 tim lolos.
+                        Jumlah tim lolos tidak boleh melebihi tim per heat. Minimum tim untuk start adalah syarat agar heat bisa dimainkan tanpa harus penuh (default 2).
+                    </p>
+                @else
+                    <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        Contoh: 28 peserta, 7 per heat, 3 lolos → 4 heat, 12 qualifier keseluruhan.
+                        Jumlah lolos tidak boleh melebihi peserta per heat. Minimum peserta untuk start adalah syarat agar heat bisa dimainkan tanpa harus penuh (default 2).
+                    </p>
+                @endif
                 <div class="mt-4 flex justify-end">
                     <flux:button wire:click="createFormat" variant="primary" icon="plus">Simpan Format Round {{ $formatRound }}</flux:button>
                 </div>
@@ -128,11 +135,27 @@
                         @if ($teamHeats->isEmpty())
                             <flux:button wire:click="generateRound({{ $teamRound }})" size="sm" variant="primary" icon="plus">Generate Heat</flux:button>
                         @else
+                            @if ($teamNeedsRebuild)
+                                <flux:button wire:click="rebuildRound({{ $teamRound }})" size="sm" variant="danger" icon="arrow-path" class="whitespace-nowrap"
+                                    wire:confirm="Bangun ulang heat Round {{ $teamRound }} dari format terbaru? Heat lama yang belum dimainkan akan diganti (hasil/outcome tetap dilindungi).">
+                                    Generate Ulang Babak Ini
+                                </flux:button>
+                            @endif
                             <flux:button wire:click="removeRound({{ $teamRound }})" size="sm" variant="danger" icon="trash" class="whitespace-nowrap">Hapus Heat Babak Ini</flux:button>
                         @endif
                         <flux:button wire:click="deleteFormat({{ $currentFormat->id }})" size="sm" variant="ghost" icon="x-mark" class="whitespace-nowrap">Hapus Format</flux:button>
                     </div>
                 </div>
+
+                @if ($teamNeedsRebuild)
+                    <div class="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+                        Susunan Heat yang ada tidak sesuai format saat ini
+                        ({{ $currentFormat->participants_per_heat }} tim/heat untuk {{ $activeTeamsCount }} tim). Klik
+                        <strong>Generate Ulang Babak Ini</strong> agar jumlah heat dihitung ulang dari jumlah Team
+                        ({{ $heatCountForRound ?? '—' }} heat). Heat dibangun ulang kosong, lalu Team didistribusikan ulang.
+                        Heat yang sudah dimainkan atau punya hasil tidak akan disentuh.
+                    </div>
+                @endif
 
                 {{-- Team tersedia --}}
                 <div class="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">

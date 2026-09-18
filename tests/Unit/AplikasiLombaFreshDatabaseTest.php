@@ -102,11 +102,11 @@ beforeEach(function () {
     DB::statement('PRAGMA synchronous = OFF');
     DB::statement('PRAGMA locking_mode = EXCLUSIVE');
 
-    Artisan::call('migrate', [
-        '--database' => 'sqlite_fresh',
-        '--path' => 'database/migrations_canonical',
-        '--force' => true,
-    ]);
+        Artisan::call('migrate', [
+            '--database' => 'sqlite_fresh',
+            '--path' => 'database/migrations',
+            '--force' => true,
+        ]);
 });
 
 afterEach(function () {
@@ -156,17 +156,17 @@ it('seeds the full canonical seeder set', function () {
 
     expect(\App\Models\desa::count())->toBeGreaterThanOrEqual(4);
     expect(\App\Models\kelompok::count())->toBeGreaterThan(0);
-    expect(MasterParticipantClass::count())->toBe(11);
+    expect(MasterParticipantClass::count())->toBe(10);
 });
 
 it('seeds the master participant classes idempotently', function () {
-    $expected = ['TK', 'SD1', 'SD2', 'SD3', 'SD4', 'SD5', 'SD6', 'SMP1', 'SMP2', 'SMP3', 'Dewasa'];
+    $expected = ['PAUD', 'SD 1', 'SD 2', 'SD 3', 'SD 4', 'SD 5', 'SD 6', 'SMP', 'SMU', 'Dewasa'];
 
     $this->seed(MasterParticipantClassSeeder::class);
     $this->seed(MasterParticipantClassSeeder::class);
     $this->seed(DatabaseSeeder::class);
 
-    expect(MasterParticipantClass::count())->toBe(11);
+    expect(MasterParticipantClass::count())->toBe(10);
 
     $rows = MasterParticipantClass::orderBy('sort_order')->get();
     expect($rows->pluck('name')->all())->toBe($expected);

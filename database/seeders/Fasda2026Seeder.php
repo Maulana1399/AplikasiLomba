@@ -11,6 +11,7 @@ use App\Models\Participation;
 use App\Models\Person;
 use App\Models\desa;
 use App\Models\kelompok;
+use App\Services\Placement\PlacementService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -19,10 +20,20 @@ use Illuminate\Support\Str;
 class Fasda2026Seeder extends Seeder
 {
     /**
-     * Import peserta FASDA 2026 lengkap untuk kebutuhan UAT.
+     * Lomba khusus Putra (gender L saja). Gender dari CSV tetap dipaksa L.
+     */
+    private const PUTRA_ONLY = [
+        'Adzan & Qomat',
+        'Aplikasi Penerapan 29 Karakter Luhur Jamaah',
+        'Khotbah',
+        'Kaifiyatussholah',
+    ];
+
+    /**
+     * Import data peserta FASDA 2026 (data lomba nyata).
      *
      * Sumber:
-     * database/seeders/data/fasda2026.csv
+     * database/seeders/data/fasda2026_final.csv
      *
      * Data yang diimport:
      * - Person
@@ -48,7 +59,7 @@ class Fasda2026Seeder extends Seeder
     public function run(): void
     {
         $path = database_path(
-            'seeders/data/fasda2026.csv'
+            'seeders/data/fasda2026_final.csv'
         );
 
         if (! is_file($path)) {
@@ -64,6 +75,24 @@ class Fasda2026Seeder extends Seeder
         $this->command?->info(
             'FASDA 2026: '.count($rows).' baris data ditemukan.'
         );
+
+        /*
+         * Urutkan deterministik: per lomba, lalu nama A-Z.
+         *
+         * Ini membuat participant_number (yang diberikan berurutan per
+         * lomba + gender) konsisten alfabetis, bukan mengikuti urutan CSV
+         * atau id database.
+         */
+        usort($rows, function (array $a, array $b): int {
+            $eventA = mb_strtolower($this->canonicalBranch((string) ($a['cabang_perlombaan'] ?? '')));
+            $eventB = mb_strtolower($this->canonicalBranch((string) ($b['cabang_perlombaan'] ?? '')));
+
+            if ($eventA !== $eventB) {
+                return $eventA <=> $eventB;
+            }
+
+            return mb_strtolower((string) ($a['nama'] ?? '')) <=> mb_strtolower((string) ($b['nama'] ?? ''));
+        });
 
         DB::transaction(function () use ($rows): void {
             /*
@@ -149,12 +178,24 @@ class Fasda2026Seeder extends Seeder
                  * CSV baru menggunakan:
                  * jenis_kelamin_inferred
                  */
+                $branch =
+                    $this->canonicalBranch(
+                        (string) ($row['cabang_perlombaan'] ?? '')
+                    );
+
                 $gender = $this->normalizeGender(
                     $row['jenis_kelamin_inferred']
                         ?? $row['gender']
                         ?? $row['jenis_kelamin']
                         ?? null
                 );
+
+                /*
+                 * Lomba khusus Putra: paksa gender L apa pun isi CSV.
+                 */
+                if (in_array($branch, self::PUTRA_ONLY, true)) {
+                    $gender = 'L';
+                }
 
                 if ($gender === 'L') {
                     $genderL++;
@@ -169,8 +210,10 @@ class Fasda2026Seeder extends Seeder
                  * DESA
                  * ---------------------------------------------------------
                  */
-                $desaName = $this->nullable(
-                    $row['desa'] ?? null
+                $desaName = $this->normalizeDesaName(
+                    $this->nullable(
+                        $row['desa'] ?? null
+                    )
                 );
 
                 $desaModel = $desaName
@@ -185,8 +228,10 @@ class Fasda2026Seeder extends Seeder
                  * KELOMPOK
                  * ---------------------------------------------------------
                  */
-                $kelompokName = $this->nullable(
-                    $row['kelompok'] ?? null
+                $kelompokName = $this->normalizeKelompokName(
+                    $this->nullable(
+                        $row['kelompok'] ?? null
+                    )
                 );
 
                 $kelompokModel = $kelompokName
@@ -303,11 +348,6 @@ class Fasda2026Seeder extends Seeder
                  * LOMBA / EVENT
                  * ---------------------------------------------------------
                  */
-                $branch =
-                    $this->canonicalBranch(
-                        $row['cabang_perlombaan'] ?? ''
-                    );
-
                 $event =
                     $events[$branch] ?? null;
 
@@ -341,7 +381,12 @@ class Fasda2026Seeder extends Seeder
                             'person_id' => $person->id,
                             'event_id' => $event->id,
                             'participant_number' =>
-                                $this->uniqueParticipantNumber(),
+                                PlacementService::generateParticipantNumber(
+                                    $event->id,
+                                    PlacementService::normalizePersonGender(
+                                        (string) $gender
+                                    )
+                                ),
                             'attendance_code' =>
                                 $this->uniqueAttendanceCode(),
                             'jenis_peserta' => 'Peserta',
@@ -355,16 +400,13 @@ class Fasda2026Seeder extends Seeder
                  * KATEGORI
                  * ---------------------------------------------------------
                  *
-                 * CSV:
-                 * kategori_candidate
-                 *
-                 * Contoh:
-                 * Paud - SD 3
-                 * SD 4 - 6
+                 * Kategori = jenjang peserta (individual), diambil dari
+                 * mpc_candidate. BUKAN gabungan rentang seperti
+                 * "Paud - SD 3" / "SD 4 - 6".
                  */
                 $categoryName =
                     $this->nullable(
-                        $row['kategori_candidate']
+                        $row['mpc_candidate']
                             ?? null
                     );
 
@@ -373,28 +415,17 @@ class Fasda2026Seeder extends Seeder
                 }
 
                 /*
-                 * Kategori di schema saat ini:
+                 * Kategori di schema aktual aplikasi:
                  *
-                 * - competition_categories.name UNIQUE global
-                 * - event_id masih NOT NULL (production)
+                 * - competition_categories.event_id NOT NULL (production)
+                 * - satu kategori dimiliki SATU event (one-to-many), BUKAN
+                 *   kategori global. Tidak ada pivot competition_category_event.
                  *
-                 * Satu kategori FASDA (mis. "Remaja", "Paud - SD 3")
-                 * dipakai oleh BANYAK event. Karena itu kategori harus
-                 * di-reuse global berdasarkan nama — jangan membuat
-                 * record duplikat hanya karena event berbeda.
-                 *
-                 * Aturan:
-                 * 1. Cari record kategori by LOWER(name) (global).
-                 * 2. Jika sudah ada, REUSE — event_id TIDAK diubah.
-                 * 3. Jika belum ada, buat baru dengan event_id = event
-                 *    pemilik (aman untuk schema event_id NOT NULL).
-                 * 4. Selalu attach/hubungkan kategori ke event via pivot
-                 *    competition_category_event supaya kategori terlihat
-                 *    di SEMUA event yang memakainya, walau record-nya
-                 *    hanya punya satu event_id.
+                 * Karena itu kategori di-reuse berdasarkan (event_id, name),
+                 * bukan berdasarkan name global.
                  */
                 $categoryKey =
-                    'name:'.mb_strtolower(
+                    $event->id.'|name:'.mb_strtolower(
                         $categoryName
                     );
 
@@ -409,7 +440,11 @@ class Fasda2026Seeder extends Seeder
                     $reusedCategories++;
                 } else {
                     $category =
-                        CompetitionCategory::whereRaw(
+                        CompetitionCategory::where(
+                            'event_id',
+                            $event->id
+                        )
+                        ->whereRaw(
                             'LOWER(name) = ?',
                             [
                                 mb_strtolower(
@@ -417,7 +452,6 @@ class Fasda2026Seeder extends Seeder
                                 ),
                             ]
                         )
-                        ->orderBy('id')
                         ->first();
 
                     if ($category) {
@@ -445,21 +479,6 @@ class Fasda2026Seeder extends Seeder
                     $categoryCache[$categoryKey] =
                         $category;
                 }
-
-                DB::table(
-                    'competition_category_event'
-                )->updateOrInsert(
-                    [
-                        'event_id' =>
-                            $event->id,
-                        'competition_category_id' =>
-                            $category->id,
-                    ],
-                    [
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]
-                );
 
                 /*
                  * ---------------------------------------------------------
@@ -523,12 +542,12 @@ class Fasda2026Seeder extends Seeder
                  * Tidak membuat kelas gender yang tidak ada
                  * datanya.
                  */
-                if (! $gender) {
-                    continue;
-                }
-
+                /*
+                 * Gender class: male-only -> L; semua lomba FASDA lain -> M
+                 * (mixed/campuran). Peserta L maupun P masuk ke class M.
+                 */
                 $classGender =
-                    $gender;
+                    in_array($branch, self::PUTRA_ONLY, true) ? 'L' : 'M';
 
                 $classKey =
                     $event->id.
@@ -597,7 +616,7 @@ class Fasda2026Seeder extends Seeder
                                     $classGender,
 
                                 /*
-                                 * Default untuk UAT.
+                                 * Default awal kelas lomba.
                                  *
                                  * Nanti dapat diubah melalui
                                  * Setting Kelas Lomba.
@@ -610,6 +629,9 @@ class Fasda2026Seeder extends Seeder
 
                                 'result_type' =>
                                     'score',
+
+                                'winner_count' =>
+                                    4,
 
                                 'code' =>
                                     $this->classCode(
@@ -766,7 +788,7 @@ class Fasda2026Seeder extends Seeder
         );
 
         $this->command?->warn(
-            'Data peserta FASDA langsung diregistrasikan ke Kelas Lomba untuk UAT.'
+            'Data peserta FASDA langsung diregistrasikan ke Kelas Lomba.'
         );
 
         $this->command?->warn(
@@ -1033,6 +1055,64 @@ class Fasda2026Seeder extends Seeder
      * DESA
      * =====================================================================
      */
+
+    private function normalizeDesaName(
+        ?string $name
+    ): ?string {
+        if (! $name) {
+            return null;
+        }
+
+        $name = preg_replace(
+            '/\s+/',
+            ' ',
+            trim($name)
+        );
+
+        // FASDA menulis desa ini sebagai "RING ROAD"; master aplikasi
+        // memakai "Ringroad". Samakan agar tidak menjadi dua record.
+        return match (mb_strtolower($name)) {
+            'ring road' => 'Ringroad',
+
+            default => $name,
+        };
+    }
+
+    private function normalizeKelompokName(
+        ?string $name
+    ): ?string {
+        if (! $name) {
+            return null;
+        }
+
+        $name = preg_replace(
+            '/\s+/',
+            ' ',
+            trim($name)
+        );
+
+        // "KM. 7", "KM.7", "KM 7" -> "KM 7"
+        $name = preg_replace(
+            '/^KM\s*\.?\s*/i',
+            'KM ',
+            $name
+        );
+
+        // Mapping varian penulisan ke nilai canonical master aplikasi.
+        // - Lamaru/Sosial Lamaru (FASDA) -> Lemaru/Lemaru Sosial (master).
+        // - Melatih -> Melati.
+        // - Bandara Lama -> Sepinggan 2.
+        return match (mb_strtolower($name)) {
+            'sumber rejo' => 'Sumber Rejo',
+            'sumberejo' => 'Sumber Rejo',
+            'lamaru' => 'Lemaru',
+            'sosial lamaru' => 'Lemaru Sosial',
+            'melatih' => 'Melati',
+            'bandara lama' => 'Sepinggan 2',
+
+            default => $name,
+        };
+    }
 
     private function ensureDesa(
         string $name,
@@ -1444,7 +1524,13 @@ class Fasda2026Seeder extends Seeder
         return match (
             mb_strtolower($name)
         ) {
+            'bacaan / tilawah' => 'Bacaan / Murotal',
+            'bacaan / murottal' => 'Bacaan / Murotal',
+            'adzan & iqomah' => 'Adzan & Qomat',
+            'kaifiyatussholah (imam)' => 'Kaifiyatussholah',
+            "kaifiyatussholah (ma'mum)" => 'Kaifiyatussholah',
             'khotbah' => 'Khotbah',
+            'pildacil' => 'Dakwah',
 
             default => $name,
         };
@@ -1474,30 +1560,6 @@ class Fasda2026Seeder extends Seeder
      * UNIQUE PARTICIPANT NUMBER
      * =====================================================================
      */
-
-    private function uniqueParticipantNumber(): string
-    {
-        do {
-            $number =
-                'F26-'.
-                str_pad(
-                    (string) random_int(
-                        1,
-                        99999
-                    ),
-                    5,
-                    '0',
-                    STR_PAD_LEFT
-                );
-        } while (
-            Participation::where(
-                'participant_number',
-                $number
-            )->exists()
-        );
-
-        return $number;
-    }
 
     /*
      * =====================================================================

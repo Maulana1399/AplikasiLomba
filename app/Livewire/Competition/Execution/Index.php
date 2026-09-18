@@ -99,9 +99,9 @@ class Index extends Component
         $query = CompetitionCategory::where('is_active', true);
 
         if ($this->filterEventId === '' || $this->filterEventId === '0') {
-            $query->whereHas('events', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'));
+            $query->whereHas('event', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'));
         } else {
-            $query->whereHas('events', fn ($q) => $q->where('events.id', (int) $this->filterEventId));
+            $query->where('event_id', (int) $this->filterEventId);
         }
 
         return $query->orderBy('sort_order')

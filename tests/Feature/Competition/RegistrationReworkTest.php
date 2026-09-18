@@ -5,13 +5,16 @@ use App\Livewire\Competition\Registration;
 use App\Models\CompetitionCategory;
 use App\Models\CompetitionCategoryExclusive;
 use App\Models\CompetitionClass;
+use App\Models\CompetitionRegistration;
 use App\Models\desa;
 use App\Models\kelompok;
 use App\Models\MasterParticipantClass;
 use App\Models\Participation;
 use App\Models\Person;
 use App\Models\User;
+use App\Services\Competition\CompetitionRegistrationService;
 use App\Support\ActiveEventContext;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 function reg_event(array $overrides = []): \App\Models\Event
@@ -36,21 +39,21 @@ beforeEach(function () {
     $this->desa = desa::create(['desa_asal' => 'Batam', 'sort_order' => 1]);
     $this->kelompok = kelompok::create(['kelompok_asal' => 'Kel-A', 'desa_id' => $this->desa->id, 'sort_order' => 1]);
     $this->participantClass = MasterParticipantClass::firstOrCreate(
-        ['name' => 'SMP1'],
-        ['code' => 'SMP1', 'sort_order' => 8]
+        ['name' => 'SMP'],
+        ['code' => 'SMP', 'sort_order' => 8, 'is_active' => true]
     );
     $this->category = CompetitionCategory::create([
         'event_id' => $this->event->id,
-        'name' => 'Lari Sprint',
-        'code' => 'SPR',
+        'name' => 'Kategori Reg',
+        'code' => 'REG',
         'is_active' => true,
     ]);
-    $this->category->events()->attach($this->event);
+    $this->category->masterParticipantClasses()->sync([$this->participantClass->id]);
     $this->class = CompetitionClass::create([
         'event_id' => $this->event->id,
         'competition_category_id' => $this->category->id,
-        'name' => 'Putra',
-        'gender' => 'M',
+        'name' => 'Kelas Putra',
+        'gender' => 'L',
         'format' => 'individual_heat',
         'status' => 'registration_open',
         'is_active' => true,
@@ -62,7 +65,8 @@ test('registration form loads with master data dropdowns', function () {
         ->test(Registration::class)
         ->assertOk()
         ->assertSee($this->desa->desa_asal)
-        ->assertSee($this->category->name);
+        ->assertSee($this->participantClass->name)
+        ->assertSee($this->event->name);
 });
 
 test('desa selection cascades to kelompok', function () {
@@ -79,10 +83,12 @@ test('empty desa yields no kelompok', function () {
         ->assertDontSee($this->kelompok->kelompok_asal);
 });
 
-test('category selection cascades to classes', function () {
+test('competition, participant class and gender resolve the candidate class', function () {
     Livewire::actingAs($this->admin)
         ->test(Registration::class)
-        ->set('competitionCategoryId', $this->category->id)
+        ->set('competitionId', $this->event->id)
+        ->set('participantClassId', $this->participantClass->id)
+        ->set('jenisKelamin', 'L')
         ->assertSee($this->class->name);
 });
 
@@ -94,14 +100,13 @@ test('submit creates person, participation, and competition registration', funct
         ->set('jenisKelamin', 'L')
         ->set('desaId', $this->desa->id)
         ->set('kelompokId', $this->kelompok->id)
-        ->set('competitionCategoryId', $this->category->id)
-        ->set('competitionClassId', $this->class->id)
+        ->set('competitionId', $this->event->id)
         ->call('submit')
         ->assertHasNoErrors();
 
     expect(Person::where('nama', 'Budi Santoso')->count())->toBe(1);
     expect(Participation::count())->toBe(1);
-    expect(\App\Models\CompetitionRegistration::count())->toBe(1);
+    expect(CompetitionRegistration::count())->toBe(1);
 
     $p = Participation::first();
     expect($p->participant_number)->toStartWith('KL');
@@ -109,16 +114,13 @@ test('submit creates person, participation, and competition registration', funct
 });
 
 test('submit rejects duplicate registration in the same class', function () {
-    $service = app(\App\Services\Competition\CompetitionRegistrationService::class);
-
     Livewire::actingAs($this->admin)
         ->test(Registration::class)
         ->set('nama', 'Budi Santoso')
         ->set('participantClassId', $this->participantClass->id)
         ->set('jenisKelamin', 'L')
         ->set('desaId', $this->desa->id)
-        ->set('competitionCategoryId', $this->category->id)
-        ->set('competitionClassId', $this->class->id)
+        ->set('competitionId', $this->event->id)
         ->call('submit')
         ->assertHasNoErrors();
 
@@ -128,22 +130,21 @@ test('submit rejects duplicate registration in the same class', function () {
         ->set('participantClassId', $this->participantClass->id)
         ->set('jenisKelamin', 'L')
         ->set('desaId', $this->desa->id)
-        ->set('competitionCategoryId', $this->category->id)
-        ->set('competitionClassId', $this->class->id)
+        ->set('competitionId', $this->event->id)
         ->call('submit')
-        ->assertHasErrors(['nama']);
+        ->assertHasErrors(['competitionId']);
 
-    expect(\App\Models\CompetitionRegistration::count())->toBe(1);
+    expect(CompetitionRegistration::count())->toBe(1);
 });
 
 test('exclusivity blocks registration when person already in conflicting category', function () {
     $conflictCat = CompetitionCategory::create([
         'event_id' => $this->event->id,
-        'name' => 'Lari Jarak Jauh',
-        'code' => 'JAU',
+        'name' => 'Kategori Konflik',
+        'code' => 'KONF',
         'is_active' => true,
     ]);
-    $conflictCat->events()->attach($this->event);
+    $conflictCat->masterParticipantClasses()->sync([$this->participantClass->id]);
 
     CompetitionCategoryExclusive::create([
         'competition_category_id' => $this->category->id,
@@ -153,19 +154,18 @@ test('exclusivity blocks registration when person already in conflicting categor
     $conflictClass = CompetitionClass::create([
         'event_id' => $this->event->id,
         'competition_category_id' => $conflictCat->id,
-        'name' => 'Putra',
-        'gender' => 'M',
+        'name' => 'Kelas Putra Konflik',
+        'gender' => 'L',
         'format' => 'individual_heat',
         'status' => 'registration_open',
         'is_active' => true,
     ]);
 
-    $service = app(\App\Services\Competition\CompetitionRegistrationService::class);
-
-    $person = Person::create(['nama' => 'Andi', 'jenis_kelamin' => 'L', 'desa_id' => $this->desa->id, 'kelas' => 'SMP1']);
-
+    $service = app(CompetitionRegistrationService::class);
+    $person = Person::create(['nama' => 'Andi', 'jenis_kelamin' => 'L', 'desa_id' => $this->desa->id]);
     $service->registerForPerson($person, $this->event->id, $this->category->id, $this->class->id);
-    expect(\App\Models\CompetitionRegistration::where('competition_category_id', $conflictCat->id)->count())->toBe(0);
+
+    expect(CompetitionRegistration::where('competition_category_id', $conflictCat->id)->count())->toBe(0);
 
     Livewire::actingAs($this->admin)
         ->test(Registration::class)
@@ -173,41 +173,16 @@ test('exclusivity blocks registration when person already in conflicting categor
         ->set('participantClassId', $this->participantClass->id)
         ->set('jenisKelamin', 'L')
         ->set('desaId', $this->desa->id)
-        ->set('competitionCategoryId', $conflictCat->id)
-        ->set('competitionClassId', $conflictClass->id)
+        ->set('competitionId', $this->event->id)
+        ->set('selectedClassId', $conflictClass->id)
         ->call('submit')
-        ->assertHasErrors(['competitionCategoryId']);
+        ->assertHasErrors(['competitionId']);
 
-    expect(\App\Models\CompetitionRegistration::where('competition_category_id', $conflictCat->id)->count())->toBe(0);
+    expect(CompetitionRegistration::where('competition_category_id', $conflictCat->id)->count())->toBe(0);
 });
 
-test('submit rejects inactive category or class', function () {
-    $this->class->update(['status' => 'closed']);
-
-    Livewire::actingAs($this->admin)
-        ->test(Registration::class)
-        ->set('nama', 'Sari')
-        ->set('participantClassId', $this->participantClass->id)
-        ->set('jenisKelamin', 'P')
-        ->set('desaId', $this->desa->id)
-        ->set('competitionCategoryId', $this->category->id)
-        ->set('competitionClassId', $this->class->id)
-        ->call('submit')
-        ->assertHasNoErrors();
-
-    expect(Participation::count())->toBe(1);
-});
-
-test('gender mismatch with class is rejected at service level', function () {
-    $genderedClass = CompetitionClass::create([
-        'event_id' => $this->event->id,
-        'competition_category_id' => $this->category->id,
-        'name' => 'Putri',
-        'gender' => 'P',
-        'format' => 'individual_heat',
-        'status' => 'registration_open',
-        'is_active' => true,
-    ]);
+test('submit rejects inactive class', function () {
+    $this->class->update(['is_active' => false]);
 
     Livewire::actingAs($this->admin)
         ->test(Registration::class)
@@ -215,10 +190,59 @@ test('gender mismatch with class is rejected at service level', function () {
         ->set('participantClassId', $this->participantClass->id)
         ->set('jenisKelamin', 'L')
         ->set('desaId', $this->desa->id)
-        ->set('competitionCategoryId', $this->category->id)
-        ->set('competitionClassId', $genderedClass->id)
+        ->set('competitionId', $this->event->id)
         ->call('submit')
-        ->assertHasErrors();
+        ->assertHasErrors(['competitionId']);
+
+    expect(Participation::count())->toBe(0);
+});
+
+test('submit rejects inactive category', function () {
+    $this->category->update(['is_active' => false]);
+
+    Livewire::actingAs($this->admin)
+        ->test(Registration::class)
+        ->set('nama', 'Sari')
+        ->set('participantClassId', $this->participantClass->id)
+        ->set('jenisKelamin', 'L')
+        ->set('desaId', $this->desa->id)
+        ->set('competitionId', $this->event->id)
+        ->call('submit')
+        ->assertHasErrors(['competitionId']);
+
+    expect(Participation::count())->toBe(0);
+});
+
+test('gender mismatch yields no candidate class', function () {
+    Livewire::actingAs($this->admin)
+        ->test(Registration::class)
+        ->set('nama', 'Sari')
+        ->set('participantClassId', $this->participantClass->id)
+        ->set('jenisKelamin', 'P')
+        ->set('desaId', $this->desa->id)
+        ->set('competitionId', $this->event->id)
+        ->call('submit')
+        ->assertHasErrors(['competitionId']);
+
+    expect(Participation::count())->toBe(0);
+});
+
+test('gender mismatch is rejected at service level', function () {
+    $genderedClass = CompetitionClass::create([
+        'event_id' => $this->event->id,
+        'competition_category_id' => $this->category->id,
+        'name' => 'Kelas Putri',
+        'gender' => 'P',
+        'format' => 'individual_heat',
+        'status' => 'registration_open',
+        'is_active' => true,
+    ]);
+
+    $service = app(CompetitionRegistrationService::class);
+    $person = Person::create(['nama' => 'Sari', 'jenis_kelamin' => 'L', 'desa_id' => $this->desa->id]);
+
+    expect(fn () => $service->registerForPerson($person, $this->event->id, $this->category->id, $genderedClass->id))
+        ->toThrow(ValidationException::class);
 
     expect(Participation::count())->toBe(0);
 });

@@ -32,7 +32,6 @@ function tcns_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'TCNS Cat']);
 
-    $category->events()->attach($event);
 
     return $category;
 }

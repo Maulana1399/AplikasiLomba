@@ -16,7 +16,7 @@ class CompetitionReportService
 {
     public function summary(Event $event): array
     {
-        $categories = CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event->id))->withCount('competitionClasses')->get();
+        $categories = CompetitionCategory::where('event_id', $event->id)->withCount('competitionClasses')->get();
         $classIds = CompetitionClass::where('event_id', $event->id)->pluck('id');
         $schedules = CompetitionSchedule::with('venue')
             ->whereIn('competition_class_id', $classIds)
@@ -138,7 +138,7 @@ class CompetitionReportService
     {
         $classIds = CompetitionClass::where('event_id', $event->id)->pluck('id');
 
-        return CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event->id))
+        return CompetitionCategory::where('event_id', $event->id)
             ->withCount('competitionClasses')
             ->get()
             ->map(function ($category) use ($classIds) {

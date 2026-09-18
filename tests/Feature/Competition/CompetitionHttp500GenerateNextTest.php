@@ -35,7 +35,6 @@ function t500_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'T500 Cat']);
 
-    $category->events()->attach($event);
 
     return $category;
 }

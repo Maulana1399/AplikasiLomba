@@ -54,12 +54,21 @@
                     @error('participantClassId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Jenis Kelamin <span class="text-red-500">*</span></label>
-                    <flux:select wire:model.live="jenisKelamin" placeholder="Pilih jenis kelamin">
-                        <flux:select.option value="L">Laki - Laki</flux:select.option>
-                        <flux:select.option value="P">Perempuan</flux:select.option>
-                    </flux:select>
-                    @error('jenisKelamin') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @if ($this->requiresGenderSelection)
+                        <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Jenis Kelamin <span class="text-red-500">*</span></label>
+                        <flux:select wire:model.live="jenisKelamin" placeholder="Pilih jenis kelamin">
+                            <flux:select.option value="L">Laki - Laki</flux:select.option>
+                            <flux:select.option value="P">Perempuan</flux:select.option>
+                        </flux:select>
+                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Peserta ini belum memiliki data jenis kelamin. Wajib dipilih.</p>
+                        @error('jenisKelamin') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    @else
+                        <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Jenis Kelamin</label>
+                        <div class="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
+                            {{ $this->knownPersonGenderLabel }}
+                            <span class="text-xs text-zinc-500 dark:text-zinc-400">(dari data peserta)</span>
+                        </div>
+                    @endif
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">Tanggal Lahir</label>

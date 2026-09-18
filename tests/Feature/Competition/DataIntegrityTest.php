@@ -27,7 +27,6 @@ beforeEach(function () {
         'name' => 'Test Category',
         'is_active' => true,
     ]);
-    $this->category->events()->attach($this->event);
 
     $this->class = CompetitionClass::create([
         'event_id' => $this->event->id,

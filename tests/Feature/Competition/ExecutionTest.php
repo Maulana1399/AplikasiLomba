@@ -33,7 +33,6 @@ function ex_event(array $overrides = []): Event
 function ex_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'Ex Cat '.str()->random(4)]);
-    $category->events()->attach($event);
 
     return $category;
 }
@@ -575,9 +574,6 @@ test('execution kategori filter when semua: shows all categories deduplicated', 
     $eventB = ex_event();
     $catA = ex_category($eventA);
     $catB = ex_category($eventB);
-
-    // Attach catA to both events — must still appear only once in Semua.
-    $catA->events()->attach($eventB);
 
     app(ActiveEventContext::class)->set($eventA);
     ex_admin();

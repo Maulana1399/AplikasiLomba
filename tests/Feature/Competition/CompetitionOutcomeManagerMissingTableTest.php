@@ -39,7 +39,6 @@ function cmt_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CMT Cat '.str()->random(4)]);
 
-    $category->events()->attach($event);
 
     return $category;
 }

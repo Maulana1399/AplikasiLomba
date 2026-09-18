@@ -36,7 +36,6 @@ function tbd_event(): Event
 function tbd_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'TBD Cat']);
-    $category->events()->syncWithoutDetaching([$event->id]);
 
     return $category;
 }

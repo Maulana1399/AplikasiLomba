@@ -43,7 +43,6 @@ function oes_event(): Event
 function oes_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'OES Cat '.str()->random(4)]);
-    $category->events()->syncWithoutDetaching([$event->id]);
 
     return $category;
 }

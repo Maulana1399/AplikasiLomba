@@ -4,6 +4,7 @@ namespace App\Livewire\Competition\Category;
 
 use App\Models\CompetitionCategory;
 use App\Models\CompetitionCategoryExclusive;
+use App\Support\ActiveEventContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -40,7 +41,8 @@ class Index extends Component
 
     public function mount(): void
     {
-        // Kategori is a global master — no ActiveEventContext filter.
+        // Kategori bersifat event-scoped: wajib ada konteks lomba aktif.
+        app(ActiveEventContext::class)->requireCurrent();
     }
 
     public function toggleCreateForm(): void
@@ -60,10 +62,12 @@ class Index extends Component
         $this->processing = true;
 
         try {
+            $event = app(ActiveEventContext::class)->requireCurrent();
+
             $this->validate([
                 'newName' => [
                     'required', 'string', 'max:255',
-                    Rule::unique('competition_categories', 'name'),
+                    Rule::unique('competition_categories', 'name')->where('event_id', $event->id),
                 ],
                 'newCode' => 'nullable|string|max:50',
                 'newSortOrder' => 'nullable|integer|min:0',
@@ -72,6 +76,7 @@ class Index extends Component
             ]);
 
             $category = CompetitionCategory::create([
+                'event_id' => $event->id,
                 'name' => $this->newName,
                 'code' => $this->newCode ?: null,
                 'sort_order' => $this->newSortOrder !== '' ? (int) $this->newSortOrder : null,
@@ -105,10 +110,12 @@ class Index extends Component
 
         $category = CompetitionCategory::findOrFail($this->editId);
 
+        $event = app(ActiveEventContext::class)->requireCurrent();
+
             $this->validate([
                 'editName' => [
                     'required', 'string', 'max:255',
-                    Rule::unique('competition_categories', 'name')->ignore($category->id),
+                    Rule::unique('competition_categories', 'name')->where('event_id', $event->id)->ignore($category->id),
                 ],
                 'editCode' => 'nullable|string|max:50',
                 'editSortOrder' => 'nullable|integer|min:0',
@@ -208,12 +215,16 @@ class Index extends Component
 
     public function render()
     {
+        $event = app(ActiveEventContext::class)->current();
+
         return view('livewire.competition.category.index', [
             'categories' => CompetitionCategory::with('masterParticipantClasses')
+                ->where('event_id', $event?->id)
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),
-            'candidateCategories' => CompetitionCategory::when($this->editId, fn ($query) => $query->where('id', '!=', $this->editId))
+            'candidateCategories' => CompetitionCategory::where('event_id', $event?->id)
+                ->when($this->editId, fn ($query) => $query->where('id', '!=', $this->editId))
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),

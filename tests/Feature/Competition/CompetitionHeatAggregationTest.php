@@ -33,7 +33,6 @@ function cha_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CHA Cat '.str()->random(4)]);
 
-    $category->events()->attach($event);
 
     return $category;
 }

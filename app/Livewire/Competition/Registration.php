@@ -71,6 +71,51 @@ class Registration extends Component
             ->first();
     }
 
+    /**
+     * Gender efektif: gender Person existing (L/P) menang; bila belum ada,
+     * gunakan pilihan operator. Null berarti operator harus memilih dulu.
+     */
+    public function effectiveGender(): ?string
+    {
+        $person = $this->findPerson();
+
+        $personGender = mb_strtoupper(trim((string) ($person?->jenis_kelamin)));
+
+        if ($personGender === 'L' || $personGender === 'P') {
+            return $personGender;
+        }
+
+        $selected = mb_strtoupper(trim($this->jenisKelamin));
+
+        return in_array($selected, ['L', 'P'], true) ? $selected : null;
+    }
+
+    /**
+     * Field gender hanya perlu ditampilkan bila Person belum punya gender L/P
+     * (atau Person belum ditemukan).
+     */
+    public function getRequiresGenderSelectionProperty(): bool
+    {
+        $person = $this->findPerson();
+
+        if (! $person) {
+            return true;
+        }
+
+        return ! in_array($person->jenis_kelamin, ['L', 'P'], true);
+    }
+
+    public function getKnownPersonGenderLabelProperty(): ?string
+    {
+        $person = $this->findPerson();
+
+        return match ($person?->jenis_kelamin) {
+            'L' => 'Laki - Laki',
+            'P' => 'Perempuan',
+            default => null,
+        };
+    }
+
     public function loadParticipations(?Person $person): void
     {
         if (! $person) {
@@ -118,7 +163,7 @@ class Registration extends Component
             return;
         }
 
-        if (blank($this->participantClassId) || blank($this->jenisKelamin)) {
+        if (blank($this->participantClassId)) {
             return;
         }
 
@@ -130,11 +175,14 @@ class Registration extends Component
             return;
         }
 
-        $gender = $this->jenisKelamin === 'L' ? 'L' : ($this->jenisKelamin === 'P' ? 'P' : $this->jenisKelamin);
+        // Gender efektif: dari data Person bila sudah ada, selain itu pilihan operator.
+        $mapped = $this->effectiveGender();
 
-        $mapped = $gender === 'L' ? 'L' : ($gender === 'P' ? 'P' : null);
+        if ($mapped === null) {
+            return;
+        }
 
-        $categoryIds = CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event->id))
+        $categoryIds = CompetitionCategory::where('event_id', $event->id)
             ->where('is_active', true)
             ->whereHas('masterParticipantClasses', fn ($q) => $q->where('master_participant_classes.id', $participantClass->id))
             ->pluck('id');
@@ -282,6 +330,12 @@ class Registration extends Component
     public function refreshPersonState(): void
     {
         $person = $this->findPerson();
+
+        // Person yang sudah punya gender L/P tidak perlu memilih gender lagi.
+        if ($person && in_array($person->jenis_kelamin, ['L', 'P'], true)) {
+            $this->jenisKelamin = '';
+        }
+
         $this->loadParticipations($person);
         $this->resolveCompetitionClass();
     }
@@ -326,12 +380,19 @@ class Registration extends Component
             $this->validate([
                 'nama' => 'required|string|max:255',
                 'participantClassId' => 'required|exists:master_participant_classes,id',
-                'jenisKelamin' => 'required|in:L,P',
+                'jenisKelamin' => 'nullable|in:L,P',
                 'tanggalLahir' => 'nullable|date',
                 'desaId' => 'required|exists:desas,id',
                 'kelompokId' => 'nullable|exists:kelompoks,id',
                 'competitionId' => 'required|exists:events,id',
             ]);
+
+            // Gender wajib tersedia: dari data Person, atau pilihan operator.
+            if ($this->effectiveGender() === null) {
+                $this->addError('jenisKelamin', 'Jenis kelamin wajib dipilih.');
+
+                return;
+            }
 
             $event = \App\Models\Event::where('id', $this->competitionId)
                 ->where('event_type', 'competition')->first();
@@ -381,7 +442,7 @@ class Registration extends Component
 
             $result = $service->register(
                 nama: trim($this->nama),
-                jenisKelamin: $this->jenisKelamin,
+                jenisKelamin: $this->jenisKelamin ?: null,
                 tanggalLahir: $this->tanggalLahir ?: null,
                 desaId: (int) $this->desaId,
                 eventId: $event->id,

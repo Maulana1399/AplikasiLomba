@@ -36,7 +36,6 @@ function hm_event(array $overrides = []): Event
 function hm_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'HM Cat '.str()->random(4)]);
-    $category->events()->attach($event);
 
     return $category;
 }

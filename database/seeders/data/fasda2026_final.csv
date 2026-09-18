@@ -1,0 +1,320 @@
+source_file,source_no,jenjang,cabang_perlombaan,nama,tempat_tanggal_lahir,kelompok,desa,kelas_sekolah,pc_pelatih,kategori_candidate,mpc_candidate,jenis_kelamin_inferred,gender_source
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,1,1,Adzan & Iqomah,Putra Jen Dimas Albani,"Balikpapan, 16 Desember 2017",Perumnas,Batam,2.0,,Paud - SD 3,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,2,1,Adzan & Iqomah,Ezzar Attala asfa mukromin,"Balikpapan, 28 Oktober  2018",Perumnas,Batam,2.0,,Paud - SD 3,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,3,1,Adzan & Iqomah,Khalif  Ubaidiillah,"Tanggerang, 1 Februari 2019",Sepinggan 3,Sepinggan,1.0,MT/tenaga pendidik SP 3,Paud - SD 3,SD 1,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,4,1,Adzan & Iqomah,King Fahad Januar Albaik,"Balikpapan, 29 Januari 2019",Melatih ,Sepinggan ,2.0,MT/Tendik Melati,Paud - SD 3,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,5,1,Adzan & Iqomah,Ahmad Farid Hasini,"Balikpapan, 28 Agustus 2018",Batakan,Timur Raya,2.0,,Paud - SD 3,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,6,1,Adzan & Iqomah,Shakeel Yardan Artanabil,"Kediri, 28 Desember 2019",Sosial Lamaru,Timur Raya,1.0,,Paud - SD 3,SD 1,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,7,1,Bacaan / Tilawah,Ideris Abdillah ,"Balikpapan,3-12-2018",Sumber rejo ,RING ROAD ,2.0,,Paud - SD 3,SD 2,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,8,1,Bacaan / Tilawah,Hanis Qalesya,"Balikpapan,30-11-2019",Gunung Samarinda ,RING ROAD ,1.0,,Paud - SD 3,SD 1,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,9,1,Bacaan / Tilawah,Akhtar Zoya Aishawafi,"Karanganyar, 18 April 2018",Batakan,Timur Raya,2.0,,Paud - SD 3,SD 2,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,10,1,Bacaan / Tilawah,Millata Silmi Hanifa,"Balikpapan, 08 Desember 2018",Lamaru,Timur Raya,2.0,,Paud - SD 3,SD 2,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,11,1,Bacaan / Tilawah,Queenara Elshanum Rahman,"Balikpapan, 16 Februari 2019",Sepinggan 1,Sepinggan,1.0,MT/tenaga pendidik SP 1,Paud - SD 3,SD 1,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,12,1,Bacaan / Tilawah,Raisya liyana zhafirah,"palu, 17 July 2019",Sepinggan 2,Sepinggan,2.0,MT/tenaga pendidik SP 2,Paud - SD 3,SD 2,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,13,1,Bacaan / Tilawah,Emeraldine,"Balikpapan, 14 Desember 2018",Somber,Batam,2.0,,Paud - SD 3,SD 2,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,14,1,Bacaan / Tilawah,Naura Alya Al Adillah,"Kutai Timur, 07 Juli 2019",Perumnas,Batam,1.0,,Paud - SD 3,SD 1,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,15,1,Hafalan / Tahfidz,Maryam Zalina Rosita,"Balikpapan,20-11-2019",Gunung Samarinda,RING ROAD,1.0,,Paud - SD 3,SD 1,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,16,1,Hafalan / Tahfidz,Sultan FareZiel Altair,"Balikpapan,11-09-2018",Bandara Utara,RING ROAD,2.0,,Paud - SD 3,SD 2,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,17,1,Hafalan / Tahfidz,Najwa Ilmi Al-kayyis,"Kutai Kartanegara, 28 Oktober 2018",Lamaru,Timur Raya,2.0,,Paud - SD 3,SD 2,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,18,1,Hafalan / Tahfidz,Prince Arsya Dzakiandra Salam Armi,"Balikpapan, 27 Februari 2019",Batakan,Timur Raya,1.0,,Paud - SD 3,SD 1,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,19,1,Hafalan / Tahfidz,Muhamad Diego Al haidar,"Tulungagung,03 Desember 2019",Bandara Baru,Sepinggan,1.0,MT/tenaga pendidik Bandaru Baru,Paud - SD 3,SD 1,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,20,1,Hafalan / Tahfidz,Railene arshyla zakaria,"Balikpapan, 9-11-2019",Sepinggan 2,Sepinggan,2.0,MT/tenaga pendidik SP 2,Paud - SD 3,SD 2,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,21,1,Hafalan / Tahfidz,Nabil Zafran Al Fayyad,"Balikpapan, 12 September 2018",Kariangau,Batam,2.0,,Paud - SD 3,SD 2,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,22,1,Hafalan / Tahfidz,Muhammad Wafi Gallant Alfaruq,"Balikpapan, 05 Juni 2018",Perumnas,Batam,2.0,,Paud - SD 3,SD 2,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,23,2,Adzan & Iqomah,Raffa Ariestya Mahardika,"Balikpapan,20-1-2019",Gunung Samarinda ,RING ROAD ,2.0,,Paud - SD 3,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,24,2,Adzan & Iqomah,Evano rayyan Danial,"Balikpapan,10-07-2018",Bandara Utara ,RING ROAD ,2.0,,Paud - SD 3,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,25,2,Adzan & Iqomah,Mikail Daviandra Zulhilmi,"Balikpapan, 26 April 2018",Manggar,Timur Raya,2.0,,Paud - SD 3,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,26,2,Adzan & Iqomah,Hughieta Deniz Azzaki,"Balikpapan, 23 Juli 2017",Lamaru,Timur Raya,2.0,,Paud - SD 3,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,27,2,Adzan & Iqomah,Muchammad Damar zikry nur faqih,balikpapan 30-09-2017,sepinggan 3,Sepinggan,3.0,MT/tenaga pendidik SP 3,Paud - SD 3,SD 3,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,28,2,Adzan & Iqomah,Dzaky Abizard Pontoh,"Sleman, 28 Oktober 2017",KM. 10,Batam,3.0,,Paud - SD 3,SD 3,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,29,2,Adzan & Iqomah,Rafif Abrisam Santoso,"Balikpapan, 20 Oktober 2016",KM. 7,Batam,3.0,,Paud - SD 3,SD 3,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,30,2,Bacaan / Tilawah,Uwais Hanan Mubarok,"Balikpapan,15-05-2019",Bandara Utara ,RING ROAD ,2.0,,Paud - SD 3,SD 2,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,31,2,Bacaan / Tilawah,Vania Dzanin Afnan,"Balikpapan,06-08-2017",Bandara Utara ,RING ROAD ,3.0,,Paud - SD 3,SD 3,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,32,2,Bacaan / Tilawah,Queen Qori Qonita Qur'ani Armi,"Balikpapan, 07 Oktober 2016",Batakan,Timur Raya,2.0,,Paud - SD 3,SD 2,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,33,2,Bacaan / Tilawah,Rayhan Hafidz Syaifullah,"Balikpapan, 10 Februari 2017",Batakan,Timur Raya,2.0,,Paud - SD 3,SD 2,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,34,2,Bacaan / Tilawah,Hilya Zenia Sairilkawabi,"Balikpapan, 01 Maret 2019",Sepinggan 1,Sepinggan,2.0,MT/tenaga pendidik SP 1,Paud - SD 3,SD 2,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,35,2,Bacaan / Tilawah,Safwana shakila salam,"Balikpapan, 30 Januari 2018",Sepinggan 2,Sepinggan,3.0,MT/tenaga pendidik SP 2,Paud - SD 3,SD 3,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,36,2,Bacaan / Tilawah,Muhammad Dilfis Assyibli,"Balikpapan, 25 Juli 2015",Kariangau,Batam,3.0,,Paud - SD 3,SD 3,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,37,2,Bacaan / Tilawah,Hana Anjani Al Adillah,"Rembang, 13 April 2017",Perumnas,Batam,3.0,,Paud - SD 3,SD 3,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,38,2,Hafalan / Tahfidz,Aisyah Septiana,"Balikpapan,7-9-2017",Sumber Rejo ,RING ROAD ,3.0,,Paud - SD 3,SD 3,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,39,2,Hafalan / Tahfidz,Adreena Putty Sholiha,"Balikpapan,3-10-2017",Bandara Utara ,RING ROAD ,3.0,,Paud - SD 3,SD 3,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,40,2,Hafalan / Tahfidz,Muhammad Zaidan Albar,"Balikpapan, 23 Juli 2017",Lamaru,Timur Raya,3.0,,Paud - SD 3,SD 3,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,41,2,Hafalan / Tahfidz,Karima rindu prasetyo,"Balikpapan, 21 November 2017",Sepinggan 2,Sepinggan,3.0,MT/tenaga pendidik SP 2,Paud - SD 3,SD 3,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,42,2,Hafalan / Tahfidz,Arsyila Keyvani Arfaaiza,"Balikpapan, 27 Maret 2018",Bandara Baru,Sepinggan,3.0,MT/tenaga pendidik Bandaru Baru,Paud - SD 3,SD 3,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,43,2,Hafalan / Tahfidz,Zulfikar Rohman Satria Norah,"Balikpapan, 22 Maret 2017",KM. 7,Batam,3.0,,Paud - SD 3,SD 3,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,44,2,Hafalan / Tahfidz,Azril Rahandika Alfariq,"Balikpapan, 21 April 2018",Kariangau,Batam,3.0,,Paud - SD 3,SD 3,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,45,3,Adzan & Iqomah,Azka Ar Rafii,"Balikpapan,21-8-2015",Sumber Rejo ,RING ROAD ,4.0,,Paud - SD 3,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,46,3,Adzan & Iqomah,Keyy Haydan Al-Ghifari ,"Balikpapan,15-5-2017",Gunung Samarinda ,RING ROAD ,3.0,,Paud - SD 3,SD 3,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,47,3,Adzan & Iqomah,Muhammad Zicry Arrohman,"Balikpapan, 16 Januari 2016",Batakan,Timur Raya,4.0,,Paud - SD 3,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,48,3,Adzan & Iqomah,Nasrulloh,"Balikpapan, 21 Maret 2016",Lamaru,Timur Raya,4.0,,Paud - SD 3,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,49,3,Adzan & Iqomah,Fauzan Ubaidillah,"Tangerang, 16 Mei 2017",Sepinggan 3,Sepinggan,4.0,MT/tenaga pendidik SP 3,Paud - SD 3,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,50,3,Adzan & Iqomah,Dastan Abqory Triswoyo,"Balikpapan, 30 Januari 2017",Sepinggan 2,Sepinggan,4.0,,Paud - SD 3,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,51,3,Adzan & Iqomah,Revan Yazid Pratama,"Balikpapan, 01 Februari 2016",Perumnas,Batam,4.0,,Paud - SD 3,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,52,3,Adzan & Iqomah,Azura Putra Lana,"Balikpapan, 22 Januari 2016",Somber,Batam,4.0,,Paud - SD 3,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,53,3,Bacaan / Tilawah,Gwyneth Yuri Abdillah ,"Balikpapan,28 Maret 2016",Sumber Rejo ,RING ROAD ,4.0,,Paud - SD 3,SD 4,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,54,3,Bacaan / Tilawah,khawla Amara Rahman,"Balikpapan,05-04-2018",Bandara Utara ,RING ROAD ,4.0,,Paud - SD 3,SD 4,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,55,3,Bacaan / Tilawah,Arsya Ridaul Kibriya,"Balikpapan, 10 Mei 2017",Lamaru,Timur Raya,4.0,,Paud - SD 3,SD 4,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,56,3,Bacaan / Tilawah,Fariza Zhenisgulovna Inara,"Balikpapan, 17 Agustus 2016",Batakan,Timur Raya,4.0,,Paud - SD 3,SD 4,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,57,3,Bacaan / Murottal,Yasmin Churin inin walid,"Balipapan, 01 November 2016",Sepinggan 2,Sepinggan,4.0,MT/tenaga pendidik SP 2,Paud - SD 3,SD 4,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,58,3,Bacaan / Murottal,Bintang Aldebaran Ayudha,"Balikpapan, 15 April 2016",Bandara Baru,Sepinggan,4.0,MT/tenaga pendidik Bandaru Baru,Paud - SD 3,SD 4,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,59,3,Bacaan / Tilawah,Nadhira Almahira Zahra,"Balikpapan, 10 Desember 2016",Somber,Batam,4.0,,Paud - SD 3,SD 4,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,60,3,Bacaan / Tilawah,Adifa Alya Mufti,"Balikpapan, 30 Agustus 2016",KM. 7,Batam,4.0,,Paud - SD 3,SD 4,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,61,3,Hafalan / Tahfidz,Alika Naila Putri ,"Balikpapan,11-4-2016",Sumber Rejo ,RING ROAD ,4.0,,Paud - SD 3,SD 4,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,62,3,Hafalan / Tahfidz,Hasan Arvi Fathamsyah,"Balikpapan,27-11-2016",Sumber Rejo ,RING ROAD ,4.0,,Paud - SD 3,SD 4,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,63,3,Hafalan / Tahfidz,Nazafarin Almeera Nugroho,"Balikpapan, 17 Mei 2018",Batakan,Timur Raya,3.0,,Paud - SD 3,SD 3,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,64,3,Hafalan / Tahfidz,Atahya Rasydan El Shaarawy,"Balikpapan, 07 juli 2017",Lamaru,Timur Raya,4.0,,Paud - SD 3,SD 4,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,65,3,Hafalan / Tahfidz,Muhammad Brilian firdaus,"Balikpapan, 8 september 2017",Sepinggan 4,Sepinggan,3.0,MT/tenaga pendidik SP 4,Paud - SD 3,SD 3,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,66,3,Hafalan / Tahfidz,Abdiba syakila fauzia,"Balikpapan, 15 Mei 2016",Sepinggan 2,Sepinggan,4.0,MT/tenaga pendidik SP 2,Paud - SD 3,SD 4,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,67,3,Hafalan / Tahfidz,Firman Nasrullah,"Balikpapan, 09 Oktober 2016",Somber,Batam,4.0,,Paud - SD 3,SD 4,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,68,3,Hafalan / Tahfidz,Firhan Ghazi Abyan Najib,"Balikpapan, 29 September 2016",KM. 7,Batam,4.0,,Paud - SD 3,SD 4,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,69,4,Adzan & Iqomah,Althamis Asfa Abbad El Husyaini,"Balikpapan,22-8-2015",Sumber Rejo ,RING ROAD ,5.0,,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,70,4,Adzan & Iqomah,Farel Aldrich Yusuf,"Balikpapan,01-07-2017",Bandara Utara,RING ROAD ,4.0,,SD 4 - 6,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,71,4,Adzan & Iqomah,Nadhif Abqory Alkayyis,"Balikpapan, 29 Januari 2017",Batakan,Timur Raya,4.0,,SD 4 - 6,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,72,4,Adzan & Iqomah,kanthaka miqdam alfarezqi,"kutai kartanegara, 12 Oktober 2015",sepinggan 3,Sepinggan,5.0,MT/tenaga pendidik SP 3,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,73,4,Adzan & Iqomah,Muhammad Nur Faiz,"Balikpapan, 30 Maret 2015",sepinggan 3,Sepinggan,5.0,MT/tenaga pendidik SP 3,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,74,4,Adzan & Iqomah,Azka Rayendra,"Balikpapan, 12 April 2016",Somber,Batam,4.0,,SD 4 - 6,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,75,4,Adzan & Iqomah,Pranaja Alvaro Satria Norah,"Balikpapan, 06 Oktober 2015",KM.7,Batam,5.0,,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,76,4,Bacaan / Tilawah,Moh. Fariz Al-fatah ,"Palu,17-3-2017",Gunung Samarinda ,RING ROAD ,4.0,,SD 4 - 6,SD 4,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,77,4,Bacaan / Tilawah,Akiffah Naila,"Balikpapan, 17 Oktober 2015",Lamaru,Timur Raya,5.0,,SD 4 - 6,SD 5,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,78,4,Bacaan / Tilawah,Muhammad Fatih Alfarizqi,"Balikpapan, 27 Desember 2016",Manggar,Timur Raya,4.0,,SD 4 - 6,SD 4,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,79,4,Bacaan / Murottal,Warda Aulia Sahanaya,"Balikpapan, 27 Mei 2016",Sepinggan 3,Sepinggan,5.0,MT/tenaga pendidik SP 3,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,80,4,Bacaan / Murottal,Qisthanzeea Athira Nafaru,"Balikpapan,15 April 2016",Bandara Baru,Sepinggan,5.0,MT/tenaga pendidik Bandaru Baru,SD 4 - 6,SD 5,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,81,4,Bacaan / Tilawah,Sofiah Zarufa Atikah,"Balikpapan, 28 Juli 2015",Kariangau,Batam,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,82,4,Bacaan / Tilawah,Khalisa Putri,"Balikpapan, 29 Desember 2014",Somber,Batam,6.0,,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,83,4,Cerdas Cermat,Alesha Azkadina Fariza Rahman,"Balikpapan,30-1-2016",Sumber Rejo ,RING ROAD ,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,84,4,Cerdas Cermat,Aisyah Zafirah Muntia,"Balikpapan,24-9-2015",Gunung Samarinda ,RING ROAD ,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,85,4,Cerdas Cermat,Ayra Faranisa,"Balikpapan,20-05-2016",Bandara Utara,RING ROAD ,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,86,4,Cerdas Cermat,Rani Anggita Naura,"Balikpapan, 26 April 2015",Batakan,Timur Raya,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,87,4,Cerdas Cermat,Fahira Raisya Azzahra,"Balikpapan, 9 November 2013",Batakan,Timur Raya,5.0,,SD 4 - 6,SD 5,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,88,4,Cerdas Cermat,Shezan Audrissana Zalika,"Balikpapan, 26 September 2015",Batakan,Timur Raya,5.0,,SD 4 - 6,SD 5,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,89,4,Cerdas Cermat,Ainayya Assabia Rafifa Azmi,"Balikpapan, 10 Oktober 2016",Kariangau,Batam,4.0,,SD 4 - 6,SD 4,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,90,4,Cerdas Cermat,Afifah Niswatul Ummah,"Balikpapan, 23 Februari 2015",Kariangau,Batam,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,91,4,Cerdas Cermat,Nadhifa Eiliya Shanum,"Balikpapan, 16 Maret 2015",Kariangau,Batam,6.0,,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,92,4,Dakwah,Maida Syakirah Arifin ,"Balikpapan ,24-4-2015",Sumber Rejo ,RING ROAD ,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,93,4,Dakwah,Jenna alesha Mudrajat,"Balikpapan, 07 oktober 2016",Sepinggan 2,Sepinggan,4.0,MT/Tendik Sepinggan 2,SD 4 - 6,SD 4,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,94,4,Dakwah,Fauzan Alfarizy Putra,"Balikpapan, 06 Januari 2017",KM. 10,Batam,4.0,,SD 4 - 6,SD 4,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,95,4,Pildacil,Azhiera Khanza Rafani,"Balikpapan, 07 September 2015",Sosial Lamaru,Timur Raya,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,96,4,Hafalan / Tahfidz,Khairina Silmi Al kayyis,"Balikpapan,20-8-2015",Sumber Rejo ,RING ROAD ,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,97,4,Hafalan / Tahfidz,Rakasya Zain Akbar,"Balikpapan, 14 Desember 2015",Lamaru,Timur Raya,4.0,,SD 4 - 6,SD 4,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,98,4,Hafalan / Tahfidz,Muhammad Devan Alfathan,"Balikpapan, 03 Juli 2015",Bandara Baru,Sepinggan,5.0,MT/tenaga pendidik Bandaru Baru,SD 4 - 6,SD 5,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,99,4,Hafalan / Tahfidz,Ahmad Aulia,"Balikpapan, April 2015",Sepinggan 2,Sepinggan,5.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 5,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,100,4,Hafalan / Tahfidz,Arkha Salima Ardhillah,"Balikpapan, 02 Januari 2016",Perumnas,Batam,5.0,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,101,4,Hafalan / Tahfidz,Nuhasakhi Quinza Ribbiyyuna Gallant,"Balikpapan, 05 Maret 2016",Perumnas,Batam,5.0,,SD 4 - 6,SD 5,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,102,4,Kaifiyatussholah,Muchammad Al-Fatih ,"Malang,18-9-2018",Sumber Rejo ,RING ROAD ,2.0,,SD 4 - 6,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,103,4,Kaifiyatussholah,Muhammad Asad Sadewa Syahabuddin,Balikpapan.19-03-2018,Bandara Utara,RING ROAD ,3.0,,SD 4 - 6,SD 3,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,104,4,Kaifiyatussholah,Muhammad Randa Zaid Aulia.R,Kutai Timur 12 April 2015,Sepinggan 2,Sepinggan,5.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,105,4,Kaifiyatussholah,Arsakha virendra.S,"Tangerang, 21 Juni 2016",Sepinggan 2,Sepinggan,5.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,106,4,Kaifiyatussholah,Sayid Hamid Ramadhan Al - Qaffal,"Balikpapan, 19 Juni 2015",Sepinggan 2,Sepinggan,5.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,107,4,Kaifiyatussholah,Ibrahim Nadja,"Banyuwangi, 14 Januari 2017",Somber,Batam,4.0,,SD 4 - 6,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,108,4,Kaifiyatussholah,Arfan Abdillah,"Balikpapan, 22 Januari 2016",Somber,Batam,3.0,,SD 4 - 6,SD 3,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,109,4,Kaifiyatussholah,Ataya Abidzar,"Balikpapan, 09 Juni 2019",Somber,Batam,Kelas 3 SD,,SD 4 - 6,SD 3,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,110,5,Adzan & Iqomah,Ezzy Jazzhon Al-Farisi,"Balikpapan,27-5-2015",Gunung Samarinda ,RING ROAD ,5.0,,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,111,5,Adzan & Iqomah,Nabil Pranaja Rachman,"Balikpapan,15-01-2015",Bandara Utara,RING ROAD ,,,SD 4 - 6,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,112,5,Adzan & Iqomah,Hiro Tsaqib Aufarizki,"Balikpapan, 26 Mei 2015",Batakan,Timur Raya,5 SD,,SD 4 - 6,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,114,5,Adzan & Iqomah,Afsal Hazlam,"Balikpapan, 20 Desember 2014",Sepinggan 2,Sepinggan,6.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,115,5,Adzan & Iqomah,Tomio Sidqi Kamil,"Surabaya, 17 November 2014",KM. 7,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,116,5,Adzan & Iqomah,Muhammad Aydil Riski,"Balikpapan, 18 Oktober 2014",KM. 7,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,117,5,Bacaan / Tilawah,Anjar Khalifi Zikri Farzana,"Balikpapan,22-1-2016",Gunung Samarinda ,RING ROAD ,5.0,,SD 4 - 6,SD 5,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,118,5,Bacaan / Tilawah,Raysha Aylani Arka,"Balikpapan, 17 Juli 2013",Batakan,Timur Raya,6 SD,,SD 4 - 6,,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,120,5,Bacaan / Murottal,Muhammad Al Fatih,"Wonosari, 14 Juli 2014",Melati,Sepinggan,6.0,MT/tenaga pendidik klp melati,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,121,5,Bacaan / Murottal,Muhammad Hafid Abdillah,"Balikpapan, 21 Oktober 2013",Sepinggan 3,Sepinggan,6.0,MT/tenaga pendidik SP 3,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,122,5,Bacaan / Tilawah,Arfina Zahratunnisa Pontoh,"Sleman, 11 Maret 2015",KM. 10,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,123,5,Bacaan / Tilawah,Aisyah Rachmatul Izzah,"Balikpapan, 07 November 2013",Kariangau,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,124,5,Cerdas Cermat,Agam Akila Pratama,"Samarinda,17-10-2014",Gunung Samarinda ,RING ROAD ,5.0,,SD 4 - 6,SD 5,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,125,5,Cerdas Cermat,Abid Akila Pranaja,"Samarinda,17-10-2014",Gunung Samarinda ,RING ROAD ,5.0,,SD 4 - 6,SD 5,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,126,5,Cerdas Cermat,Muchammad Umair Al hafidz ,"Malang,1-4-2014",Sumber Rejo ,RING ROAD ,6.0,,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,127,5,Cerdas Cermat,Khana Khania,Balikpapan 9 Juni 2014,Sepinggan 2,Sepinggan,6.0,Bunda Uci,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,128,5,Cerdas Cermat,Alycia Aqilasyah Firdaus Hakim,"Balikpapan, 30 desember 2013",Sepinggan 2,Sepinggan,6.0,Bunda Uci,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,129,5,Cerdas Cermat,Adzkia Aqila Agustina Tanjung,"Balikpapan, 3 Agsustus 2014",Sepinggan 2,Sepinggan,6.0,Bunda Uci,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,130,5,Cerdas Cermat,Muh Hafiz Faizan,"Balikpapan, 28 Desember 2013",Somber,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,131,5,Cerdas Cermat,Muhammad Fadli,"Balikpapan, 17 Oktober 2015",Somber,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,132,5,Cerdas Cermat,Hafidz Syarkhan,"Balikpapan, 30 Juni 2016",Somber,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,133,5,Dakwah,Dominica Maudy Dau Lumban Gaol ,"Lumban Gaol,16-8-2014",Gunung Samarinda ,RING ROAD ,6.0,,SD 4 - 6,SD 6,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,134,5,Dakwah,Keisha Hasna Humaira,"Balikpapan, 04 Februari 2016",Sepinggan 2,Sepinggan,5.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,135,5,Dakwah,Hafiz aldzumirat putra haryanto,17-april-2015 /surakarta,Sepinggan 1,Sepinggan,6.0,MT/tenaga pendidik SP 1,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,136,5,Pildacil,Hana Khoirunnisa Ramadhani,"Balikpapan, 22 juli 2014",Lamaru,Timur Raya,6 SD,,SD 4 - 6,,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,137,5,Hafalan / Tahfidz,Ashabia Zaha Al Biruni,"Bandung,29-9-2014",Bandara Utara ,RING ROAD ,6.0,,SD 4 - 6,SD 6,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,138,5,Hafalan / Tahfidz,Ailsa Rania Huwaidaa,"Balikpapan,12-11-2013",Sumber Rejo ,RING ROAD ,6.0,,SD 4 - 6,SD 6,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,139,5,Hafalan / Tahfidz,Alicia Aurora Kusuma,"Samarinda, 06 Februari 2015",Lamaru,Timur Raya,6 SD,,SD 4 - 6,,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,140,5,Hafalan / Tahfidz,Dini zakia rahma,"Balikpapan, 20 desember 2014",Sepinggan 4,Sepinggan,6.0,MT/tenaga pendidik SP 4,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,141,5,Hafalan / Tahfidz,larasati putri agustriani,Balikpapan 24 agustus 2014,Sepinggan 2,Sepinggan,6.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,142,5,Hafalan / Tahfidz,Azzua Fazila Putri Lana,"Jakarta, 04 Desember 2014",Somber,Batam,Kelas 5 SD,,SD 4 - 6,SD 5,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,143,5,Hafalan / Tahfidz,Salsabila (Caca),"Balikpapan, 17 Mei 2014",Somber,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,144,5,Kaifiyatussholah,Ihsan Almubarok Rahman,"Balikpapan,25-02-2019",Bandara Utara,RING ROAD ,,,SD 4 - 6,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,145,5,Kaifiyatussholah,Rizky Rahmadani Pratama ,"Balikpapan,18-7-2014",Sumber Rejo ,RING ROAD ,6.0,,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,146,5,Kaifiyatussholah,Hamis Ali Fathamsyah,"Balikpapan,10-5-2018",Sumber Rejo ,RING ROAD ,3.0,,SD 4 - 6,SD 3,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,147,5,Kaifiyatussholah,Yuriko Afiata Alief,"Balikpapan,11-1-2017",Gunung Samarinda ,RING ROAD ,4.0,,SD 4 - 6,SD 4,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,148,5,Kaifiyatussholah,Muhammad Zaidan El Rafif,"Balikpapan, 12 September 2014",Sepinggan 2,Sepinggan,6.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,149,5,Kaifiyatussholah,Bijaryono,"Balikpapan , 12 Juni 2014",Sepinggan 2,Sepinggan,6.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,150,5,Kaifiyatussholah,Effan Adhyastha Cheng,"Balikpapan, 14 Januari 2015",Sepinggan 2,Sepinggan,6.0,MT/tenaga pendidik SP 2,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,151,5,Kaifiyatussholah,Roziqo Khirzan Wibowo,"Kediri, 26 Mei 2014",KM 7,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,152,5,Kaifiyatussholah,Ikhsan Mufthi,"Balikpapan, 18 April 2015",KM 7,Batam,Kelas 5 SD,,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,153,5,Kaifiyatussholah,Alhan Affdholeo Santoso,"Lamongan, 20 April 2014",KM. 7,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,154,6,Adzan & Iqomah,Faiz Nahar Mubarok,"Pemantang Siantar,14-11-2013",Sumber Rejo ,RING ROAD ,7.0,,SD 4 - 6,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,155,6,Adzan & Iqomah,Assyraf Naufal Mubarak,"Kediri, 27 juli 2015",Lamaru,Timur Raya,5 SD,,SD 4 - 6,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,156,6,Adzan & Iqomah,Fariz Noval,"Balikpapan, 23 Januari 2013",Manggar,Timur Raya,6 SD,,SD 4 - 6,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,157,6,Adzan & Iqomah,Sandre Ubaidillah,"Jakarta Barat, 13 Februari 2014",Sepinggan 3,Sepinggan,6.0,MT/tenaga pendidik SP 4,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,158,6,Adzan & Iqomah,Daffy El Rafif Rachman,2014-02-11 00:00:00,Sepinggan 1,Sepinggan,6.0,MT/tenaga pendidik SP 1,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,159,6,Adzan & Iqomah,M. Fakih Ghaisan Ismail,"Balikpapan, 30 April 2014",Somber,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,160,6,Adzan & Iqomah,Radithya Raffa putra susanto,"Balikpapan, 12 Maret 2013",Perumnas,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,161,6,Adzan & Iqomah,Rofiq Hidayat,"Balikpapan, 23 September 2010",Somber,Batam,Kelas 1 SMK,,SD 4 - 6,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,162,6,Bacaan / Tilawah,Dafa Putra Faan,"Paser,05-02-2015",,,,,SD 4 - 6,,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,163,6,Bacaan / Tilawah,Fahma badzlim Azerbaijan,"Balikpapan,25-2-2014",Bandara Utara ,RING ROAD ,7.0,,SD 4 - 6,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,165,6,Bacaan / Murottal,Azfar Fahim Nursidik,"Balikpapan, 2 April 2013",Bandara Baru,Sepinggan,VII,MT/tenaga pendidik Bandaru Baru,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,166,6,Bacaan / Murottal,Musa waliyullah,"Balikpapan, 14 November 2013",Sepinggan 3,Sepinggan,VII,MT/tenaga pendidik SP 3,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,167,6,Bacaan / Tilawah,Chelsea Nafisah Rifdah,"Balikpapan, 07 Mei 2014",KM. 7,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,168,6,Bacaan / Tilawah,Muhammad Alif Adi Saputra,"Balikpapan, 16 September 2012",KM. 7,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,169,6,Cerdas Cermat,Farah Almaira Marsha Angelica,"Balikpapan,13-05-2014",Bandara Utara,RING ROAD ,6.0,,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,170,6,Cerdas Cermat,Diandra Khansa Rafani,"Balikpapan,07-03-2014",Bandara Utara,RING ROAD ,6.0,,SD 4 - 6,SD 6,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,171,6,Cerdas Cermat,Tiara Ajeng Hasyim Sanjaya,"Balikpapan,03-10-2014",Bandara Utara,RING ROAD ,6.0,,SD 4 - 6,SD 6,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,173,6,Cerdas Cermat,Qian Emir Sadidan Zein,"Balikpapan, 2 Agustus 2013",Sepinggan 2,Sepinggan,VII,Bunda Uci,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,174,6,Cerdas Cermat,Faiz Fairel Mudrajat,"Balikpapan, 08 November 2014",Sepinggan 2,Sepinggan,6.0,Bunda Uci,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,175,6,Cerdas Cermat,Reyhan Arsyil Maulana,"Balikpapan , 04 Desember 2013",Sepinggan 4,Sepinggan,VII,Bunda Uci,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,176,6,Cerdas Cermat,Yafits Pranaja Rosyidi,"Balikpapan, 13 September 2013",Perumnas,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,177,6,Cerdas Cermat,Farid Attala Antik Firdaus,"Balikpapan, 08 Desember 2013",Perumnas,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,178,6,Cerdas Cermat,Alfarisy Novario Hamdi Kurniawan,"Balikpapan, 07 November 2014",Perumnas,Batam,Kelas 6 SD,,SD 4 - 6,SD 6,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,179,6,Dakwah,Cantik Sholiha,"Balikpapan,18-3-2014",Bandara Utara ,RING ROAD ,7.0,,SD 4 - 6,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,180,6,Pildacil,Yasmin Ayudia Nugroho,"Balikpapan, 10 November 2013",Batakan,Timur Raya,7 SMP,,SD 4 - 6,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,181,6,Dakwah,Ratu Bilqis Dwi Cahya haqiqi,2014-06-07 00:00:00,Sepinggan 3,Sepinggan,VII,MT/tenaga pendidik SP 3,SD 4 - 6,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,182,6,Dakwah,Rasya Adelio,"Balikpapan, 05 September 2013",Perumnas,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,183,6,Hafalan / Tahfidz,Dzikrian Emir Indi Prasetiyo,"Balikpapan, 2 April 2013",Bandara Baru,Sepinggan,VII,MT/tenaga pendidik Bandaru Baru,SD 4 - 6,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,184,6,Hafalan / Tahfidz,Mey Anggraini nur jannah,"Balikpapan, 9 mey 2013",Sepinggan 4,Sepinggan,VII,MT/Tendik Sepinggan 4,SD 4 - 6,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,185,6,Hafalan / Tahfidz,Ghaizan Arshaka Prasetyo,"Balikpapan, 29 Januari 2014",Perumnas,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,186,6,Hafalan / Tahfidz,Nazwa Nur Annisa Nabil,"Balikpapan,15 Agustus 2013",KM. 7,Batam,Kelas 1 SMP,,SD 4 - 6,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,187,6,Kaifiyatussholah,Sidiq Abdulloh Rohim,"Balikpapan,23-6-2014",Sumber Rejo ,RING ROAD ,6.0,,SD 4 - 6,SD 6,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,188,6,Kaifiyatussholah,Putra Ajri Hamizan,"Balikpapan,21-6-2014",Sumber Rejo ,RING ROAD ,7.0,,SD 4 - 6,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,189,6,Kaifiyatussholah,Benzema Fairel Alfarizhie,"Sangatta,30-09-2013",Bandara Utara,RING ROAD ,7.0,,SD 4 - 6,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,190,6,Kaifiyatussholah,Muhammad Nazhirul Asrofi,"Balikpapan, 31 Oktober 2015",Kariangau,Batam,Kelas 5 SD,,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,191,6,Kaifiyatussholah,Arhab Reyhan Ardhani,"Balikpapan, 10 Desember 2015",Kariangau,Batam,Kelas 5 SD,,SD 4 - 6,SD 5,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,192,6,Kaifiyatussholah,Faiz Dwika Evandy,"Balikpapan, 22 September 2019",Kariangau,Batam,Kelas 1 SD,,SD 4 - 6,SD 1,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,193,pra remaja,Adzan & Iqomah,Fadhlan Rosan Faqih,"Balikpapan,12-9-2011",Sumber Rejo ,RING ROAD ,9.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,194,pra remaja,Adzan & Iqomah,Mirza Ubaidillah Yafi,"Balikpapan,29-9-2011",,,,,Remaja,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,195,pra remaja,Adzan & Iqomah,Salman Abdillah,"Balikpapan, 20 Agustus 2011",Batakan,Timur Raya,8 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,197,pra remaja,Adzan & Iqomah,Adipati zaeni,"Balikpapan, 01 November,2012",Sepinggan 3,Sepinggan,SMP,MT/tenaga pendidik SP 3,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,198,pra remaja,Adzan & Iqomah,Alif,,Sepinggan 1,Sepinggan,SMP,MT/tenaga pendidik SP 1,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,199,pra remaja,Adzan & Iqomah,M. Miqdad Ubaydillah,"Balikpapan, 17 Oktober 2010",Perumnas,Batam,Kelas 1 SMK,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,200,pra remaja,Adzan & Iqomah,Rofiq Hidayat,"Balikpapan, 23 September 2010",Somber,Batam,Kelas 1 SMK,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,201,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Khaasyi' Aslam Rahman,"Balikpapan,01-09-2012",,,,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,202,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Athar Fathi Omar ,"Balikpapan,12-12-2012",Bandara Utara ,RING ROAD ,8.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,203,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Ahyar Aufa Sabila Rosyada,"Balikpapan,21-10-12",Gunung Samarinda ,RING ROAD ,8.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,204,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Julio Jabal Sabila Rosyada ,"Balikpapan,11-7-2011",Gunung Samarinda ,RING ROAD ,10.0,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,205,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Mirza Ubaidillah Yafi,"Balikpapan,29-9-2011",Bandara Utara ,RING ROAD ,9.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,206,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Alfazzam Ramadhan,"Balikpapan, 2 Agustus 2012",Sepinggan 1,Sepinggan,SMP,Mas Habibi,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,207,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Saga Abdillah Romadhon,"Balikpapan, 23 Juli 2013",Sepinggan 2,Sepinggan,SMP,Mas Habibi,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,208,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Azfar Fahim Nursisik,"Balikpapan,2 April 2013",Bandara Baru,Sepinggan,SMP,Mas Habibi,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,209,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Farid Abid Pranaja,"Balikpapan, 10 Oktober 2013",Bandara Baru,Sepinggan,SMP,Mas Habibi,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,210,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Adipati zaeni,"Balikpapan,1,11,2012",Sepinggan 3,Sepinggan,SMP,Mas Habibi,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,211,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Musa Waliyullah,"Balikpapan,14 November 2013",Sepinggan 3,Sepinggan,SMP,Mas Habibi,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,212,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Fadhilah Arsyad Firdaus,"Balikpapan, 5 Januari 2013",Sepinggan 4,Sepinggan,SMP,Mas Habibi,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,213,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Caesar Onais Mahi,"Balikpapan, 12 Desember 2012",Bandara Lama,Sepinggan,SMP,Mas Habibi,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,214,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Diyo Sancez Chosmaliana,"Balikpapan, 30 Agustus 2012",,Batam,Kelas 2 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,215,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Muhammad Akmal Zaidan,"Balikpapan, 04 Agustus 2011",Perumnas,Batam,Kelas 3 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,216,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Muhammad Alif Adi S,"Balikpapan, 16 September 2012",,,Kelas 1 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,217,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Zyko Yogie Prasetya,"Balikpapan, 12 November 2011",,Batam,Kelas 1 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,218,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Tan Ziofigo Pramana,"Balikpapan, 28 Februari 2013",,Batam,Kelas 2 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,219,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Ammerzaki Abis Fairuz,"Balikpapan, 16 Maret 2012",,Batam,Kelas 3 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,220,pra remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Alvin Jiro tejasati,"Balikpapan,12-11-2012",Gunung Samarinda ,RING ROAD ,8.0,,Remaja,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,221,pra remaja,Bacaan / Tilawah,Godewyn Kenzo Abdulloh,"Balikpapan, 9 Agustus 2011",Sumber Rejo ,RING ROAD ,9.0,,Remaja,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,222,pra remaja,Bacaan / Tilawah,Riza Rizwana Azalea,"Balikpapan, 02 Agustus 2011",Batakan,Timur Raya,8 SMP,,Remaja,SMP,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,224,pra remaja,Bacaan / Murottal,Zivara Zayyana Naf'an,"Balikpapan ,01 Februari 2012",Sepinggan 2,Sepinggan,SMP,MT/tenaga pendidik SP 2,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,225,pra remaja,Bacaan / Murottal,Zazkia Mareta Dewi,"Balikpapan, 10 juli 2012",Sepinggan 4,Sepinggan,SMP,MT/tenaga pendidik SP 4,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,226,pra remaja,Bacaan / Tilawah,Muhammad Rafi,"Balikpapan, 28 September 2010",Somber,Batam,Kelas 1 SMK,,Remaja,SMU,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,227,pra remaja,Bacaan / Tilawah,Nasyah Felcia Nurdjannah,"Balikpapan, 23 April 2013",Somber,Batam,Kelas 2 SMP,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,228,pra remaja,Cerdas Cermat,Khansa Ardelia Hasna,"Balikpapan,2-1-2012",Sumber Rejo ,RING ROAD ,9.0,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,229,pra remaja,Cerdas Cermat,Yasmin Raisha Ratu Zahirah ,"Balikpapan,12-4-2012",Sumber Rejo ,RING ROAD ,9.0,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,230,pra remaja,Cerdas Cermat,Eryna Johara Azzalea,"Balikpapan,2012",Bandara Utara ,RING ROAD ,,,Remaja,,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,231,pra remaja,Cerdas Cermat,Zaskia Altafinnisa,"Balikpapan,10 Mei 2011",Sepinggan 3,Sepinggan,SMP,Bunda Olif,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,232,pra remaja,Cerdas Cermat,Huriyyana Qonita Izzati,"Purbalingga, 09 Mei 2011",Sepinggan 3,Sepinggan,SMP,Bunda Olif,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,233,pra remaja,Cerdas Cermat,Aurora Zuhrotul Mudrajat,"Balikpapan, 25 Agustus 2012",Sepinggan 2,Sepinggan,SMP,Bunda Olif,Remaja,SMP,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,234,pra remaja,Cerdas Cermat,Anin Dita Lenita Putri,"Balikpapan, 22 Maret 2011",Kariangau,Batam,Kelas 1 SMK,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,235,pra remaja,Cerdas Cermat,Wahyuni Putri Nur Hidayah,"Balikpapan, 26 Maret 2011",Kariangau,Batam,Kelas 1 SMK,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,236,pra remaja,Cerdas Cermat,Aqila Putri Irawan,"Balikpapan, 24 Juni 2013",Kariangau,Batam,Kelas 1 SMP,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,237,pra remaja,Hafalan / Tahfidz,Charissa Firdha Hasyim Sanjaya,"Balikpapan,24-09-2012",Bandara Utara ,RING ROAD ,9.0,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,238,pra remaja,Hafalan / Tahfidz,Fannisa Aulya Kamilan,"Balikpapan, 14 April 2012",Batakan,Timur Raya,8 SMP,,Remaja,SMP,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,239,pra remaja,Hafalan / Tahfidz,Muhammad Rayval Firdaus Rusmin,Kutai Timur 09 juni 2012,Sepinggan 2,Sepinggan,SMP,MT/Tendik Sepinggan 2,Remaja,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,240,pra remaja,Hafalan / Tahfidz,Nailah Talita Zahirah,"Balikpapan, 03 Agustus 2010",Somber,Batam,,,Remaja,,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,241,pra remaja,Kaifiyatussholah (Ma'mum),Crisann Aprilio Khalfani,"Balikpapan,11-04-2012",Bandara Utara,RING ROAD ,8.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,242,pra remaja,Kaifiyatussholah (Ma'mum),Ahyar Aufa Sabila Rosyada,"Balikpapan,21-10-12",Bandara Utara,RING ROAD ,8.0,,Remaja,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,243,pra remaja,Kaifiyatussholah (Ma'mum),Bramatya Yassar Fawaz,"Balikpapan,14-04-2010",Bandara Utara,RING ROAD ,10.0,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,244,pra remaja,Kaifiyatussholah (Imam),Abdurrahman Al Sudes,"Balikpapan, 12 Juli 2012",Manggar,Timur Raya,8 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,245,pra remaja,Kaifiyatussholah (Ma'mum),Ryamizard Al Kayyis,"Jambi, 30 Juni 2012",Sosial Lamaru,Timur Raya,8 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,246,pra remaja,Kaifiyatussholah (Ma'mum),Muhammad Razqa Bayu,"Muara Jawa, 06 Februari 2013",Manggar,Timur Raya,7 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,247,pra remaja,Kaifiyatussholah (Imam),Hikmal Febrian alfiansyah,20 Febriari 2013,Sepinggan 3,Sepinggan,SMP,MT/tenaga pendidik SP 3,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,248,pra remaja,Kaifiyatussholah (Ma'mum),Caesar Onais Mahi,Balikpapan 1 November 2012,Sepinggan 2,Sepinggan,SMP,MT/tenaga pendidik Sp 2,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,249,pra remaja,Kaifiyatussholah (Ma'mum),izzan Mirza al dhanie,"balikpapan, 08 November 2012",Melati,Sepinggan,SMP,MT/tenaga pendidik melati,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,250,pra remaja,Kaifiyatussholah (Imam),Abrar Athallah Asfa,"Balikpapan, 18 Maret 2013",Perumnas,Batam,Kelas 2 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,251,pra remaja,Kaifiyatussholah (Ma'mum),Muhammad Akmal Zaidan,"Balikpapan, 04 Agustus 2011",Perumnas,Batam,Kelas 3 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,252,pra remaja,Kaifiyatussholah (Ma'mum),Kabul Kameswara,"Balikpapan, 16 Desember 2012",Perumnas,Batam,Kelas 1 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,253,pra remaja,khotbah ,Mirza Nadhim Al Ukaili,"Balikpapan,3-7-2012",Bandara Utara ,RING ROAD ,8.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,254,pra remaja,Khotbah,Hamdan Abdillah,"Balikpapan, 20 Agustus 2011",Batakan,Timur Raya,8 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,255,pra remaja,Khotbah,Saga Abdillah Romadhon,"Balikpapan, 23 Juli 2013",Sepinggan 1,Sepinggan,SMP,MT/tenaga pendidik SP 1,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,256,pra remaja,Khotbah,fayad zabihulloh jagad,"Balikpapan, 24 Oktober 2010",Perumnas,Batam,Kelas 1 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,257,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Fadhlan Rosan Faqih,"Balikpapan,12-9-2011",sumberejo,RING ROAD ,9.0,,Remaja,,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,258,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Godewyn Kenzo Abdulloh,"Balikpapan, 9 Agustus 2011",Sumber Rejo ,RING ROAD ,9.0,,Remaja,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,259,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Mirza Nadhim Al Ukaili,"Balikpapan,3-7-2012",Bandara Utara ,RING ROAD ,8.0,,Remaja,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,260,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Fannisa Aulya Kamilan,"Balikpapan, 14 April 2012",Batakan,Timur Raya,8 SMP,,Remaja,SMP,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,261,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Riza Rizwana Azalea,"Balikpapan, 02 Agustus 2011",Batakan,Timur Raya,8 SMP,,Remaja,SMP,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,262,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Aqila Afsheen Riha Janetha,"balikpapan, 25 Juni 2012",Bandara Baru,Sepinggan,SMP,MT/tenaga pendidik Bandaru Baru,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,263,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Bilqees Sheeba Fakhrun Nisa Putri Hardjianto,"Balikpapan, 24 Juni 2011",Bandara Baru,Sepinggan,SMP,MT/tenaga pendidik Bandaru Baru,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,264,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Qinayra Azzema Nafaru,"Balikpapan,22 Nopember 2013",Bandara Baru,Sepinggan,SMP,MT/tenaga pendidik Bandaru Baru,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,265,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Zidni Marga A.,"Balikpapan, 01 September 2011",Somber,Batam,Kelas 2 SMP,,Remaja,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,266,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Nasyah Felcia Nurdjannah,"Balikpapan, 23 April 2013",Somber,Batam,Kelas 2 SMP,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,267,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Rifa'atus Salsabila Malik,"Balikpapan, 10 Oktober 2012",Soekarno Hatta,Batam,Kelas 2 SMP,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,268,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Aqeela asyah maldinov,"Balikpapan, 13 Juni 2012",Perumnas,Batam,Kelas 2 SMP,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,269,pra remaja,"Kreativitas Maket Masjid Al Ajwah, dengan bahan Kardus",Putri Dea Permata Maharani,"Balikpapan, 23 Agustus 2012",Perumnas,Batam,Kelas 1 SMP,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,270,pra remaja,Pildacil,M. Rafael Firdaus Royyan,"Balikpapan, 24 Juni 2012",Batakan,Timur Raya,8 SMP,,Remaja,SMP,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,271,remaja,Adzan & Iqomah, Danish Alba Dhiyaulhaq,"Balikpapan,06-03-2013",Bandara Utara ,RING ROAD ,8.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,272,remaja,Adzan & Iqomah,Julio Jabal Sabila Rosyada ,"Balikpapan,11-7-2011",Gunung Samarinda ,RING ROAD ,10.0,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,273,remaja,Adzan & Iqomah,Azhar Fawaid,"Balikpapan, 18 Februari 2007",Batakan,Timur Raya,-,,Remaja,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,275,remaja,Adzan & Iqomah,Muhammad Rafif Syari Romadon,"Balikpapan, 24 september 2008",Sepinggan 4,Sepinggan,SMA,MT/tenaga pendidik SP 4,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,276,remaja,Adzan & Iqomah,Muhammad Ali Akbar,"Balikpapan, 26 November 2009",Melati,Sepinggan,SMA,MT/tenaga pendidik MELATI,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,277,remaja,Adzan & Iqomah,Fatkhan yogi Abdillah,"Balikpapan, 04 Juni 2009",Perumnas,Batam,Kelas 3 SMK,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,278,remaja,Adzan & Iqomah,Azzam Nibras Firdaus,"Balikpapan, 09 November 2010",KM. 7,Batam,Kelas 2 SMK,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,279,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Mirza Nadhim Al Ukaili,"Balikpapan, 3-7-2012",Bandara Utara,RING ROAD ,8.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,280,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Chrisna Dinejad Hasyim Sanjaya,"Balikpapan,07-12-2010",Bandara Utara,RING ROAD ,,,Remaja,,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,281,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Danish Alba Diyaulhaq,"Balikpapan, 06-03-2013",Bandara Utara,RING ROAD ,8.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,282,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Bramantya Yassar Fawas ,"Balikpapan, 14-04-2010",Bandara Utara,RING ROAD ,10.0,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,283,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Mohammad Kuntodiwibatsoh,"Balikpapan, 01-12-2009",Sumber Rejo ,RING ROAD ,11.0,,Remaja,SD 1,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,284,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah ,Muhammad Fachri Ramadhan,"Balikpapan,29-08-2009",Gunung Samarinda ,RING ROAD ,11.0,,Remaja,SD 1,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,285,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Fatkhan yogi Abdillah,"Balikpapan, 04 Juni 2009",Perumnas,Batam,Kelas 3 SMK,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,286,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Muhammad Romadoni,"Wonogiri, 26 September 2007",Somber,Batam,Kelas 3 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,287,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Ferdinand rosyid,"Balikpapan, 27 September 2009",Somber,Batam,Kelas 3 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,288,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Nabil Rehan Firdaus,"Balikpapan, 7 Februari 2011",Kariangau,Batam,Kelas 1 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,289,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,fayad zabihulloh jagad,"Balikpapan, 24 Oktober 2010",Perumnas,Batam,Kelas 1 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,290,remaja,Aplikasi Penerapan 29 Karakter Luhur Jamaah,Muhammad Nauval,"Balikpapan, 26 Maret 2009",,Batam,Kelas 1 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,291,remaja,Bacaan / Tilawah,Muhammad Fachri ramadhan,"Balikpapan,29-8-2009",Gunung Samarinda ,RING ROAD ,11.0,,Remaja,SD 1,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,292,remaja,Bacaan / Tilawah,Savira NurRuvita Maqviroh,"Balikpapan, 11 November 2010",Batakan,Timur Raya,10 SMK,,Remaja,SMU,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,294,remaja,Bacaan / Tilawah,Habiburrohim Al Muttaqi,"Purbalingga, 06 November 2008",Sepinggan 3,Sepinggan,SMA,MT/Tendik Sepinggan 3,Remaja,SMU,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,295,remaja,Bacaan / Tilawah,Qhaleesya Shabiyyah Nafaru,Balikpapan 20 Desember 2011,Bandara Baru,Sepinggan,SMA,MT/tenaga pendidik Bandaru Baru,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,296,remaja,Bacaan / Tilawah,Sharanie Fidli Ayyadana,"Balikpapan, 26 Maret 2008",KM. 7,Batam,Kelas 3 SMA,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,297,remaja,Bacaan / Tilawah,Nazwa Salsabilla,"Balikpapan, 22 Juli 2008",Perumnas,Batam,MABA,,Remaja,,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,298,remaja,Cerdas Cermat,Oulya Anis Alhidayah ,"Balikpapan,13-2-2009",Gunung Samarinda ,RING ROAD ,11.0,,Remaja,SD 1,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,299,remaja,Cerdas Cermat,Alisya Adelina akilah,"Balikpapan,3-6-2011",Gunung Samarinda ,RING ROAD ,11.0,,Remaja,SD 1,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,300,remaja,Cerdas Cermat,Ashlikh Aprilia Solikhah,"Balikpapan,24-4-2007",Gunung Samarinda ,RING ROAD ,11.0,,Remaja,SD 1,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,301,remaja,Cerdas Cermat,Isa Al Mahdi,"Balikpapan, 26 Januari 2010",Sepinggan 3,Sepinggan,SMA,Bunda Olif,Remaja,SMU,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,302,remaja,Cerdas Cermat,Mandala hafidz bimantoro,Balikpapan 15-05-2009,Sepinggan 3,Sepinggan,SMA,Bunda Olif,Remaja,SMU,L,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,303,remaja,Cerdas Cermat,Ajji Anugerah Esfandiar Pahlawan,Balikpapan 03-03-2009,Sepinggan 3,Sepinggan,SMA,Bunda Olif,Remaja,SMU,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,304,remaja,Cerdas Cermat,Nadya Zulfa Adiba,"Balikpapan, 06 Desember 2010",Perumnas,Batam,Kelas 1 SMA,,Remaja,SMU,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,305,remaja,Cerdas Cermat,Nadya Qonita Bilqisthi,"Balikpapan, 04 November 2008",Perumnas,Batam,Kelas 3 SMA,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,306,remaja,Cerdas Cermat,Gendhis Athaya Prasetyo,"Kediri, 08 Januari 2011",Perumnas,Batam,Kelas 1 SMA,,Remaja,SMU,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,307,remaja,Hafalan / Tahfidz,Yuqiu Aflaha Alief,"Balikpapan,27-11-2015",Gunung Samarinda ,RING ROAD ,8.0,,Remaja,SMP,L,default_uat_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,308,remaja,Hafalan / Tahfidz,Evan Brilliant Edra Royan,"Balikpapan, 15 Februari 2011",Batakan,Timur Raya,9 SMP,,Remaja,SMP,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,309,remaja,Hafalan / Tahfidz,Aruni Marga Al-bashira,"Balikpapan, 04 April 2009",Somber,Batam,Kelas 3 SMA,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,310,remaja,Kaifiyatussholah ,Mohammad Kuntodiwibatsoh,"Balikpapan,1-12-2009",Sumber Rejo ,RING ROAD ,11.0,,Remaja,SD 1,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,311,remaja,Kaifiyatussholah ,Chrisna Dinejad Hasyim Sanjaya,"Balikpapan,07-12-2010",Bandara Utara,RING ROAD ,10.0,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,312,remaja,Kaifiyatussholah ,Alvin Jiro tejasati,"Balikpapan,12-11-2012",Gunung Samarinda ,RING ROAD ,8.0,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,313,remaja,Kaifiyatussholah (Imam),Ferdinand rosyid,"Balikpapan, 27 September 2009",Somber,Batam,Kelas 3 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,314,remaja,Kaifiyatussholah (Ma'mum),Muhammad Romadoni,"Wonogiri, 26 September 2007",Somber,Batam,Kelas 3 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,315,remaja,Kaifiyatussholah (Ma'mum),Hafidz Ikhsan,"Balikpapan, 29 Agustus 2012",Somber,Batam,Kelas 2 SMP,,Remaja,SMP,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,316,remaja,Khotbah,Zahwan Nazhan Nehru Al Husyaini,"Balikpapan,18-4-2008",Sumberejo,RING ROAD ,12.0,,Remaja,SD 2,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,317,remaja,Khotbah,Fadil Guzza Fiddin,"Balikpapan, 8 Mei 2010",Batakan,Timur Raya,10 SMK,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,318,remaja,Khotbah,Rofiq Fawaz H,"Balikpapan 20, Oktober 2009",Sepinggan 1,Sepinggan,SMA,MT/tenaga pendidik SP 1,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,319,remaja,Khotbah,Muhammad Naufal,"Balikpapan, 26 Maret 2009",Somber,Batam,Kelas 3 SMA,,Remaja,SMU,L,competition_rule_male_only
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,320,remaja,Kreativitas Barang Bekas,Yasmin Raisha Ratu Zahirah ,"Balikpapan,12-4-2012",Sumber Rejo ,RING ROAD ,9.0,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,321,remaja,Kreativitas Barang Bekas,Eryna Johara Azzalea,"Balikpapan,2012",Bandara Utara ,RING ROAD ,10.0,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,322,remaja,Kreativitas Barang Bekas,Khansa Ardelia Hasna,"Balikpapan,2-01-2012",Sumber Rejo ,RING ROAD ,9.0,,Remaja,SMP,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,323,remaja,Kreativitas Barang Bekas,Savira NurRuvita Maqviroh,"Balikpapan, 11 November 2010",Batakan,Timur Raya,10 SMK,,Remaja,SMU,,not_provided
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,324,remaja,Kreativitas Barang Bekas,Oktavia Dea Shafira,"Balikpapan, 26 Oktober 2008",Somber,Batam,Kelas 3 SMA,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,325,remaja,Kreativitas Barang Bekas,Nayla Fadillah Azzarah,"Surabaya, 16 Juli 2009",Perumnas,Batam,Kelas 3 SMK,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,326,remaja,Kreativitas Barang Bekas,Putri Zahra Ramadhani,"Balikpapan, 26 Agustus 2009",Perumnas,Batam,Kelas 3 SMA,,Remaja,SMU,P,name_inference
+FASDES_GABUNGAN_PER_JENJANG_KATEGORI (2).xlsx,327,remaja,Pildacil,Dava Alfarezqi Rafasya,"Balikpapan, 27 Maret 2011",Batakan,Timur Raya,10 SMK,,Remaja,SMU,L,name_inference

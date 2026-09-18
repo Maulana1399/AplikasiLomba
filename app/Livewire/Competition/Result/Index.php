@@ -77,7 +77,7 @@ class Index extends Component
             return collect();
         }
 
-        return CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', (int) $this->filterEventId))
+        return CompetitionCategory::where('event_id', (int) $this->filterEventId)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')

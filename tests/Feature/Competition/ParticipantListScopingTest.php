@@ -50,7 +50,6 @@ function pl_category(Event $event, string $name): CompetitionCategory
         'is_active' => true,
     ]);
 
-    $category->events()->attach($event);
 
     return $category;
 }

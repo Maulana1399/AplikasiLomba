@@ -101,7 +101,7 @@ class CompetitionUatReset extends Command
             CompetitionHeatFormat::whereIn('competition_class_id', $classIds)->delete();
             CompetitionRegistration::whereIn('competition_class_id', $classIds)->delete();
             CompetitionClass::whereIn('id', $classIds)->delete();
-            CompetitionCategory::whereHas('events', fn ($q) => $q->whereIn('events.id', $eventIds))->delete();
+            CompetitionCategory::whereIn('event_id', $eventIds)->delete();
 
             $participationIds = Participation::whereIn('event_id', $eventIds)->pluck('id');
             Participation::whereIn('id', $participationIds)->delete();
@@ -150,7 +150,7 @@ class CompetitionUatReset extends Command
             'competition_heat_formats' => CompetitionHeatFormat::whereIn('competition_class_id', $classIds)->count(),
             'competition_registrations' => CompetitionRegistration::whereIn('competition_class_id', $classIds)->count(),
             'competition_classes' => $classIds->count(),
-            'competition_categories' => CompetitionCategory::whereHas('events', fn ($q) => $q->whereIn('events.id', $eventIds))->count(),
+            'competition_categories' => CompetitionCategory::whereIn('event_id', $eventIds)->count(),
             'participations' => Participation::whereIn('event_id', $eventIds)->count(),
             'events' => $eventIds->count(),
         ];

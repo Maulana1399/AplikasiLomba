@@ -32,7 +32,6 @@ function chrt_event(array $overrides = []): Event
 function chrt_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'CHRT Cat '.str()->random(4)]);
-    $category->events()->syncWithoutDetaching([$event->id]);
 
     return $category;
 }

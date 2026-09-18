@@ -17,7 +17,7 @@ class CompetitionRegistrationService
 {
     public function register(
         string $nama,
-        string $jenisKelamin,
+        ?string $jenisKelamin,
         ?string $tanggalLahir,
         int $desaId,
         int $eventId,
@@ -32,6 +32,10 @@ class CompetitionRegistrationService
         ) {
             $event = Event::lockForUpdate()->findOrFail($eventId);
 
+            // Gender pilihan operator (kanonik L/P). Dipakai hanya bila Person
+            // belum memiliki jenis_kelamin; tidak pernah menimpa L/P existing.
+            $gender = $this->normalizeGender($jenisKelamin);
+
             $person = Person::where('nama', $nama)
                 ->where('desa_id', $desaId)
                 ->first();
@@ -39,7 +43,7 @@ class CompetitionRegistrationService
             if (! $person) {
                 $person = Person::create([
                     'nama' => $nama,
-                    'jenis_kelamin' => $jenisKelamin === 'Perempuan' ? 'P' : 'L',
+                    'jenis_kelamin' => $gender,
                     'tanggal_lahir' => $tanggalLahir,
                     'desa_id' => $desaId,
                     'kelompok_id' => $kelompokId,
@@ -52,32 +56,69 @@ class CompetitionRegistrationService
                 eventId: $event->id,
                 competitionCategoryId: $competitionCategoryId,
                 competitionClassId: $competitionClassId,
+                gender: $gender,
             );
         });
     }
 
+    /**
+     * @param  string|null  $gender  Gender pilihan operator (L/P), hanya dipakai
+     *                               jika Person belum punya jenis_kelamin.
+     */
     public function registerForPerson(
         Person $person,
         int $eventId,
         int $competitionCategoryId,
         int $competitionClassId,
         string $registrationType = 'individual',
+        ?string $gender = null,
     ): array {
-        return DB::transaction(function () use ($person, $eventId, $competitionCategoryId, $competitionClassId, $registrationType) {
+        return DB::transaction(function () use ($person, $eventId, $competitionCategoryId, $competitionClassId, $registrationType, $gender) {
             $event = Event::lockForUpdate()->findOrFail($eventId);
 
             $category = CompetitionCategory::where('id', $competitionCategoryId)
-                ->whereHas('events', fn ($q) => $q->where('events.id', $event->id))->firstOrFail();
+                ->where('event_id', $event->id)->firstOrFail();
 
             $class = CompetitionClass::where('id', $competitionClassId)
                 ->where('competition_category_id', $category->id)
                 ->where('event_id', $event->id)->firstOrFail();
 
-            // 1. Gender validation
-            if ($class->gender !== 'M' && $class->gender !== $person->jenis_kelamin) {
+            /*
+             * 1. Tentukan gender efektif.
+             *
+             * Gender Person existing (L/P) SELALU menang dan tidak pernah
+             * ditimpa. Jika Person belum punya gender, pakai pilihan operator.
+             * Tanpa keduanya -> tolak (tidak boleh menebak dari nama).
+             */
+            $effectiveGender = $this->normalizeGender($person->jenis_kelamin)
+                ?? $this->normalizeGender($gender);
+
+            if ($effectiveGender === null) {
+                throw ValidationException::withMessages([
+                    'jenisKelamin' => 'Jenis kelamin wajib dipilih.',
+                ]);
+            }
+
+            /*
+             * 2. Validasi eligibility SEBELUM persistence.
+             *
+             * Class M = wildcard (L & P). Class L hanya menerima L. Tidak ada
+             * class P terpisah. Karena dicek sebelum menyimpan gender, pilihan
+             * yang tidak eligible tidak akan tersimpan.
+             */
+            if ($class->gender !== 'M' && $class->gender !== $effectiveGender) {
                 throw ValidationException::withMessages([
                     'competitionClassId' => 'Jenis kelamin peserta tidak sesuai dengan kelas ini.',
                 ]);
+            }
+
+            /*
+             * 3. Simpan gender hanya bila Person belum punya nilai kanonik.
+             *    Berada dalam transaksi yang sama, sehingga rollback ikut
+             *    membatalkan penyimpanan bila registrasi gagal.
+             */
+            if ($this->normalizeGender($person->jenis_kelamin) === null) {
+                $person->update(['jenis_kelamin' => $effectiveGender]);
             }
 
             $existingParticipation = Participation::where('person_id', $person->id)
@@ -85,7 +126,7 @@ class CompetitionRegistrationService
                 ->first();
 
             if ($existingParticipation) {
-                // 2. Duplicate registration check
+                // 4. Duplicate registration check
                 $existingReg = CompetitionRegistration::where('participation_id', $existingParticipation->id)
                     ->where('competition_class_id', $class->id)
                     ->first();
@@ -96,7 +137,7 @@ class CompetitionRegistrationService
                     ]);
                 }
 
-                // 3. Conflict/exclusivity check (bidirectional)
+                // 5. Conflict/exclusivity check (bidirectional)
                 $conflictCategoryIds = $category->allExclusiveCategoryIds();
 
                 if (! empty($conflictCategoryIds)) {
@@ -117,7 +158,7 @@ class CompetitionRegistrationService
 
                 $participation = $existingParticipation;
             } else {
-                $jenisKelamin = $person->jenis_kelamin === 'P' ? 'Perempuan' : 'Laki - Laki';
+                $jenisKelamin = $effectiveGender === 'P' ? 'Perempuan' : 'Laki - Laki';
                 $participation = $this->createParticipation($person, $event, $jenisKelamin);
             }
 
@@ -130,6 +171,20 @@ class CompetitionRegistrationService
                 'competition_registration' => $registration,
             ];
         });
+    }
+
+    /**
+     * Normalisasi ke nilai kanonik L/P. Mengembalikan null bila tidak dikenali.
+     */
+    private function normalizeGender(?string $gender): ?string
+    {
+        $gender = strtoupper(trim((string) $gender));
+
+        return match ($gender) {
+            'L', 'LAKI', 'LAKI-LAKI', 'LAKI LAKI', 'MALE' => 'L',
+            'P', 'PEREMPUAN', 'WANITA', 'FEMALE' => 'P',
+            default => null,
+        };
     }
 
     private function createParticipation(Person $person, Event $event, string $jenisKelamin): Participation

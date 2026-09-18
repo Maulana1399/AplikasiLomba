@@ -38,7 +38,6 @@ function th_event(array $overrides = []): Event
 function th_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'TH Cat '.str()->random(4)]);
-    $category->events()->syncWithoutDetaching([$event->id]);
 
     return $category;
 }

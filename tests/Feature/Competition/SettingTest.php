@@ -32,7 +32,6 @@ function setting_category(Event $event, array $overrides = []): CompetitionCateg
         'code' => strtoupper(str()->random(6)),
     ], $overrides));
 
-    $category->events()->syncWithoutDetaching([$event->id]);
 
     return $category;
 }

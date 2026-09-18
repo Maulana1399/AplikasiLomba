@@ -21,7 +21,6 @@ function hph_category(\App\Models\Event $event): \App\Models\CompetitionCategory
 {
     $category = \App\Models\CompetitionCategory::create(['event_id' => $event->id, 'name' => 'HPH Cat '.str()->random(4)]);
 
-    $category->events()->attach($event);
 
     return $category;
 }

@@ -174,7 +174,7 @@ class Event extends Model
 
     public function competitionCategories()
     {
-        return $this->belongsToMany(CompetitionCategory::class, 'competition_category_event', 'event_id', 'competition_category_id')->withTimestamps();
+        return $this->hasMany(CompetitionCategory::class);
     }
 
     public function competitionClasses()

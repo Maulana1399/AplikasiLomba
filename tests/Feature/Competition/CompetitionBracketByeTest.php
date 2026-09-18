@@ -31,7 +31,6 @@ function bye_category(\App\Models\Event $event): \App\Models\CompetitionCategory
 {
     $category = \App\Models\CompetitionCategory::create(['event_id' => $event->id, 'name' => 'BYE Cat '.str()->random(4)]);
 
-    $category->events()->attach($event);
 
     return $category;
 }

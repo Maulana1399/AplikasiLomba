@@ -77,7 +77,7 @@ class Index extends Component
     {
         $event = app(ActiveEventContext::class)->current();
 
-        return CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event?->id))
+        return CompetitionCategory::where('event_id', $event?->id)
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();

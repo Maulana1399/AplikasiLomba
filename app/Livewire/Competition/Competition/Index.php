@@ -19,8 +19,6 @@ class Index extends Component
 
     public string $newSortOrder = '';
 
-    public array $newCategoryIds = [];
-
     public ?int $editId = null;
 
     public string $editName = '';
@@ -28,8 +26,6 @@ class Index extends Component
     public string $editCode = '';
 
     public string $editSortOrder = '';
-
-    public array $editCategoryIds = [];
 
     public bool $processing = false;
 
@@ -41,7 +37,7 @@ class Index extends Component
     public function toggleCreateForm(): void
     {
         $this->showCreateForm = ! $this->showCreateForm;
-        $this->reset(['newName', 'newCode', 'newSortOrder', 'newCategoryIds']);
+        $this->reset(['newName', 'newCode', 'newSortOrder']);
         $this->resetErrorBag();
     }
 
@@ -62,11 +58,9 @@ class Index extends Component
                 ],
                 'newCode' => 'nullable|string|max:50|unique:events,code',
                 'newSortOrder' => 'nullable|integer|min:0',
-                'newCategoryIds' => 'nullable|array',
-                'newCategoryIds.*' => 'exists:competition_categories,id',
             ]);
 
-            $event = Event::create([
+            Event::create([
                 'name' => $this->newName,
                 'slug' => \Illuminate\Support\Str::slug($this->newName).'-'.uniqid(),
                 'code' => $this->newCode !== '' ? $this->newCode : null,
@@ -77,10 +71,8 @@ class Index extends Component
                 'end_date' => now()->toDateString(),
             ]);
 
-            $event->competitionCategories()->sync($this->newCategoryIds);
-
             $this->showCreateForm = false;
-            $this->reset(['newName', 'newCode', 'newSortOrder', 'newCategoryIds']);
+            $this->reset(['newName', 'newCode', 'newSortOrder']);
             session()->flash('success', 'Lomba berhasil dibuat.');
         } finally {
             $this->processing = false;
@@ -94,7 +86,6 @@ class Index extends Component
         $this->editName = $event->name;
         $this->editCode = $event->code ?? '';
         $this->editSortOrder = (string) ($event->sort_order ?? '');
-        $this->editCategoryIds = Event::where('id', $event->id)->first()->competitionCategories()->pluck('competition_categories.id')->map(fn ($v) => (int) $v)->all();
     }
 
     public function update(): void
@@ -115,23 +106,7 @@ class Index extends Component
                 Rule::unique('events', 'code')->ignore($event->id),
             ],
             'editSortOrder' => 'nullable|integer|min:0',
-            'editCategoryIds' => 'nullable|array',
-            'editCategoryIds.*' => 'exists:competition_categories,id',
         ]);
-
-        $desiredIds = collect($this->editCategoryIds)->map(fn ($v) => (int) $v)->unique()->values()->all();
-        $currentIds = $event->competitionCategories()->pluck('competition_categories.id')->map(fn ($v) => (int) $v)->all();
-        $toDetach = collect($currentIds)->diff($desiredIds)->values()->all();
-
-        foreach ($toDetach as $catId) {
-            if (\App\Models\CompetitionClass::where('event_id', $event->id)
-                ->where('competition_category_id', $catId)->exists()) {
-                $cat = \App\Models\CompetitionCategory::find($catId);
-                $this->addError('editCategoryIds', "Kategori {$cat?->name} masih digunakan kelas lomba di event ini, tidak dapat dilepas.");
-
-                return;
-            }
-        }
 
         $event->update([
             'name' => $this->editName,
@@ -139,25 +114,13 @@ class Index extends Component
             'sort_order' => $this->editSortOrder !== '' ? (int) $this->editSortOrder : null,
         ]);
 
-        $event->competitionCategories()->sync($desiredIds);
-
-        $this->reset(['editId', 'editName', 'editCode', 'editSortOrder', 'editCategoryIds']);
+        $this->reset(['editId', 'editName', 'editCode', 'editSortOrder']);
         session()->flash('success', 'Lomba berhasil diperbarui.');
     }
 
     public function cancelEdit(): void
     {
-        $this->reset(['editId', 'editName', 'editCode', 'editSortOrder', 'editCategoryIds']);
-    }
-
-    public function updatedNewCategoryIds(): void
-    {
-        $this->resetValidation('newCategoryIds');
-    }
-
-    public function updatedEditCategoryIds(): void
-    {
-        $this->resetValidation('editCategoryIds');
+        $this->reset(['editId', 'editName', 'editCode', 'editSortOrder']);
     }
 
     public function toggleActive(int $id): void
@@ -223,10 +186,6 @@ class Index extends Component
         return view('livewire.competition.competition.index', [
             'competitions' => Event::where('event_type', 'competition')
                 ->withCount('competitionCategories')
-                ->orderBy('sort_order')
-                ->orderBy('name')
-                ->get(),
-            'allCategories' => \App\Models\CompetitionCategory::where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),

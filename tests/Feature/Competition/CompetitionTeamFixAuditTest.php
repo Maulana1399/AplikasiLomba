@@ -34,10 +34,10 @@ function fix_event(array $overrides = []): Event
 
 function fix_category(Event $event): CompetitionCategory
 {
-    $category = CompetitionCategory::create(['name' => 'Fix Cat '.str()->random(4)]);
-    $event->competitionCategories()->attach($category->id);
-
-    return $category;
+    return CompetitionCategory::create([
+        'event_id' => $event->id,
+        'name' => 'Fix Cat '.str()->random(4),
+    ]);
 }
 
 function fix_class(Event $event, CompetitionCategory $category, string $format = 'team_vs_team', array $overrides = []): CompetitionClass

@@ -26,11 +26,6 @@ class CompetitionCategory extends Model
         return $this->belongsTo(Event::class, 'event_id');
     }
 
-    public function events()
-    {
-        return $this->belongsToMany(Event::class, 'competition_category_event', 'competition_category_id', 'event_id')->withTimestamps();
-    }
-
     public function competitionClasses()
     {
         return $this->hasMany(CompetitionClass::class);

@@ -39,7 +39,6 @@ function rr_lomba(string $name, array $eventOverrides = []): array
         'name' => 'Kategori '.$name.' '.$suffix,
         'is_active' => true,
     ]);
-    $category->events()->attach($event);
 
     $class = CompetitionClass::create([
         'event_id' => $event->id,

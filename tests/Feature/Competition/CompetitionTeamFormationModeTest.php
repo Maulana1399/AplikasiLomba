@@ -45,7 +45,6 @@ function tm_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'Cabang '.str()->random(4)]);
 
-    $category->events()->attach($event);
 
     return $category;
 }

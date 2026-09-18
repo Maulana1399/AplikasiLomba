@@ -92,24 +92,8 @@ class ParticipantList extends Component
         $eventId = (int) $this->competitionId;
 
         return CompetitionCategory::query()
-            ->where(
-                'is_active',
-                true
-            )
-            ->where(
-                fn ($query) => $query
-                    ->where(
-                        'event_id',
-                        $eventId
-                    )
-                    ->orWhereHas(
-                        'events',
-                        fn ($query) => $query->where(
-                            'events.id',
-                            $eventId
-                        )
-                    )
-            )
+            ->where('is_active', true)
+            ->where('event_id', $eventId)
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();

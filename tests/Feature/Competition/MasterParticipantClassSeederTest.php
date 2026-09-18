@@ -4,29 +4,28 @@ use App\Models\MasterParticipantClass;
 use Database\Seeders\MasterParticipantClassSeeder;
 
 $expected = [
-    'TK',
-    'SD1',
-    'SD2',
-    'SD3',
-    'SD4',
-    'SD5',
-    'SD6',
-    'SMP1',
-    'SMP2',
-    'SMP3',
+    'PAUD',
+    'SD 1',
+    'SD 2',
+    'SD 3',
+    'SD 4',
+    'SD 5',
+    'SD 6',
+    'SMP',
+    'SMU',
     'Dewasa',
 ];
 
-it('seeds 11 default master participant classes', function () use ($expected) {
+it('seeds 10 default master participant classes', function () use ($expected) {
     $this->seed(MasterParticipantClassSeeder::class);
 
-    expect(MasterParticipantClass::count())->toBe(11);
+    expect(MasterParticipantClass::count())->toBe(10);
 
     $names = MasterParticipantClass::orderBy('sort_order')->pluck('name')->all();
     expect($names)->toBe($expected);
 });
 
-it('assigns sort_order 1 through 11 in order', function () {
+it('assigns sort_order 1 through 10 in order', function () {
     $this->seed(MasterParticipantClassSeeder::class);
 
     $rows = MasterParticipantClass::orderBy('sort_order')->get();
@@ -48,25 +47,25 @@ it('is idempotent — running twice produces no duplicates', function () {
     $this->seed(MasterParticipantClassSeeder::class);
     $this->seed(MasterParticipantClassSeeder::class);
 
-    expect(MasterParticipantClass::count())->toBe(11);
+    expect(MasterParticipantClass::count())->toBe(10);
 });
 
 it('preserves operator changes on re-seed', function () {
     $this->seed(MasterParticipantClassSeeder::class);
 
-    $smp1 = MasterParticipantClass::where('name', 'SMP1')->first();
-    expect($smp1)->not->toBeNull();
+    $smp = MasterParticipantClass::where('name', 'SMP')->first();
+    expect($smp)->not->toBeNull();
 
-    $smp1->update(['code' => 'SMP1A', 'sort_order' => 99, 'is_active' => false]);
+    $smp->update(['code' => 'SMP1A', 'sort_order' => 99, 'is_active' => false]);
 
     $this->seed(MasterParticipantClassSeeder::class);
 
-    expect(MasterParticipantClass::count())->toBe(11);
+    expect(MasterParticipantClass::count())->toBe(10);
 
-    $smp1After = MasterParticipantClass::where('name', 'SMP1')->first();
-    expect($smp1After->code)->toBe('SMP1A');
-    expect($smp1After->sort_order)->toBe(99);
-    expect($smp1After->is_active)->toBeFalse();
+    $smpAfter = MasterParticipantClass::where('name', 'SMP')->first();
+    expect($smpAfter->code)->toBe('SMP1A');
+    expect($smpAfter->sort_order)->toBe(99);
+    expect($smpAfter->is_active)->toBeFalse();
 });
 
 it('all classes are active by default', function () {

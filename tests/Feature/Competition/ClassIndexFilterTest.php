@@ -30,7 +30,6 @@ function filter_category(Event $event, array $overrides = []): CompetitionCatego
         'is_active' => true,
     ], $overrides));
 
-    $category->events()->syncWithoutDetaching([$event->id]);
 
     return $category;
 }
@@ -104,25 +103,21 @@ test('filter Lomba hanya menampilkan kelas milik lomba tersebut', function () {
         ->assertDontSee($kelasB->name);
 });
 
-test('kelas dari lomba lain tidak bocor saat kategori di-reuse antar lomba', function () {
+test('kelas dari lomba lain tidak bocor antar lomba yang punya kategori sendiri', function () {
     $eventA = filter_event();
     $eventB = filter_event();
     app(ActiveEventContext::class)->set($eventA);
 
-    // Satu kategori GLOBAL yang sama dipakai oleh dua lomba (via pivot).
-    $shared = CompetitionCategory::create([
-        'name' => 'Kategori Global '.str()->random(8),
-        'code' => 'SHARED-'.strtoupper(str()->random(6)),
-        'is_active' => true,
-    ]);
-    $shared->events()->syncWithoutDetaching([$eventA->id, $eventB->id]);
+    // Setiap lomba punya kategori sendiri (event-scoped), bukan kategori global.
+    $catA = filter_category($eventA, ['name' => 'Kategori A '.str()->random(8)]);
+    $catB = filter_category($eventB, ['name' => 'Kategori B '.str()->random(8)]);
 
-    $kelasA = filter_class($eventA, $shared, ['name' => 'Kelas Shared A']);
-    $kelasB = filter_class($eventB, $shared, ['name' => 'Kelas Shared B']);
+    $kelasA = filter_class($eventA, $catA, ['name' => 'Kelas Shared A']);
+    $kelasB = filter_class($eventB, $catB, ['name' => 'Kelas Shared B']);
 
-    // Kedua kelas menunjuk competition_category_id yang sama.
-    expect($kelasA->competition_category_id)->toBe($shared->id)
-        ->and($kelasB->competition_category_id)->toBe($shared->id);
+    // Kedua kelas menunjuk kategori milik lomba masing-masing.
+    expect($kelasA->competition_category_id)->toBe($catA->id)
+        ->and($kelasB->competition_category_id)->toBe($catB->id);
 
     Livewire::actingAs(filter_admin())
         ->test(ClassIndex::class)

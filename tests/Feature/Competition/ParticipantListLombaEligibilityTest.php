@@ -33,7 +33,6 @@ function ple_category(Event $event, string $name, ?string $code = null): Competi
         'is_active' => true,
     ]);
 
-    $category->events()->attach($event);
 
     return $category;
 }

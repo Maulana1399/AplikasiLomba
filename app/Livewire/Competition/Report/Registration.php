@@ -39,7 +39,7 @@ class Registration extends Component
 
         return view('livewire.competition.report.registration', [
             'registrations' => $registrations,
-            'categories' => CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $event?->id))
+            'categories' => CompetitionCategory::where('event_id', $event?->id)
                 ->where('is_active', true)->orderBy('name')->get(),
             'filterClasses' => $this->filterCategoryId
                 ? CompetitionClass::where('competition_category_id', $this->filterCategoryId)

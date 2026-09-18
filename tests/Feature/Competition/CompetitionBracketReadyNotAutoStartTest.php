@@ -32,7 +32,6 @@ function r4h_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'R4H Cat '.str()->random(4)]);
 
-    $category->events()->attach($event);
 
     return $category;
 }

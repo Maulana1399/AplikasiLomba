@@ -425,7 +425,7 @@ class Index extends Component
             'resultTypeLabel' => $selected ? CompetitionResultType::label($selected->resultType()) : '-',
             'resultDirection' => $selected ? $this->directionLabel($selected->resultType()) : '-',
             'categories' => \App\Models\CompetitionCategory::where('is_active', true)
-                ->whereHas('events', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'))
+                ->whereHas('event', fn ($q) => $q->where('event_type', 'competition')->where('status', 'active'))
                 ->orderBy('sort_order')
                 ->orderBy('name')
                 ->get(),

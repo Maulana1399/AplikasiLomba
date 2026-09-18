@@ -234,7 +234,7 @@ class Index extends Component
                 return;
             }
 
-            if (! CompetitionCategory::where('id', $this->newCompetitionCategoryId)->whereHas('events', fn ($q) => $q->where('events.id', $event->id))->exists()) {
+            if (! CompetitionCategory::where('id', $this->newCompetitionCategoryId)->where('event_id', $event->id)->exists()) {
                 $this->addError('newCompetitionCategoryId', 'Kategori harus berasal dari lomba yang dipilih.');
 
                 return;
@@ -340,7 +340,7 @@ class Index extends Component
             return;
         }
 
-        if (! CompetitionCategory::where('id', $this->editCompetitionCategoryId)->whereHas('events', fn ($q) => $q->where('events.id', $event->id))->exists()) {
+        if (! CompetitionCategory::where('id', $this->editCompetitionCategoryId)->where('event_id', $event->id)->exists()) {
             $this->addError('editCompetitionCategoryId', 'Kategori harus berasal dari lomba yang dipilih.');
 
             return;
@@ -506,7 +506,7 @@ class Index extends Component
             return collect();
         }
 
-        return CompetitionCategory::whereHas('events', fn ($q) => $q->where('events.id', $eventId))
+        return CompetitionCategory::where('event_id', $eventId)
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('name')

@@ -53,7 +53,6 @@ function makeCategory(Event $event, array $overrides = []): CompetitionCategory
         'code' => strtoupper(str()->random(6)),
     ], $overrides));
 
-    $category->events()->attach($event);
 
     return $category;
 }

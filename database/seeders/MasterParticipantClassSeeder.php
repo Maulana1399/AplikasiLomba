@@ -10,23 +10,22 @@ class MasterParticipantClassSeeder extends Seeder
     public function run(): void
     {
         $defaults = [
-            'TK',
-            'SD1',
-            'SD2',
-            'SD3',
-            'SD4',
-            'SD5',
-            'SD6',
-            'SMP1',
-            'SMP2',
-            'SMP3',
+            'PAUD',
+            'SD 1',
+            'SD 2',
+            'SD 3',
+            'SD 4',
+            'SD 5',
+            'SD 6',
+            'SMP',
+            'SMU',
             'Dewasa',
         ];
 
         foreach (array_values($defaults) as $index => $name) {
             MasterParticipantClass::firstOrCreate(
                 ['name' => $name],
-                ['code' => $name, 'sort_order' => $index + 1]
+                ['code' => $name, 'sort_order' => $index + 1, 'is_active' => true]
             );
         }
     }

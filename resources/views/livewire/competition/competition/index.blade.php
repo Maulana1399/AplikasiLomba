@@ -41,15 +41,6 @@
                     @error('newSortOrder') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>
-            <div class="mt-4">
-                <p class="mb-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">Kategori *</p>
-                <flux:checkbox.group wire:model.live="newCategoryIds" class="grid gap-2 sm:grid-cols-3">
-                    @foreach ($allCategories as $cat)
-                        <flux:checkbox wire:key="new-cat-{{ $cat->id }}" value="{{ $cat->id }}" label="{{ $cat->name }}" />
-                    @endforeach
-                </flux:checkbox.group>
-                @error('newCategoryIds') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-            </div>
             <div class="mt-4 flex justify-end">
                 <flux:button wire:click="create" variant="primary" :loading="$processing">Simpan</flux:button>
             </div>
@@ -83,14 +74,7 @@
                             <td class="px-4 py-2">
                                 <flux:input wire:model="editSortOrder" type="number" size="sm" />
                             </td>
-                            <td class="px-4 py-2">
-                                <flux:checkbox.group wire:model.live="editCategoryIds" class="grid gap-1">
-                                    @foreach ($allCategories as $cat)
-                                        <flux:checkbox wire:key="edit-cat-{{ $competition->id }}-{{ $cat->id }}" value="{{ $cat->id }}" label="{{ $cat->name }}" />
-                                    @endforeach
-                                </flux:checkbox.group>
-                                @error('editCategoryIds') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                            </td>
+                            <td class="px-4 py-2 text-sm text-zinc-500">{{ $competition->competition_categories_count ?? 0 }}</td>
                             <td class="px-4 py-2 text-sm">
                                 <span class="text-zinc-500">{{ $competition->isActive() ? 'Aktif' : 'Nonaktif' }}</span>
                             </td>

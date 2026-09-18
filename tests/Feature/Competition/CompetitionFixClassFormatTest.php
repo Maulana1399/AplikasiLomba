@@ -20,7 +20,6 @@ function fix_class_seed(?string $format, ?int $teamSize): CompetitionClass
         'code' => strtoupper(str()->random(6)),
     ]);
 
-    $category->events()->syncWithoutDetaching([$event->id]);
 
     return CompetitionClass::create([
         'event_id' => $event->id,

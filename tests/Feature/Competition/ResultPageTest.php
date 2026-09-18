@@ -38,7 +38,6 @@ function rp_event(array $overrides = []): Event
 function rp_category(Event $event): CompetitionCategory
 {
     $category = CompetitionCategory::create(['event_id' => $event->id, 'name' => 'RP Cat '.str()->random(4)]);
-    $category->events()->attach($event);
 
     return $category;
 }

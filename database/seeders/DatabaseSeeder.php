@@ -11,9 +11,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SuperUserSeeder::class,
             UserSeeder::class,
-            DesaSeeder::class,
-            KelompokSeeder::class,
-            MasterParticipantClassSeeder::class,
+            AplikasiLombaSeeder::class,
+            Fasda2026Seeder::class,
         ]);
     }
 }
